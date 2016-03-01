@@ -1,0 +1,4 @@
+language: rust
+rust:
+  - nightly
+script: cd pact_mock_server_matchers && cargo build && cargo test
