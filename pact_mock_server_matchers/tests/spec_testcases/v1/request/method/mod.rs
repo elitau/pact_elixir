@@ -1,4 +1,5 @@
 use pact_mock_server_matchers::model::Request;
+use pact_mock_server_matchers::match_request;
 use rustc_serialize::json;
 
 #[test]
@@ -27,10 +28,14 @@ fn different_method() {
     println!("{:?}", expected);
     let actual = Request::from_json(&pact.find("actual").unwrap());
     println!("{:?}", expected);
+    let comment = "comment"; //pact.find("comment").unwrap().as_string().unwrap();
     let pact_match = pact.find("match").unwrap();
-    assert!(pact_match.as_boolean().unwrap());
+    if pact_match.as_boolean().unwrap() {
+       assert!(match_request(&expected, &actual).is_empty(), comment);
+    } else {
+       assert!(!match_request(&expected, &actual).is_empty(), comment);
+    }
 }
-      
 
 #[test]
 fn matches() {
@@ -58,10 +63,14 @@ fn matches() {
     println!("{:?}", expected);
     let actual = Request::from_json(&pact.find("actual").unwrap());
     println!("{:?}", expected);
+    let comment = "comment"; //pact.find("comment").unwrap().as_string().unwrap();
     let pact_match = pact.find("match").unwrap();
-    assert!(pact_match.as_boolean().unwrap());
+    if pact_match.as_boolean().unwrap() {
+       assert!(match_request(&expected, &actual).is_empty(), comment);
+    } else {
+       assert!(!match_request(&expected, &actual).is_empty(), comment);
+    }
 }
-      
 
 #[test]
 fn method_is_different_case() {
@@ -89,7 +98,11 @@ fn method_is_different_case() {
     println!("{:?}", expected);
     let actual = Request::from_json(&pact.find("actual").unwrap());
     println!("{:?}", expected);
+    let comment = "comment"; //pact.find("comment").unwrap().as_string().unwrap();
     let pact_match = pact.find("match").unwrap();
-    assert!(pact_match.as_boolean().unwrap());
+    if pact_match.as_boolean().unwrap() {
+       assert!(match_request(&expected, &actual).is_empty(), comment);
+    } else {
+       assert!(!match_request(&expected, &actual).is_empty(), comment);
+    }
 }
-      

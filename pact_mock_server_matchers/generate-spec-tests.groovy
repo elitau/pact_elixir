@@ -12,9 +12,11 @@ specs.eachFileRecurse(FileType.DIRECTORIES) { dir ->
   testFile.withPrintWriter { pw ->
     if (requestResponsePath == 'request') {
       pw.println('use pact_mock_server_matchers::model::Request;')
+      pw.println('use pact_mock_server_matchers::match_request;')
       pw.println('use rustc_serialize::json;')
     } else if (requestResponsePath == 'response') {
       pw.println('use pact_mock_server_matchers::model::Response;')
+      pw.println('use pact_mock_server_matchers::match_response;')
       pw.println('use rustc_serialize::json;')
     }
 
@@ -38,6 +40,13 @@ specs.eachFileRecurse(FileType.DIRECTORIES) { dir ->
         |    println!("{:?}", expected);
         |    let actual = Request::from_json(&pact.find("actual").unwrap());
         |    println!("{:?}", expected);
+        |    let comment = "comment"; //pact.find("comment").unwrap().as_string().unwrap();
+        |    let pact_match = pact.find("match").unwrap();
+        |    if pact_match.as_boolean().unwrap() {
+        |       assert!(match_request(&expected, &actual).is_empty(), comment);
+        |    } else {
+        |       assert!(!match_request(&expected, &actual).is_empty(), comment);
+        |    }
         """
       } else if (requestResponsePath == 'response') {
         testBody += """
@@ -45,13 +54,16 @@ specs.eachFileRecurse(FileType.DIRECTORIES) { dir ->
         |    println!("{:?}", expected);
         |    let actual = Response::from_json(&pact.find("actual").unwrap());
         |    println!("{:?}", actual);
+        |    let comment = "comment"; // pact.find("comment").unwrap().as_string().unwrap();
+        |    let pact_match = pact.find("match").unwrap();
+        |    if pact_match.as_boolean().unwrap() {
+        |       assert!(match_response(&expected, &actual).is_empty(), comment);
+        |    } else {
+        |       assert!(!match_response(&expected, &actual).is_empty(), comment);
+        |    }
         """
       }
-      testBody +=
-      """|    let pact_match = pact.find("match").unwrap();
-         |    assert!(pact_match.as_boolean().unwrap());
-         |}
-      """
+      testBody += '|}'
       pw.println testBody.stripMargin('|')
     }
   }

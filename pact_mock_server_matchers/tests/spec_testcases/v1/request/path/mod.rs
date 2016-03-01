@@ -1,4 +1,5 @@
 use pact_mock_server_matchers::model::Request;
+use pact_mock_server_matchers::match_request;
 use rustc_serialize::json;
 
 #[test]
@@ -28,10 +29,14 @@ fn empty_path_found_when_forward_slash_expected() {
     println!("{:?}", expected);
     let actual = Request::from_json(&pact.find("actual").unwrap());
     println!("{:?}", expected);
+    let comment = "comment"; //pact.find("comment").unwrap().as_string().unwrap();
     let pact_match = pact.find("match").unwrap();
-    assert!(pact_match.as_boolean().unwrap());
+    if pact_match.as_boolean().unwrap() {
+       assert!(match_request(&expected, &actual).is_empty(), comment);
+    } else {
+       assert!(!match_request(&expected, &actual).is_empty(), comment);
+    }
 }
-      
 
 #[test]
 fn forward_slash_found_when_empty_path_expected() {
@@ -60,10 +65,14 @@ fn forward_slash_found_when_empty_path_expected() {
     println!("{:?}", expected);
     let actual = Request::from_json(&pact.find("actual").unwrap());
     println!("{:?}", expected);
+    let comment = "comment"; //pact.find("comment").unwrap().as_string().unwrap();
     let pact_match = pact.find("match").unwrap();
-    assert!(pact_match.as_boolean().unwrap());
+    if pact_match.as_boolean().unwrap() {
+       assert!(match_request(&expected, &actual).is_empty(), comment);
+    } else {
+       assert!(!match_request(&expected, &actual).is_empty(), comment);
+    }
 }
-      
 
 #[test]
 fn incorrect_path() {
@@ -92,10 +101,14 @@ fn incorrect_path() {
     println!("{:?}", expected);
     let actual = Request::from_json(&pact.find("actual").unwrap());
     println!("{:?}", expected);
+    let comment = "comment"; //pact.find("comment").unwrap().as_string().unwrap();
     let pact_match = pact.find("match").unwrap();
-    assert!(pact_match.as_boolean().unwrap());
+    if pact_match.as_boolean().unwrap() {
+       assert!(match_request(&expected, &actual).is_empty(), comment);
+    } else {
+       assert!(!match_request(&expected, &actual).is_empty(), comment);
+    }
 }
-      
 
 #[test]
 fn matches() {
@@ -124,10 +137,14 @@ fn matches() {
     println!("{:?}", expected);
     let actual = Request::from_json(&pact.find("actual").unwrap());
     println!("{:?}", expected);
+    let comment = "comment"; //pact.find("comment").unwrap().as_string().unwrap();
     let pact_match = pact.find("match").unwrap();
-    assert!(pact_match.as_boolean().unwrap());
+    if pact_match.as_boolean().unwrap() {
+       assert!(match_request(&expected, &actual).is_empty(), comment);
+    } else {
+       assert!(!match_request(&expected, &actual).is_empty(), comment);
+    }
 }
-      
 
 #[test]
 fn missing_trailing_slash_in_path() {
@@ -156,10 +173,14 @@ fn missing_trailing_slash_in_path() {
     println!("{:?}", expected);
     let actual = Request::from_json(&pact.find("actual").unwrap());
     println!("{:?}", expected);
+    let comment = "comment"; //pact.find("comment").unwrap().as_string().unwrap();
     let pact_match = pact.find("match").unwrap();
-    assert!(pact_match.as_boolean().unwrap());
+    if pact_match.as_boolean().unwrap() {
+       assert!(match_request(&expected, &actual).is_empty(), comment);
+    } else {
+       assert!(!match_request(&expected, &actual).is_empty(), comment);
+    }
 }
-      
 
 #[test]
 fn unexpected_trailing_slash_in_path() {
@@ -188,7 +209,11 @@ fn unexpected_trailing_slash_in_path() {
     println!("{:?}", expected);
     let actual = Request::from_json(&pact.find("actual").unwrap());
     println!("{:?}", expected);
+    let comment = "comment"; //pact.find("comment").unwrap().as_string().unwrap();
     let pact_match = pact.find("match").unwrap();
-    assert!(pact_match.as_boolean().unwrap());
+    if pact_match.as_boolean().unwrap() {
+       assert!(match_request(&expected, &actual).is_empty(), comment);
+    } else {
+       assert!(!match_request(&expected, &actual).is_empty(), comment);
+    }
 }
-      

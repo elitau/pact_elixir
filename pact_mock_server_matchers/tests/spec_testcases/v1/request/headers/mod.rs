@@ -1,4 +1,5 @@
 use pact_mock_server_matchers::model::Request;
+use pact_mock_server_matchers::match_request;
 use rustc_serialize::json;
 
 #[test]
@@ -27,10 +28,14 @@ fn empty_headers() {
     println!("{:?}", expected);
     let actual = Request::from_json(&pact.find("actual").unwrap());
     println!("{:?}", expected);
+    let comment = "comment"; //pact.find("comment").unwrap().as_string().unwrap();
     let pact_match = pact.find("match").unwrap();
-    assert!(pact_match.as_boolean().unwrap());
+    if pact_match.as_boolean().unwrap() {
+       assert!(match_request(&expected, &actual).is_empty(), comment);
+    } else {
+       assert!(!match_request(&expected, &actual).is_empty(), comment);
+    }
 }
-      
 
 #[test]
 fn header_name_is_different_case() {
@@ -61,10 +66,14 @@ fn header_name_is_different_case() {
     println!("{:?}", expected);
     let actual = Request::from_json(&pact.find("actual").unwrap());
     println!("{:?}", expected);
+    let comment = "comment"; //pact.find("comment").unwrap().as_string().unwrap();
     let pact_match = pact.find("match").unwrap();
-    assert!(pact_match.as_boolean().unwrap());
+    if pact_match.as_boolean().unwrap() {
+       assert!(match_request(&expected, &actual).is_empty(), comment);
+    } else {
+       assert!(!match_request(&expected, &actual).is_empty(), comment);
+    }
 }
-      
 
 #[test]
 fn header_value_is_different_case() {
@@ -95,10 +104,14 @@ fn header_value_is_different_case() {
     println!("{:?}", expected);
     let actual = Request::from_json(&pact.find("actual").unwrap());
     println!("{:?}", expected);
+    let comment = "comment"; //pact.find("comment").unwrap().as_string().unwrap();
     let pact_match = pact.find("match").unwrap();
-    assert!(pact_match.as_boolean().unwrap());
+    if pact_match.as_boolean().unwrap() {
+       assert!(match_request(&expected, &actual).is_empty(), comment);
+    } else {
+       assert!(!match_request(&expected, &actual).is_empty(), comment);
+    }
 }
-      
 
 #[test]
 fn matches() {
@@ -131,10 +144,14 @@ fn matches() {
     println!("{:?}", expected);
     let actual = Request::from_json(&pact.find("actual").unwrap());
     println!("{:?}", expected);
+    let comment = "comment"; //pact.find("comment").unwrap().as_string().unwrap();
     let pact_match = pact.find("match").unwrap();
-    assert!(pact_match.as_boolean().unwrap());
+    if pact_match.as_boolean().unwrap() {
+       assert!(match_request(&expected, &actual).is_empty(), comment);
+    } else {
+       assert!(!match_request(&expected, &actual).is_empty(), comment);
+    }
 }
-      
 
 #[test]
 fn order_of_comma_separated_header_values_different() {
@@ -165,10 +182,14 @@ fn order_of_comma_separated_header_values_different() {
     println!("{:?}", expected);
     let actual = Request::from_json(&pact.find("actual").unwrap());
     println!("{:?}", expected);
+    let comment = "comment"; //pact.find("comment").unwrap().as_string().unwrap();
     let pact_match = pact.find("match").unwrap();
-    assert!(pact_match.as_boolean().unwrap());
+    if pact_match.as_boolean().unwrap() {
+       assert!(match_request(&expected, &actual).is_empty(), comment);
+    } else {
+       assert!(!match_request(&expected, &actual).is_empty(), comment);
+    }
 }
-      
 
 #[test]
 fn unexpected_header_found() {
@@ -197,10 +218,14 @@ fn unexpected_header_found() {
     println!("{:?}", expected);
     let actual = Request::from_json(&pact.find("actual").unwrap());
     println!("{:?}", expected);
+    let comment = "comment"; //pact.find("comment").unwrap().as_string().unwrap();
     let pact_match = pact.find("match").unwrap();
-    assert!(pact_match.as_boolean().unwrap());
+    if pact_match.as_boolean().unwrap() {
+       assert!(match_request(&expected, &actual).is_empty(), comment);
+    } else {
+       assert!(!match_request(&expected, &actual).is_empty(), comment);
+    }
 }
-      
 
 #[test]
 fn whitespace_after_comma_different() {
@@ -231,7 +256,11 @@ fn whitespace_after_comma_different() {
     println!("{:?}", expected);
     let actual = Request::from_json(&pact.find("actual").unwrap());
     println!("{:?}", expected);
+    let comment = "comment"; //pact.find("comment").unwrap().as_string().unwrap();
     let pact_match = pact.find("match").unwrap();
-    assert!(pact_match.as_boolean().unwrap());
+    if pact_match.as_boolean().unwrap() {
+       assert!(match_request(&expected, &actual).is_empty(), comment);
+    } else {
+       assert!(!match_request(&expected, &actual).is_empty(), comment);
+    }
 }
-      

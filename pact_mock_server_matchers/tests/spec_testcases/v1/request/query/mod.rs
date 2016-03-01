@@ -1,4 +1,5 @@
 use pact_mock_server_matchers::model::Request;
+use pact_mock_server_matchers::match_request;
 use rustc_serialize::json;
 
 #[test]
@@ -28,10 +29,14 @@ fn different_param_order() {
     println!("{:?}", expected);
     let actual = Request::from_json(&pact.find("actual").unwrap());
     println!("{:?}", expected);
+    let comment = "comment"; //pact.find("comment").unwrap().as_string().unwrap();
     let pact_match = pact.find("match").unwrap();
-    assert!(pact_match.as_boolean().unwrap());
+    if pact_match.as_boolean().unwrap() {
+       assert!(match_request(&expected, &actual).is_empty(), comment);
+    } else {
+       assert!(!match_request(&expected, &actual).is_empty(), comment);
+    }
 }
-      
 
 #[test]
 fn different_param_values() {
@@ -60,10 +65,14 @@ fn different_param_values() {
     println!("{:?}", expected);
     let actual = Request::from_json(&pact.find("actual").unwrap());
     println!("{:?}", expected);
+    let comment = "comment"; //pact.find("comment").unwrap().as_string().unwrap();
     let pact_match = pact.find("match").unwrap();
-    assert!(pact_match.as_boolean().unwrap());
+    if pact_match.as_boolean().unwrap() {
+       assert!(match_request(&expected, &actual).is_empty(), comment);
+    } else {
+       assert!(!match_request(&expected, &actual).is_empty(), comment);
+    }
 }
-      
 
 #[test]
 fn matches() {
@@ -92,10 +101,14 @@ fn matches() {
     println!("{:?}", expected);
     let actual = Request::from_json(&pact.find("actual").unwrap());
     println!("{:?}", expected);
+    let comment = "comment"; //pact.find("comment").unwrap().as_string().unwrap();
     let pact_match = pact.find("match").unwrap();
-    assert!(pact_match.as_boolean().unwrap());
+    if pact_match.as_boolean().unwrap() {
+       assert!(match_request(&expected, &actual).is_empty(), comment);
+    } else {
+       assert!(!match_request(&expected, &actual).is_empty(), comment);
+    }
 }
-      
 
 #[test]
 fn trailing_amperand() {
@@ -124,7 +137,11 @@ fn trailing_amperand() {
     println!("{:?}", expected);
     let actual = Request::from_json(&pact.find("actual").unwrap());
     println!("{:?}", expected);
+    let comment = "comment"; //pact.find("comment").unwrap().as_string().unwrap();
     let pact_match = pact.find("match").unwrap();
-    assert!(pact_match.as_boolean().unwrap());
+    if pact_match.as_boolean().unwrap() {
+       assert!(match_request(&expected, &actual).is_empty(), comment);
+    } else {
+       assert!(!match_request(&expected, &actual).is_empty(), comment);
+    }
 }
-      
