@@ -27,13 +27,12 @@ fn different_method() {
     let expected = Request::from_json(&pact.find("expected").unwrap());
     println!("{:?}", expected);
     let actual = Request::from_json(&pact.find("actual").unwrap());
-    println!("{:?}", expected);
-    let comment = "comment"; //pact.find("comment").unwrap().as_string().unwrap();
+    println!("{:?}", actual);
     let pact_match = pact.find("match").unwrap();
     if pact_match.as_boolean().unwrap() {
-       assert!(match_request(expected, actual).is_empty(), comment);
+       assert!(match_request(expected, actual).is_empty(), "Methods is incorrect");
     } else {
-       assert!(!match_request(expected, actual).is_empty(), comment);
+       assert!(!match_request(expected, actual).is_empty(), "Methods is incorrect");
     }
 }
 
@@ -62,13 +61,12 @@ fn matches() {
     let expected = Request::from_json(&pact.find("expected").unwrap());
     println!("{:?}", expected);
     let actual = Request::from_json(&pact.find("actual").unwrap());
-    println!("{:?}", expected);
-    let comment = "comment"; //pact.find("comment").unwrap().as_string().unwrap();
+    println!("{:?}", actual);
     let pact_match = pact.find("match").unwrap();
     if pact_match.as_boolean().unwrap() {
-       assert!(match_request(expected, actual).is_empty(), comment);
+       assert!(match_request(expected, actual).is_empty(), "Methods match");
     } else {
-       assert!(!match_request(expected, actual).is_empty(), comment);
+       assert!(!match_request(expected, actual).is_empty(), "Methods match");
     }
 }
 
@@ -97,12 +95,11 @@ fn method_is_different_case() {
     let expected = Request::from_json(&pact.find("expected").unwrap());
     println!("{:?}", expected);
     let actual = Request::from_json(&pact.find("actual").unwrap());
-    println!("{:?}", expected);
-    let comment = "comment"; //pact.find("comment").unwrap().as_string().unwrap();
+    println!("{:?}", actual);
     let pact_match = pact.find("match").unwrap();
     if pact_match.as_boolean().unwrap() {
-       assert!(match_request(expected, actual).is_empty(), comment);
+       assert!(match_request(expected, actual).is_empty(), "Methods case does not matter");
     } else {
-       assert!(!match_request(expected, actual).is_empty(), comment);
+       assert!(!match_request(expected, actual).is_empty(), "Methods case does not matter");
     }
 }

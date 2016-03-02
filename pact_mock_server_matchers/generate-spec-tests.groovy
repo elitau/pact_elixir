@@ -1,6 +1,7 @@
 #!/usr/bin/env groovy
 
 import groovy.io.FileType
+import groovy.json.JsonSlurper
 
 def tests = new File('tests')
 def specs = new File(tests, 'spec_testcases')
@@ -25,6 +26,7 @@ specs.eachFileRecurse(FileType.DIRECTORIES) { dir ->
     }
 
     dir.eachFileMatch(~/.*\.json/) {
+      def json = new JsonSlurper().parse(it)
       def testBody = """
         |#[test]
         |fn ${it.name.replaceAll(' ', '_').replaceAll('\\.json', '')}() {
@@ -39,13 +41,12 @@ specs.eachFileRecurse(FileType.DIRECTORIES) { dir ->
         |    let expected = Request::from_json(&pact.find("expected").unwrap());
         |    println!("{:?}", expected);
         |    let actual = Request::from_json(&pact.find("actual").unwrap());
-        |    println!("{:?}", expected);
-        |    let comment = "comment"; //pact.find("comment").unwrap().as_string().unwrap();
+        |    println!("{:?}", actual);
         |    let pact_match = pact.find("match").unwrap();
         |    if pact_match.as_boolean().unwrap() {
-        |       assert!(match_request(expected, actual).is_empty(), comment);
+        |       assert!(match_request(expected, actual).is_empty(), "${json.comment}");
         |    } else {
-        |       assert!(!match_request(expected, actual).is_empty(), comment);
+        |       assert!(!match_request(expected, actual).is_empty(), "${json.comment}");
         |    }
         """
       } else if (requestResponsePath == 'response') {
@@ -54,12 +55,11 @@ specs.eachFileRecurse(FileType.DIRECTORIES) { dir ->
         |    println!("{:?}", expected);
         |    let actual = Response::from_json(&pact.find("actual").unwrap());
         |    println!("{:?}", actual);
-        |    let comment = "comment"; // pact.find("comment").unwrap().as_string().unwrap();
         |    let pact_match = pact.find("match").unwrap();
         |    if pact_match.as_boolean().unwrap() {
-        |       assert!(match_response(expected, actual).is_empty(), comment);
+        |       assert!(match_response(expected, actual).is_empty(), "${json.comment}");
         |    } else {
-        |       assert!(!match_response(expected, actual).is_empty(), comment);
+        |       assert!(!match_response(expected, actual).is_empty(), "${json.comment}");
         |    }
         """
       }

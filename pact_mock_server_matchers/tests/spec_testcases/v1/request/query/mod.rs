@@ -13,14 +13,14 @@ fn different_param_order() {
           "path": "/path",
           "query": "alligator=Mary&hippo=John",
           "headers": {}
-      
+
         },
         "actual": {
           "method": "GET",
           "path": "/path",
           "query": "hippo=John&alligator=Mary",
           "headers": {}
-      
+
         }
       }
     );
@@ -28,13 +28,12 @@ fn different_param_order() {
     let expected = Request::from_json(&pact.find("expected").unwrap());
     println!("{:?}", expected);
     let actual = Request::from_json(&pact.find("actual").unwrap());
-    println!("{:?}", expected);
-    let comment = "comment"; //pact.find("comment").unwrap().as_string().unwrap();
+    println!("{:?}", actual);
     let pact_match = pact.find("match").unwrap();
     if pact_match.as_boolean().unwrap() {
-       //assert!(match_request(&expected, &actual).is_empty(), comment);
+       //assert!(match_request(expected, actual).is_empty(), "Query strings are matched using basic string equality, these are not equal.");
     } else {
-       //assert!(!match_request(&expected, &actual).is_empty(), comment);
+       //assert!(!match_request(expected, actual).is_empty(), "Query strings are matched using basic string equality, these are not equal.");
     }
 }
 
@@ -49,14 +48,14 @@ fn different_param_values() {
           "path": "/path",
           "query": "alligator=Mary&hippo=John",
           "headers": {}
-      
+
         },
         "actual": {
           "method": "GET",
           "path": "/path",
           "query": "alligator=Mary&hippo=Fred",
           "headers": {}
-      
+
         }
       }
     );
@@ -64,13 +63,12 @@ fn different_param_values() {
     let expected = Request::from_json(&pact.find("expected").unwrap());
     println!("{:?}", expected);
     let actual = Request::from_json(&pact.find("actual").unwrap());
-    println!("{:?}", expected);
-    let comment = "comment"; //pact.find("comment").unwrap().as_string().unwrap();
+    println!("{:?}", actual);
     let pact_match = pact.find("match").unwrap();
     if pact_match.as_boolean().unwrap() {
-       //assert!(match_request(&expected, &actual).is_empty(), comment);
+       //assert!(match_request(expected, actual).is_empty(), "Queries are not the same - hippo is Fred instead of John");
     } else {
-       //assert!(!match_request(&expected, &actual).is_empty(), comment);
+       //assert!(!match_request(expected, actual).is_empty(), "Queries are not the same - hippo is Fred instead of John");
     }
 }
 
@@ -85,14 +83,14 @@ fn matches() {
           "path": "/path",
           "query": "alligator=Mary&hippo=John",
           "headers": {}
-      
+
         },
         "actual": {
           "method": "GET",
           "path": "/path",
           "query": "alligator=Mary&hippo=John",
           "headers": {}
-      
+
         }
       }
     );
@@ -100,13 +98,12 @@ fn matches() {
     let expected = Request::from_json(&pact.find("expected").unwrap());
     println!("{:?}", expected);
     let actual = Request::from_json(&pact.find("actual").unwrap());
-    println!("{:?}", expected);
-    let comment = "comment"; //pact.find("comment").unwrap().as_string().unwrap();
+    println!("{:?}", actual);
     let pact_match = pact.find("match").unwrap();
     if pact_match.as_boolean().unwrap() {
-       //assert!(match_request(&expected, &actual).is_empty(), comment);
+       //assert!(match_request(expected, actual).is_empty(), "Queries are the same");
     } else {
-       //assert!(!match_request(&expected, &actual).is_empty(), comment);
+       //assert!(!match_request(expected, actual).is_empty(), "Queries are the same");
     }
 }
 
@@ -121,14 +118,14 @@ fn trailing_amperand() {
           "path": "/path",
           "query": "alligator=Mary&hippo=John",
           "headers": {}
-      
+
         },
         "actual": {
           "method": "GET",
           "path": "/path",
           "query": "alligator=Mary&hippo=John&",
           "headers": {}
-      
+
         }
       }
     );
@@ -136,12 +133,11 @@ fn trailing_amperand() {
     let expected = Request::from_json(&pact.find("expected").unwrap());
     println!("{:?}", expected);
     let actual = Request::from_json(&pact.find("actual").unwrap());
-    println!("{:?}", expected);
-    let comment = "comment"; //pact.find("comment").unwrap().as_string().unwrap();
+    println!("{:?}", actual);
     let pact_match = pact.find("match").unwrap();
     if pact_match.as_boolean().unwrap() {
-       //assert!(match_request(&expected, &actual).is_empty(), comment);
+       //assert!(match_request(expected, actual).is_empty(), "Query strings are matched using basic string equality, these are not equal.");
     } else {
-       //assert!(!match_request(&expected, &actual).is_empty(), comment);
+       //assert!(!match_request(expected, actual).is_empty(), "Query strings are matched using basic string equality, these are not equal.");
     }
 }

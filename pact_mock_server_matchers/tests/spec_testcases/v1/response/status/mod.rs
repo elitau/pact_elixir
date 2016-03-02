@@ -21,12 +21,11 @@ fn different_status() {
     println!("{:?}", expected);
     let actual = Response::from_json(&pact.find("actual").unwrap());
     println!("{:?}", actual);
-    let comment = "comment"; // pact.find("comment").unwrap().as_string().unwrap();
     let pact_match = pact.find("match").unwrap();
     if pact_match.as_boolean().unwrap() {
-       //assert!(match_response(&expected, &actual).is_empty(), comment);
+       assert!(match_response(expected, actual).is_empty(), "Status is incorrect");
     } else {
-       //assert!(!match_response(&expected, &actual).is_empty(), comment);
+       assert!(!match_response(expected, actual).is_empty(), "Status is incorrect");
     }
 }
 
@@ -49,11 +48,10 @@ fn matches() {
     println!("{:?}", expected);
     let actual = Response::from_json(&pact.find("actual").unwrap());
     println!("{:?}", actual);
-    let comment = "comment"; // pact.find("comment").unwrap().as_string().unwrap();
     let pact_match = pact.find("match").unwrap();
     if pact_match.as_boolean().unwrap() {
-       //assert!(match_response(&expected, &actual).is_empty(), comment);
+       assert!(match_response(expected, actual).is_empty(), "Status matches");
     } else {
-       //assert!(!match_response(&expected, &actual).is_empty(), comment);
+       assert!(!match_response(expected, actual).is_empty(), "Status matches");
     }
 }

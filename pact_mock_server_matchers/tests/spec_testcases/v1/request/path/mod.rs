@@ -28,13 +28,12 @@ fn empty_path_found_when_forward_slash_expected() {
     let expected = Request::from_json(&pact.find("expected").unwrap());
     println!("{:?}", expected);
     let actual = Request::from_json(&pact.find("actual").unwrap());
-    println!("{:?}", expected);
-    let comment = "comment"; //pact.find("comment").unwrap().as_string().unwrap();
+    println!("{:?}", actual);
     let pact_match = pact.find("match").unwrap();
     if pact_match.as_boolean().unwrap() {
-       //assert!(match_request(&expected, &actual).is_empty(), comment);
+       assert!(match_request(expected, actual).is_empty(), "Empty path found when forward slash expected");
     } else {
-       //assert!(!match_request(&expected, &actual).is_empty(), comment);
+       assert!(!match_request(expected, actual).is_empty(), "Empty path found when forward slash expected");
     }
 }
 
@@ -64,13 +63,12 @@ fn forward_slash_found_when_empty_path_expected() {
     let expected = Request::from_json(&pact.find("expected").unwrap());
     println!("{:?}", expected);
     let actual = Request::from_json(&pact.find("actual").unwrap());
-    println!("{:?}", expected);
-    let comment = "comment"; //pact.find("comment").unwrap().as_string().unwrap();
+    println!("{:?}", actual);
     let pact_match = pact.find("match").unwrap();
     if pact_match.as_boolean().unwrap() {
-       //assert!(match_request(&expected, &actual).is_empty(), comment);
+       assert!(match_request(expected, actual).is_empty(), "Foward slash found when empty path expected");
     } else {
-       //assert!(!match_request(&expected, &actual).is_empty(), comment);
+       assert!(!match_request(expected, actual).is_empty(), "Foward slash found when empty path expected");
     }
 }
 
@@ -100,13 +98,12 @@ fn incorrect_path() {
     let expected = Request::from_json(&pact.find("expected").unwrap());
     println!("{:?}", expected);
     let actual = Request::from_json(&pact.find("actual").unwrap());
-    println!("{:?}", expected);
-    let comment = "comment"; //pact.find("comment").unwrap().as_string().unwrap();
+    println!("{:?}", actual);
     let pact_match = pact.find("match").unwrap();
     if pact_match.as_boolean().unwrap() {
-       //assert!(match_request(&expected, &actual).is_empty(), comment);
+       assert!(match_request(expected, actual).is_empty(), "Paths do not match");
     } else {
-       //assert!(!match_request(&expected, &actual).is_empty(), comment);
+       assert!(!match_request(expected, actual).is_empty(), "Paths do not match");
     }
 }
 
@@ -136,13 +133,12 @@ fn matches() {
     let expected = Request::from_json(&pact.find("expected").unwrap());
     println!("{:?}", expected);
     let actual = Request::from_json(&pact.find("actual").unwrap());
-    println!("{:?}", expected);
-    let comment = "comment"; //pact.find("comment").unwrap().as_string().unwrap();
+    println!("{:?}", actual);
     let pact_match = pact.find("match").unwrap();
     if pact_match.as_boolean().unwrap() {
-       //assert!(match_request(&expected, &actual).is_empty(), comment);
+       assert!(match_request(expected, actual).is_empty(), "Paths match");
     } else {
-       //assert!(!match_request(&expected, &actual).is_empty(), comment);
+       assert!(!match_request(expected, actual).is_empty(), "Paths match");
     }
 }
 
@@ -172,13 +168,12 @@ fn missing_trailing_slash_in_path() {
     let expected = Request::from_json(&pact.find("expected").unwrap());
     println!("{:?}", expected);
     let actual = Request::from_json(&pact.find("actual").unwrap());
-    println!("{:?}", expected);
-    let comment = "comment"; //pact.find("comment").unwrap().as_string().unwrap();
+    println!("{:?}", actual);
     let pact_match = pact.find("match").unwrap();
     if pact_match.as_boolean().unwrap() {
-       //assert!(match_request(&expected, &actual).is_empty(), comment);
+       assert!(match_request(expected, actual).is_empty(), "Path is missing trailing slash, trailing slashes can matter");
     } else {
-       //assert!(!match_request(&expected, &actual).is_empty(), comment);
+       assert!(!match_request(expected, actual).is_empty(), "Path is missing trailing slash, trailing slashes can matter");
     }
 }
 
@@ -208,12 +203,11 @@ fn unexpected_trailing_slash_in_path() {
     let expected = Request::from_json(&pact.find("expected").unwrap());
     println!("{:?}", expected);
     let actual = Request::from_json(&pact.find("actual").unwrap());
-    println!("{:?}", expected);
-    let comment = "comment"; //pact.find("comment").unwrap().as_string().unwrap();
+    println!("{:?}", actual);
     let pact_match = pact.find("match").unwrap();
     if pact_match.as_boolean().unwrap() {
-       //assert!(match_request(&expected, &actual).is_empty(), comment);
+       assert!(match_request(expected, actual).is_empty(), "Path has unexpected trailing slash, trailing slashes can matter");
     } else {
-       //assert!(!match_request(&expected, &actual).is_empty(), comment);
+       assert!(!match_request(expected, actual).is_empty(), "Path has unexpected trailing slash, trailing slashes can matter");
     }
 }

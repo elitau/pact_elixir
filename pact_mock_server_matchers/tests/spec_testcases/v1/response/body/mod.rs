@@ -31,12 +31,11 @@ fn array_in_different_order() {
     println!("{:?}", expected);
     let actual = Response::from_json(&pact.find("actual").unwrap());
     println!("{:?}", actual);
-    let comment = "comment"; // pact.find("comment").unwrap().as_string().unwrap();
     let pact_match = pact.find("match").unwrap();
     if pact_match.as_boolean().unwrap() {
-       //assert!(match_response(&expected, &actual).is_empty(), comment);
+       //assert!(match_response(expected, actual).is_empty(), "Favourite colours in wrong order");
     } else {
-       //assert!(!match_response(&expected, &actual).is_empty(), comment);
+       //assert!(!match_response(expected, actual).is_empty(), "Favourite colours in wrong order");
     }
 }
 
@@ -50,7 +49,7 @@ fn deeply_nested_objects() {
       		"headers": {},
       		"body": {
       			"object1": {
-      				"object2": { 
+      				"object2": {
       					"object4": {
       						"object5": {
       							"name": "Mary",
@@ -68,7 +67,7 @@ fn deeply_nested_objects() {
       		"headers": {},
       		"body": {
       			"object1":{
-      				"object2": { 
+      				"object2": {
       					"object4":{
       						"object5": {
       							"name": "Mary",
@@ -91,12 +90,11 @@ fn deeply_nested_objects() {
     println!("{:?}", expected);
     let actual = Response::from_json(&pact.find("actual").unwrap());
     println!("{:?}", actual);
-    let comment = "comment"; // pact.find("comment").unwrap().as_string().unwrap();
     let pact_match = pact.find("match").unwrap();
     if pact_match.as_boolean().unwrap() {
-       //assert!(match_response(&expected, &actual).is_empty(), comment);
+       //assert!(match_response(expected, actual).is_empty(), "Comparisons should work even on nested objects");
     } else {
-       //assert!(!match_response(&expected, &actual).is_empty(), comment);
+       //assert!(!match_response(expected, actual).is_empty(), "Comparisons should work even on nested objects");
     }
 }
 
@@ -129,12 +127,11 @@ fn different_value_found_at_index() {
     println!("{:?}", expected);
     let actual = Response::from_json(&pact.find("actual").unwrap());
     println!("{:?}", actual);
-    let comment = "comment"; // pact.find("comment").unwrap().as_string().unwrap();
     let pact_match = pact.find("match").unwrap();
     if pact_match.as_boolean().unwrap() {
-       //assert!(match_response(&expected, &actual).is_empty(), comment);
+       //assert!(match_response(expected, actual).is_empty(), "Incorrect favourite colour");
     } else {
-       //assert!(!match_response(&expected, &actual).is_empty(), comment);
+       //assert!(!match_response(expected, actual).is_empty(), "Incorrect favourite colour");
     }
 }
 
@@ -167,12 +164,11 @@ fn different_value_found_at_key() {
     println!("{:?}", expected);
     let actual = Response::from_json(&pact.find("actual").unwrap());
     println!("{:?}", actual);
-    let comment = "comment"; // pact.find("comment").unwrap().as_string().unwrap();
     let pact_match = pact.find("match").unwrap();
     if pact_match.as_boolean().unwrap() {
-       //assert!(match_response(&expected, &actual).is_empty(), comment);
+       //assert!(match_response(expected, actual).is_empty(), "Incorrect value at alligator name");
     } else {
-       //assert!(!match_response(&expected, &actual).is_empty(), comment);
+       //assert!(!match_response(expected, actual).is_empty(), "Incorrect value at alligator name");
     }
 }
 
@@ -203,12 +199,11 @@ fn keys_out_of_order_match() {
     println!("{:?}", expected);
     let actual = Response::from_json(&pact.find("actual").unwrap());
     println!("{:?}", actual);
-    let comment = "comment"; // pact.find("comment").unwrap().as_string().unwrap();
     let pact_match = pact.find("match").unwrap();
     if pact_match.as_boolean().unwrap() {
-       //assert!(match_response(&expected, &actual).is_empty(), comment);
+       //assert!(match_response(expected, actual).is_empty(), "Favourite number and favourite colours out of order");
     } else {
-       //assert!(!match_response(&expected, &actual).is_empty(), comment);
+       //assert!(!match_response(expected, actual).is_empty(), "Favourite number and favourite colours out of order");
     }
 }
 
@@ -245,12 +240,11 @@ fn matches() {
     println!("{:?}", expected);
     let actual = Response::from_json(&pact.find("actual").unwrap());
     println!("{:?}", actual);
-    let comment = "comment"; // pact.find("comment").unwrap().as_string().unwrap();
     let pact_match = pact.find("match").unwrap();
     if pact_match.as_boolean().unwrap() {
-       //assert!(match_response(&expected, &actual).is_empty(), comment);
+       //assert!(match_response(expected, actual).is_empty(), "Responses match");
     } else {
-       //assert!(!match_response(&expected, &actual).is_empty(), comment);
+       //assert!(!match_response(expected, actual).is_empty(), "Responses match");
     }
 }
 
@@ -283,12 +277,11 @@ fn missing_index() {
     println!("{:?}", expected);
     let actual = Response::from_json(&pact.find("actual").unwrap());
     println!("{:?}", actual);
-    let comment = "comment"; // pact.find("comment").unwrap().as_string().unwrap();
     let pact_match = pact.find("match").unwrap();
     if pact_match.as_boolean().unwrap() {
-       //assert!(match_response(&expected, &actual).is_empty(), comment);
+       //assert!(match_response(expected, actual).is_empty(), "Missing favorite colour");
     } else {
-       //assert!(!match_response(&expected, &actual).is_empty(), comment);
+       //assert!(!match_response(expected, actual).is_empty(), "Missing favorite colour");
     }
 }
 
@@ -322,12 +315,11 @@ fn missing_key() {
     println!("{:?}", expected);
     let actual = Response::from_json(&pact.find("actual").unwrap());
     println!("{:?}", actual);
-    let comment = "comment"; // pact.find("comment").unwrap().as_string().unwrap();
     let pact_match = pact.find("match").unwrap();
     if pact_match.as_boolean().unwrap() {
-       //assert!(match_response(&expected, &actual).is_empty(), comment);
+       //assert!(match_response(expected, actual).is_empty(), "Missing key alligator name");
     } else {
-       //assert!(!match_response(&expected, &actual).is_empty(), comment);
+       //assert!(!match_response(expected, actual).is_empty(), "Missing key alligator name");
     }
 }
 
@@ -360,12 +352,11 @@ fn not_null_found_at_key_when_null_expected() {
     println!("{:?}", expected);
     let actual = Response::from_json(&pact.find("actual").unwrap());
     println!("{:?}", actual);
-    let comment = "comment"; // pact.find("comment").unwrap().as_string().unwrap();
     let pact_match = pact.find("match").unwrap();
     if pact_match.as_boolean().unwrap() {
-       //assert!(match_response(&expected, &actual).is_empty(), comment);
+       //assert!(match_response(expected, actual).is_empty(), "Name should be null");
     } else {
-       //assert!(!match_response(&expected, &actual).is_empty(), comment);
+       //assert!(!match_response(expected, actual).is_empty(), "Name should be null");
     }
 }
 
@@ -398,12 +389,11 @@ fn not_null_found_in_array_when_null_expected() {
     println!("{:?}", expected);
     let actual = Response::from_json(&pact.find("actual").unwrap());
     println!("{:?}", actual);
-    let comment = "comment"; // pact.find("comment").unwrap().as_string().unwrap();
     let pact_match = pact.find("match").unwrap();
     if pact_match.as_boolean().unwrap() {
-       //assert!(match_response(&expected, &actual).is_empty(), comment);
+       //assert!(match_response(expected, actual).is_empty(), "Favourite numbers expected to contain null, but not null found");
     } else {
-       //assert!(!match_response(&expected, &actual).is_empty(), comment);
+       //assert!(!match_response(expected, actual).is_empty(), "Favourite numbers expected to contain null, but not null found");
     }
 }
 
@@ -436,12 +426,11 @@ fn null_found_at_key_where_not_null_expected() {
     println!("{:?}", expected);
     let actual = Response::from_json(&pact.find("actual").unwrap());
     println!("{:?}", actual);
-    let comment = "comment"; // pact.find("comment").unwrap().as_string().unwrap();
     let pact_match = pact.find("match").unwrap();
     if pact_match.as_boolean().unwrap() {
-       //assert!(match_response(&expected, &actual).is_empty(), comment);
+       //assert!(match_response(expected, actual).is_empty(), "Name should not be null");
     } else {
-       //assert!(!match_response(&expected, &actual).is_empty(), comment);
+       //assert!(!match_response(expected, actual).is_empty(), "Name should not be null");
     }
 }
 
@@ -474,12 +463,11 @@ fn null_found_in_array_when_not_null_expected() {
     println!("{:?}", expected);
     let actual = Response::from_json(&pact.find("actual").unwrap());
     println!("{:?}", actual);
-    let comment = "comment"; // pact.find("comment").unwrap().as_string().unwrap();
     let pact_match = pact.find("match").unwrap();
     if pact_match.as_boolean().unwrap() {
-       //assert!(match_response(&expected, &actual).is_empty(), comment);
+       //assert!(match_response(expected, actual).is_empty(), "Favourite numbers expected to be strings found a null");
     } else {
-       //assert!(!match_response(&expected, &actual).is_empty(), comment);
+       //assert!(!match_response(expected, actual).is_empty(), "Favourite numbers expected to be strings found a null");
     }
 }
 
@@ -512,12 +500,11 @@ fn number_found_at_key_when_string_expected() {
     println!("{:?}", expected);
     let actual = Response::from_json(&pact.find("actual").unwrap());
     println!("{:?}", actual);
-    let comment = "comment"; // pact.find("comment").unwrap().as_string().unwrap();
     let pact_match = pact.find("match").unwrap();
     if pact_match.as_boolean().unwrap() {
-       //assert!(match_response(&expected, &actual).is_empty(), comment);
+       //assert!(match_response(expected, actual).is_empty(), "Number of feet expected to be string but was number");
     } else {
-       //assert!(!match_response(&expected, &actual).is_empty(), comment);
+       //assert!(!match_response(expected, actual).is_empty(), "Number of feet expected to be string but was number");
     }
 }
 
@@ -550,12 +537,11 @@ fn number_found_in_array_when_string_expected() {
     println!("{:?}", expected);
     let actual = Response::from_json(&pact.find("actual").unwrap());
     println!("{:?}", actual);
-    let comment = "comment"; // pact.find("comment").unwrap().as_string().unwrap();
     let pact_match = pact.find("match").unwrap();
     if pact_match.as_boolean().unwrap() {
-       //assert!(match_response(&expected, &actual).is_empty(), comment);
+       //assert!(match_response(expected, actual).is_empty(), "Favourite numbers expected to be strings found a number");
     } else {
-       //assert!(!match_response(&expected, &actual).is_empty(), comment);
+       //assert!(!match_response(expected, actual).is_empty(), "Favourite numbers expected to be strings found a number");
     }
 }
 
@@ -587,12 +573,11 @@ fn objects_in_array_first_matches() {
     println!("{:?}", expected);
     let actual = Response::from_json(&pact.find("actual").unwrap());
     println!("{:?}", actual);
-    let comment = "comment"; // pact.find("comment").unwrap().as_string().unwrap();
     let pact_match = pact.find("match").unwrap();
     if pact_match.as_boolean().unwrap() {
-       //assert!(match_response(&expected, &actual).is_empty(), comment);
+       //assert!(match_response(expected, actual).is_empty(), "Properties match but unexpected element recieved");
     } else {
-       //assert!(!match_response(&expected, &actual).is_empty(), comment);
+       //assert!(!match_response(expected, actual).is_empty(), "Properties match but unexpected element recieved");
     }
 }
 
@@ -625,12 +610,11 @@ fn objects_in_array_no_matches() {
     println!("{:?}", expected);
     let actual = Response::from_json(&pact.find("actual").unwrap());
     println!("{:?}", actual);
-    let comment = "comment"; // pact.find("comment").unwrap().as_string().unwrap();
     let pact_match = pact.find("match").unwrap();
     if pact_match.as_boolean().unwrap() {
-       //assert!(match_response(&expected, &actual).is_empty(), comment);
+       //assert!(match_response(expected, actual).is_empty(), "Array of objects, properties match on incorrect objects");
     } else {
-       //assert!(!match_response(&expected, &actual).is_empty(), comment);
+       //assert!(!match_response(expected, actual).is_empty(), "Array of objects, properties match on incorrect objects");
     }
 }
 
@@ -662,12 +646,11 @@ fn objects_in_array_second_matches() {
     println!("{:?}", expected);
     let actual = Response::from_json(&pact.find("actual").unwrap());
     println!("{:?}", actual);
-    let comment = "comment"; // pact.find("comment").unwrap().as_string().unwrap();
     let pact_match = pact.find("match").unwrap();
     if pact_match.as_boolean().unwrap() {
-       //assert!(match_response(&expected, &actual).is_empty(), comment);
+       //assert!(match_response(expected, actual).is_empty(), "Property of second object matches, but unexpected element recieved");
     } else {
-       //assert!(!match_response(&expected, &actual).is_empty(), comment);
+       //assert!(!match_response(expected, actual).is_empty(), "Property of second object matches, but unexpected element recieved");
     }
 }
 
@@ -692,12 +675,11 @@ fn plain_text_that_does_not_match() {
     println!("{:?}", expected);
     let actual = Response::from_json(&pact.find("actual").unwrap());
     println!("{:?}", actual);
-    let comment = "comment"; // pact.find("comment").unwrap().as_string().unwrap();
     let pact_match = pact.find("match").unwrap();
     if pact_match.as_boolean().unwrap() {
-       //assert!(match_response(&expected, &actual).is_empty(), comment);
+       //assert!(match_response(expected, actual).is_empty(), "Plain text that does not match");
     } else {
-       //assert!(!match_response(&expected, &actual).is_empty(), comment);
+       //assert!(!match_response(expected, actual).is_empty(), "Plain text that does not match");
     }
 }
 
@@ -722,12 +704,11 @@ fn plain_text_that_matches() {
     println!("{:?}", expected);
     let actual = Response::from_json(&pact.find("actual").unwrap());
     println!("{:?}", actual);
-    let comment = "comment"; // pact.find("comment").unwrap().as_string().unwrap();
     let pact_match = pact.find("match").unwrap();
     if pact_match.as_boolean().unwrap() {
-       //assert!(match_response(&expected, &actual).is_empty(), comment);
+       //assert!(match_response(expected, actual).is_empty(), "Plain text that matches");
     } else {
-       //assert!(!match_response(&expected, &actual).is_empty(), comment);
+       //assert!(!match_response(expected, actual).is_empty(), "Plain text that matches");
     }
 }
 
@@ -760,12 +741,11 @@ fn property_name_is_different_case() {
     println!("{:?}", expected);
     let actual = Response::from_json(&pact.find("actual").unwrap());
     println!("{:?}", actual);
-    let comment = "comment"; // pact.find("comment").unwrap().as_string().unwrap();
     let pact_match = pact.find("match").unwrap();
     if pact_match.as_boolean().unwrap() {
-       //assert!(match_response(&expected, &actual).is_empty(), comment);
+       //assert!(match_response(expected, actual).is_empty(), "Property names on objects are case sensitive");
     } else {
-       //assert!(!match_response(&expected, &actual).is_empty(), comment);
+       //assert!(!match_response(expected, actual).is_empty(), "Property names on objects are case sensitive");
     }
 }
 
@@ -798,12 +778,11 @@ fn string_found_at_key_when_number_expected() {
     println!("{:?}", expected);
     let actual = Response::from_json(&pact.find("actual").unwrap());
     println!("{:?}", actual);
-    let comment = "comment"; // pact.find("comment").unwrap().as_string().unwrap();
     let pact_match = pact.find("match").unwrap();
     if pact_match.as_boolean().unwrap() {
-       //assert!(match_response(&expected, &actual).is_empty(), comment);
+       //assert!(match_response(expected, actual).is_empty(), "Number of feet expected to be number but was string");
     } else {
-       //assert!(!match_response(&expected, &actual).is_empty(), comment);
+       //assert!(!match_response(expected, actual).is_empty(), "Number of feet expected to be number but was string");
     }
 }
 
@@ -836,12 +815,11 @@ fn string_found_in_array_when_number_expected() {
     println!("{:?}", expected);
     let actual = Response::from_json(&pact.find("actual").unwrap());
     println!("{:?}", actual);
-    let comment = "comment"; // pact.find("comment").unwrap().as_string().unwrap();
     let pact_match = pact.find("match").unwrap();
     if pact_match.as_boolean().unwrap() {
-       //assert!(match_response(&expected, &actual).is_empty(), comment);
+       //assert!(match_response(expected, actual).is_empty(), "Favourite Numbers expected to be numbers, but 2 is a string");
     } else {
-       //assert!(!match_response(&expected, &actual).is_empty(), comment);
+       //assert!(!match_response(expected, actual).is_empty(), "Favourite Numbers expected to be numbers, but 2 is a string");
     }
 }
 
@@ -874,12 +852,11 @@ fn unexpected_index_with_not_null_value() {
     println!("{:?}", expected);
     let actual = Response::from_json(&pact.find("actual").unwrap());
     println!("{:?}", actual);
-    let comment = "comment"; // pact.find("comment").unwrap().as_string().unwrap();
     let pact_match = pact.find("match").unwrap();
     if pact_match.as_boolean().unwrap() {
-       //assert!(match_response(&expected, &actual).is_empty(), comment);
+       //assert!(match_response(expected, actual).is_empty(), "Unexpected favourite colour");
     } else {
-       //assert!(!match_response(&expected, &actual).is_empty(), comment);
+       //assert!(!match_response(expected, actual).is_empty(), "Unexpected favourite colour");
     }
 }
 
@@ -912,12 +889,11 @@ fn unexpected_index_with_null_value() {
     println!("{:?}", expected);
     let actual = Response::from_json(&pact.find("actual").unwrap());
     println!("{:?}", actual);
-    let comment = "comment"; // pact.find("comment").unwrap().as_string().unwrap();
     let pact_match = pact.find("match").unwrap();
     if pact_match.as_boolean().unwrap() {
-       //assert!(match_response(&expected, &actual).is_empty(), comment);
+       //assert!(match_response(expected, actual).is_empty(), "Unexpected favourite colour with null value");
     } else {
-       //assert!(!match_response(&expected, &actual).is_empty(), comment);
+       //assert!(!match_response(expected, actual).is_empty(), "Unexpected favourite colour with null value");
     }
 }
 
@@ -951,12 +927,11 @@ fn unexpected_key_with_not_null_value() {
     println!("{:?}", expected);
     let actual = Response::from_json(&pact.find("actual").unwrap());
     println!("{:?}", actual);
-    let comment = "comment"; // pact.find("comment").unwrap().as_string().unwrap();
     let pact_match = pact.find("match").unwrap();
     if pact_match.as_boolean().unwrap() {
-       //assert!(match_response(&expected, &actual).is_empty(), comment);
+       //assert!(match_response(expected, actual).is_empty(), "Unexpected phone number");
     } else {
-       //assert!(!match_response(&expected, &actual).is_empty(), comment);
+       //assert!(!match_response(expected, actual).is_empty(), "Unexpected phone number");
     }
 }
 
@@ -990,11 +965,10 @@ fn unexpected_key_with_null_value() {
     println!("{:?}", expected);
     let actual = Response::from_json(&pact.find("actual").unwrap());
     println!("{:?}", actual);
-    let comment = "comment"; // pact.find("comment").unwrap().as_string().unwrap();
     let pact_match = pact.find("match").unwrap();
     if pact_match.as_boolean().unwrap() {
-       //assert!(match_response(&expected, &actual).is_empty(), comment);
+       //assert!(match_response(expected, actual).is_empty(), "Unexpected phone number with null value");
     } else {
-       //assert!(!match_response(&expected, &actual).is_empty(), comment);
+       //assert!(!match_response(expected, actual).is_empty(), "Unexpected phone number with null value");
     }
 }
