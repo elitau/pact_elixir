@@ -31,9 +31,9 @@ fn different_method() {
     let comment = "comment"; //pact.find("comment").unwrap().as_string().unwrap();
     let pact_match = pact.find("match").unwrap();
     if pact_match.as_boolean().unwrap() {
-       //assert!(match_request(&expected, &actual).is_empty(), comment);
+       assert!(match_request(expected, actual).is_empty(), comment);
     } else {
-       //assert!(!match_request(&expected, &actual).is_empty(), comment);
+       assert!(!match_request(expected, actual).is_empty(), comment);
     }
 }
 
@@ -66,9 +66,9 @@ fn matches() {
     let comment = "comment"; //pact.find("comment").unwrap().as_string().unwrap();
     let pact_match = pact.find("match").unwrap();
     if pact_match.as_boolean().unwrap() {
-       //assert!(match_request(&expected, &actual).is_empty(), comment);
+       assert!(match_request(expected, actual).is_empty(), comment);
     } else {
-       //assert!(!match_request(&expected, &actual).is_empty(), comment);
+       assert!(!match_request(expected, actual).is_empty(), comment);
     }
 }
 
@@ -101,8 +101,8 @@ fn method_is_different_case() {
     let comment = "comment"; //pact.find("comment").unwrap().as_string().unwrap();
     let pact_match = pact.find("match").unwrap();
     if pact_match.as_boolean().unwrap() {
-       //assert!(match_request(&expected, &actual).is_empty(), comment);
+       assert!(match_request(expected, actual).is_empty(), comment);
     } else {
-       //assert!(!match_request(&expected, &actual).is_empty(), comment);
+       assert!(!match_request(expected, actual).is_empty(), comment);
     }
 }

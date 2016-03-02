@@ -26,7 +26,7 @@ impl Request {
     #[allow(unused_variables, dead_code)]
     pub fn from_json(request: &Json) -> Request {
         Request {
-            method: "".to_string(),
+            method: request.find("method").unwrap().to_string(),
             path: "".to_string(),
             query: None,
             headers: None,

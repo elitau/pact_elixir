@@ -1,8 +1,9 @@
 [package]
 name = "pact_mock_server_matchers"
-version = "0.1.0"
+version = "0.0.0"
 authors = ["Ronald Holshausen <uglyog@gmail.com>"]
 
 [dependencies]
 json_macros = "^0.3"
 rustc-serialize = "^0.3"
+log = "^0.3.5"

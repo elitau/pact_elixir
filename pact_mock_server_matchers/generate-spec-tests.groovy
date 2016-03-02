@@ -43,9 +43,9 @@ specs.eachFileRecurse(FileType.DIRECTORIES) { dir ->
         |    let comment = "comment"; //pact.find("comment").unwrap().as_string().unwrap();
         |    let pact_match = pact.find("match").unwrap();
         |    if pact_match.as_boolean().unwrap() {
-        |       //assert!(match_request(&expected, &actual).is_empty(), comment);
+        |       assert!(match_request(expected, actual).is_empty(), comment);
         |    } else {
-        |       //assert!(!match_request(&expected, &actual).is_empty(), comment);
+        |       assert!(!match_request(expected, actual).is_empty(), comment);
         |    }
         """
       } else if (requestResponsePath == 'response') {
@@ -57,9 +57,9 @@ specs.eachFileRecurse(FileType.DIRECTORIES) { dir ->
         |    let comment = "comment"; // pact.find("comment").unwrap().as_string().unwrap();
         |    let pact_match = pact.find("match").unwrap();
         |    if pact_match.as_boolean().unwrap() {
-        |       //assert!(match_response(&expected, &actual).is_empty(), comment);
+        |       assert!(match_response(expected, actual).is_empty(), comment);
         |    } else {
-        |       //assert!(!match_response(&expected, &actual).is_empty(), comment);
+        |       assert!(!match_response(expected, actual).is_empty(), comment);
         |    }
         """
       }
