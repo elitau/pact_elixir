@@ -1,10 +1,11 @@
 use pact_mock_server_matchers::model::Request;
 use pact_mock_server_matchers::match_request;
 use rustc_serialize::json;
+use rustc_serialize::json::Json;
 
 #[test]
 fn different_method() {
-    let pact = json!(
+    let pact = Json::from_str(r#"
       {
         "match": false,
         "comment": "Methods is incorrect",
@@ -22,7 +23,7 @@ fn different_method() {
       
         }
       }
-    );
+    "#).unwrap();
 
     let expected = Request::from_json(&pact.find("expected").unwrap());
     println!("{:?}", expected);
@@ -38,7 +39,7 @@ fn different_method() {
 
 #[test]
 fn matches() {
-    let pact = json!(
+    let pact = Json::from_str(r#"
       {
         "match": true,
         "comment": "Methods match",
@@ -56,7 +57,7 @@ fn matches() {
       
         }
       }
-    );
+    "#).unwrap();
 
     let expected = Request::from_json(&pact.find("expected").unwrap());
     println!("{:?}", expected);
@@ -72,7 +73,7 @@ fn matches() {
 
 #[test]
 fn method_is_different_case() {
-    let pact = json!(
+    let pact = Json::from_str(r#"
       {
         "match": true,
         "comment": "Methods case does not matter",
@@ -90,7 +91,7 @@ fn method_is_different_case() {
       
         }
       }
-    );
+    "#).unwrap();
 
     let expected = Request::from_json(&pact.find("expected").unwrap());
     println!("{:?}", expected);

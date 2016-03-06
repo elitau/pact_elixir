@@ -1,10 +1,11 @@
 use pact_mock_server_matchers::model::Request;
 use pact_mock_server_matchers::match_request;
 use rustc_serialize::json;
+use rustc_serialize::json::Json;
 
 #[test]
 fn empty_path_found_when_forward_slash_expected() {
-    let pact = json!(
+    let pact = Json::from_str(r#"
       {
         "match": false,
         "comment": "Empty path found when forward slash expected",
@@ -23,7 +24,7 @@ fn empty_path_found_when_forward_slash_expected() {
       
         }
       }
-    );
+    "#).unwrap();
 
     let expected = Request::from_json(&pact.find("expected").unwrap());
     println!("{:?}", expected);
@@ -39,7 +40,7 @@ fn empty_path_found_when_forward_slash_expected() {
 
 #[test]
 fn forward_slash_found_when_empty_path_expected() {
-    let pact = json!(
+    let pact = Json::from_str(r#"
       {
         "match": false,
         "comment": "Foward slash found when empty path expected",
@@ -58,7 +59,7 @@ fn forward_slash_found_when_empty_path_expected() {
       
         }
       }
-    );
+    "#).unwrap();
 
     let expected = Request::from_json(&pact.find("expected").unwrap());
     println!("{:?}", expected);
@@ -74,7 +75,7 @@ fn forward_slash_found_when_empty_path_expected() {
 
 #[test]
 fn incorrect_path() {
-    let pact = json!(
+    let pact = Json::from_str(r#"
       {
         "match": false,
         "comment": "Paths do not match",
@@ -93,7 +94,7 @@ fn incorrect_path() {
       
         }
       }
-    );
+    "#).unwrap();
 
     let expected = Request::from_json(&pact.find("expected").unwrap());
     println!("{:?}", expected);
@@ -109,7 +110,7 @@ fn incorrect_path() {
 
 #[test]
 fn matches() {
-    let pact = json!(
+    let pact = Json::from_str(r#"
       {
         "match": true,
         "comment": "Paths match",
@@ -128,7 +129,7 @@ fn matches() {
       
         }
       }
-    );
+    "#).unwrap();
 
     let expected = Request::from_json(&pact.find("expected").unwrap());
     println!("{:?}", expected);
@@ -144,7 +145,7 @@ fn matches() {
 
 #[test]
 fn missing_trailing_slash_in_path() {
-    let pact = json!(
+    let pact = Json::from_str(r#"
       {
         "match": false,
         "comment": "Path is missing trailing slash, trailing slashes can matter",
@@ -163,7 +164,7 @@ fn missing_trailing_slash_in_path() {
       
         }
       }
-    );
+    "#).unwrap();
 
     let expected = Request::from_json(&pact.find("expected").unwrap());
     println!("{:?}", expected);
@@ -179,7 +180,7 @@ fn missing_trailing_slash_in_path() {
 
 #[test]
 fn unexpected_trailing_slash_in_path() {
-    let pact = json!(
+    let pact = Json::from_str(r#"
       {
         "match": false,
         "comment": "Path has unexpected trailing slash, trailing slashes can matter",
@@ -198,7 +199,7 @@ fn unexpected_trailing_slash_in_path() {
       
         }
       }
-    );
+    "#).unwrap();
 
     let expected = Request::from_json(&pact.find("expected").unwrap());
     println!("{:?}", expected);

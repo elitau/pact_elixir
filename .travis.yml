@@ -1,7 +1,5 @@
 language: rust
-rust:
-  - nightly
 os:
   - linux
-  - osx  
+  - osx
 script: cd pact_mock_server_matchers && cargo build && cargo test

@@ -1,13 +1,14 @@
 use pact_mock_server_matchers::model::Request;
 use pact_mock_server_matchers::match_request;
 use rustc_serialize::json;
+use rustc_serialize::json::Json;
 
 #[test]
 fn different_param_order() {
-    let pact = json!(
+    let pact = Json::from_str(r#"
       {
         "match": true,
-        "comment": "Query strings are not matched using basic string equality.",
+        "comment": "Query strings are matched using basic string equality, these are not equal.",
         "expected" : {
           "method": "GET",
           "path": "/path",
@@ -23,7 +24,7 @@ fn different_param_order() {
 
         }
       }
-    );
+    "#).unwrap();
 
     let expected = Request::from_json(&pact.find("expected").unwrap());
     println!("{:?}", expected);
@@ -39,7 +40,7 @@ fn different_param_order() {
 
 #[test]
 fn different_param_values() {
-    let pact = json!(
+    let pact = Json::from_str(r#"
       {
         "match": false,
         "comment": "Queries are not the same - hippo is Fred instead of John",
@@ -58,7 +59,7 @@ fn different_param_values() {
 
         }
       }
-    );
+    "#).unwrap();
 
     let expected = Request::from_json(&pact.find("expected").unwrap());
     println!("{:?}", expected);
@@ -74,7 +75,7 @@ fn different_param_values() {
 
 #[test]
 fn matches() {
-    let pact = json!(
+    let pact = Json::from_str(r#"
       {
         "match": true,
         "comment": "Queries are the same",
@@ -93,7 +94,7 @@ fn matches() {
 
         }
       }
-    );
+    "#).unwrap();
 
     let expected = Request::from_json(&pact.find("expected").unwrap());
     println!("{:?}", expected);
@@ -109,10 +110,10 @@ fn matches() {
 
 #[test]
 fn trailing_amperand() {
-    let pact = json!(
+    let pact = Json::from_str(r#"
       {
         "match": true,
-        "comment": "Query strings are not matched using basic string equality.",
+        "comment": "Query strings are matched using basic string equality, these are not equal.",
         "expected" : {
           "method": "GET",
           "path": "/path",
@@ -128,7 +129,7 @@ fn trailing_amperand() {
 
         }
       }
-    );
+    "#).unwrap();
 
     let expected = Request::from_json(&pact.find("expected").unwrap());
     println!("{:?}", expected);

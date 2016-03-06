@@ -1,10 +1,11 @@
 use pact_mock_server_matchers::model::Response;
 use pact_mock_server_matchers::match_response;
 use rustc_serialize::json;
+use rustc_serialize::json::Json;
 
 #[test]
 fn different_status() {
-    let pact = json!(
+    let pact = Json::from_str(r#"
       {
       	"match": false,
       	"comment": "Status is incorrect",
@@ -15,7 +16,7 @@ fn different_status() {
       		"status" : 400
       	}
       }
-    );
+    "#).unwrap();
 
     let expected = Response::from_json(&pact.find("expected").unwrap());
     println!("{:?}", expected);
@@ -31,7 +32,7 @@ fn different_status() {
 
 #[test]
 fn matches() {
-    let pact = json!(
+    let pact = Json::from_str(r#"
       {
       	"match": true,
       	"comment": "Status matches",
@@ -42,7 +43,7 @@ fn matches() {
       		"status" : 202
       	}
       }
-    );
+    "#).unwrap();
 
     let expected = Response::from_json(&pact.find("expected").unwrap());
     println!("{:?}", expected);
