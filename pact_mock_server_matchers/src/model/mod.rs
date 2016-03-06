@@ -1,5 +1,4 @@
 use std::collections::HashMap;
-use std::fmt;
 use rustc_serialize::json::Json;
 
 #[allow(dead_code)]
@@ -23,7 +22,6 @@ pub struct Request {
 }
 
 impl Request {
-    #[allow(unused_variables, dead_code)]
     pub fn from_json(request: &Json) -> Request {
         let method_val = match request.find("method") {
             Some(v) => v.to_string(),
@@ -33,10 +31,17 @@ impl Request {
             Some(v) => v.to_string(),
             None => "/".to_string()
         };
+        let query_val = match request.find("query") {
+            Some(v) => match *v {
+                Json::String(ref s) => parse_query_string(s),
+                _ => None
+            },
+            None => None
+        };
         Request {
             method: method_val,
             path: path_val,
-            query: None,
+            query: query_val,
             headers: None,
             body: None,
             matching_rules: None
@@ -53,7 +58,6 @@ pub struct Response {
 }
 
 impl Response {
-    #[allow(unused_variables, dead_code)]
     pub fn from_json(response: &Json) -> Response {
         let status_val = match response.find("status") {
             Some(v) => v.as_u64().unwrap() as u16,
@@ -71,7 +75,7 @@ impl Response {
 #[allow(dead_code)]
 pub struct Interaction {
     pub description: String,
-    pub providerState: String,
+    pub provider_state: String,
     pub request: Request,
     pub response: Response
 }
@@ -84,45 +88,97 @@ pub struct Pact {
     pub metadata: HashMap<String, HashMap<String, String>>
 }
 
+pub fn parse_query_string(query: &String) -> Option<HashMap<String, Vec<String>>> {
+    if !query.is_empty() {
+        Some(query.split("&").map(|kv| {
+            if !kv.is_empty() {
+                kv.split("=").collect::<Vec<&str>>()
+            } else {
+                vec![]
+            }
+        }).fold(HashMap::new(), |mut map, name_value| {
+            if !name_value.is_empty() {
+                let name = name_value[0].to_string();
+                let value = name_value[1].to_string();
+                map.entry(name).or_insert(vec![]).push(value);
+            }
+            map
+        }))
+    } else {
+        None
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::collections::HashMap;
+    use rustc_serialize::json::Json;
 
     #[test]
     fn request_from_json_defaults_to_get() {
-        let request_json = json!(
+        let request_json = Json::from_str(r#"
           {
               "path": "/",
               "query": "",
               "headers": {}
           }
-        );
+        "#).unwrap();
         let request = Request::from_json(&request_json);
         assert_eq!(request.method, "GET".to_string());
     }
 
     #[test]
     fn request_from_json_defaults_to_root_for_path() {
-        let request_json = json!(
+        let request_json = Json::from_str(r#"
           {
               "method": "PUT",
               "query": "",
               "headers": {}
           }
-        );
+        "#).unwrap();
+        println!("request_json: {}", request_json);
         let request = Request::from_json(&request_json);
         assert_eq!(request.path, "/".to_string());
     }
 
     #[test]
     fn response_from_json_defaults_to_status_200() {
-        let response_json = json!(
+        let response_json = Json::from_str(r#"
           {
               "headers": {}
           }
-        );
+        "#).unwrap();
         let response = Response::from_json(&response_json);
         assert_eq!(response.status, 200);
+    }
+
+    #[test]
+    fn parse_query_string_test() {
+        let query = "a=b&c=d".to_string();
+        let mut expected = HashMap::new();
+        expected.insert("a".to_string(), vec!["b".to_string()]);
+        expected.insert("c".to_string(), vec!["d".to_string()]);
+        let result = parse_query_string(&query);
+        assert_eq!(result, Some(expected));
+    }
+
+    #[test]
+    fn parse_query_string_handles_empty_string() {
+        let query = "".to_string();
+        let expected = None;
+        let result = parse_query_string(&query);
+        assert_eq!(result, expected);
+    }
+
+    #[test]
+    fn parse_query_string_handles_missing_values() {
+        let query = "a=&c=d".to_string();
+        let mut expected = HashMap::new();
+        expected.insert("a".to_string(), vec!["".to_string()]);
+        expected.insert("c".to_string(), vec!["d".to_string()]);
+        let result = parse_query_string(&query);
+        assert_eq!(result, Some(expected));
     }
 
 }

@@ -6,8 +6,8 @@ use rustc_serialize::json;
 fn different_param_order() {
     let pact = json!(
       {
-        "match": false,
-        "comment": "Query strings are matched using basic string equality, these are not equal.",
+        "match": true,
+        "comment": "Query strings are not matched using basic string equality.",
         "expected" : {
           "method": "GET",
           "path": "/path",
@@ -31,9 +31,9 @@ fn different_param_order() {
     println!("{:?}", actual);
     let pact_match = pact.find("match").unwrap();
     if pact_match.as_boolean().unwrap() {
-       //assert!(match_request(expected, actual).is_empty(), "Query strings are matched using basic string equality, these are not equal.");
+       assert!(match_request(expected, actual).is_empty(), "Query strings are matched using basic string equality, these are not equal.");
     } else {
-       //assert!(!match_request(expected, actual).is_empty(), "Query strings are matched using basic string equality, these are not equal.");
+       assert!(!match_request(expected, actual).is_empty(), "Query strings are matched using basic string equality, these are not equal.");
     }
 }
 
@@ -66,9 +66,9 @@ fn different_param_values() {
     println!("{:?}", actual);
     let pact_match = pact.find("match").unwrap();
     if pact_match.as_boolean().unwrap() {
-       //assert!(match_request(expected, actual).is_empty(), "Queries are not the same - hippo is Fred instead of John");
+       assert!(match_request(expected, actual).is_empty(), "Queries are not the same - hippo is Fred instead of John");
     } else {
-       //assert!(!match_request(expected, actual).is_empty(), "Queries are not the same - hippo is Fred instead of John");
+       assert!(!match_request(expected, actual).is_empty(), "Queries are not the same - hippo is Fred instead of John");
     }
 }
 
@@ -101,9 +101,9 @@ fn matches() {
     println!("{:?}", actual);
     let pact_match = pact.find("match").unwrap();
     if pact_match.as_boolean().unwrap() {
-       //assert!(match_request(expected, actual).is_empty(), "Queries are the same");
+       assert!(match_request(expected, actual).is_empty(), "Queries are the same");
     } else {
-       //assert!(!match_request(expected, actual).is_empty(), "Queries are the same");
+       assert!(!match_request(expected, actual).is_empty(), "Queries are the same");
     }
 }
 
@@ -111,8 +111,8 @@ fn matches() {
 fn trailing_amperand() {
     let pact = json!(
       {
-        "match": false,
-        "comment": "Query strings are matched using basic string equality, these are not equal.",
+        "match": true,
+        "comment": "Query strings are not matched using basic string equality.",
         "expected" : {
           "method": "GET",
           "path": "/path",
@@ -136,8 +136,8 @@ fn trailing_amperand() {
     println!("{:?}", actual);
     let pact_match = pact.find("match").unwrap();
     if pact_match.as_boolean().unwrap() {
-       //assert!(match_request(expected, actual).is_empty(), "Query strings are matched using basic string equality, these are not equal.");
+       assert!(match_request(expected, actual).is_empty(), "Query strings are matched using basic string equality, these are not equal.");
     } else {
-       //assert!(!match_request(expected, actual).is_empty(), "Query strings are matched using basic string equality, these are not equal.");
+       assert!(!match_request(expected, actual).is_empty(), "Query strings are matched using basic string equality, these are not equal.");
     }
 }
