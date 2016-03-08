@@ -1,5 +1,7 @@
 use std::collections::HashMap;
 use rustc_serialize::json::Json;
+use rustc_serialize::hex::FromHex;
+use std::char;
 
 #[allow(dead_code)]
 pub struct Consumer {
@@ -88,6 +90,46 @@ pub struct Pact {
     pub metadata: HashMap<String, HashMap<String, String>>
 }
 
+fn decode_query(query: &str) -> String {
+    let mut chars = query.chars();
+    let mut ch = chars.next();
+    let mut result = String::new();
+
+    while ch.is_some() {
+        let c = ch.unwrap();
+        if c == '%' {
+            let c1 = chars.next();
+            let c2 = chars.next();
+            match (c1, c2) {
+                (Some(v1), Some(v2)) => {
+                    let mut s = String::new();
+                    s.push(v1);
+                    s.push(v2);
+                    match s.as_str().from_hex() {
+                        Ok(n) => result.push(n[0] as char),
+                        Err(_) => {
+                            result.push('%');
+                            result.push(v1);
+                            result.push(v2);
+                        }
+                    }
+                },
+                (Some(v1), None) => {
+                    result.push('%');
+                    result.push(v1);
+                },
+                _ => result.push('%')
+            }
+        } else {
+            result.push(c);
+        }
+
+        ch = chars.next();
+    }
+
+    result
+}
+
 pub fn parse_query_string(query: &String) -> Option<HashMap<String, Vec<String>>> {
     if !query.is_empty() {
         Some(query.split("&").map(|kv| {
@@ -98,8 +140,8 @@ pub fn parse_query_string(query: &String) -> Option<HashMap<String, Vec<String>>
             }
         }).fold(HashMap::new(), |mut map, name_value| {
             if !name_value.is_empty() {
-                let name = name_value[0].to_string();
-                let value = name_value[1].to_string();
+                let name = decode_query(name_value[0]);
+                let value = decode_query(name_value[1]);
                 map.entry(name).or_insert(vec![]).push(value);
             }
             map
@@ -177,6 +219,15 @@ mod tests {
         let mut expected = HashMap::new();
         expected.insert("a".to_string(), vec!["".to_string()]);
         expected.insert("c".to_string(), vec!["d".to_string()]);
+        let result = parse_query_string(&query);
+        assert_eq!(result, Some(expected));
+    }
+
+    #[test]
+    fn parse_query_string_decodes_values() {
+        let query = "a=a%20b%20c".to_string();
+        let mut expected = HashMap::new();
+        expected.insert("a".to_string(), vec!["a b c".to_string()]);
         let result = parse_query_string(&query);
         assert_eq!(result, Some(expected));
     }
