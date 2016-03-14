@@ -31,9 +31,9 @@ fn empty_headers() {
     println!("{:?}", actual);
     let pact_match = pact.find("match").unwrap();
     if pact_match.as_boolean().unwrap() {
-    //    assert!(match_request(expected, actual).is_empty(), "Empty headers match");
+       assert!(match_request(expected, actual).is_empty(), "Empty headers match");
     } else {
-    //    assert!(!match_request(expected, actual).is_empty(), "Empty headers match");
+       assert!(!match_request(expected, actual).is_empty(), "Empty headers match");
     }
 }
 
@@ -68,9 +68,9 @@ fn header_name_is_different_case() {
     println!("{:?}", actual);
     let pact_match = pact.find("match").unwrap();
     if pact_match.as_boolean().unwrap() {
-    //    assert!(match_request(expected, actual).is_empty(), "Header name is case insensitive");
+       assert!(match_request(expected, actual).is_empty(), "Header name is case insensitive");
     } else {
-    //    assert!(!match_request(expected, actual).is_empty(), "Header name is case insensitive");
+       assert!(!match_request(expected, actual).is_empty(), "Header name is case insensitive");
     }
 }
 
@@ -105,9 +105,9 @@ fn header_value_is_different_case() {
     println!("{:?}", actual);
     let pact_match = pact.find("match").unwrap();
     if pact_match.as_boolean().unwrap() {
-    //    assert!(match_request(expected, actual).is_empty(), "Headers values are case sensitive");
+       assert!(match_request(expected, actual).is_empty(), "Headers values are case sensitive");
     } else {
-    //    assert!(!match_request(expected, actual).is_empty(), "Headers values are case sensitive");
+       assert!(!match_request(expected, actual).is_empty(), "Headers values are case sensitive");
     }
 }
 
@@ -144,9 +144,9 @@ fn matches() {
     println!("{:?}", actual);
     let pact_match = pact.find("match").unwrap();
     if pact_match.as_boolean().unwrap() {
-    //    assert!(match_request(expected, actual).is_empty(), "Headers match");
+       assert!(match_request(expected, actual).is_empty(), "Headers match");
     } else {
-    //    assert!(!match_request(expected, actual).is_empty(), "Headers match");
+       assert!(!match_request(expected, actual).is_empty(), "Headers match");
     }
 }
 
@@ -181,9 +181,9 @@ fn order_of_comma_separated_header_values_different() {
     println!("{:?}", actual);
     let pact_match = pact.find("match").unwrap();
     if pact_match.as_boolean().unwrap() {
-    //    assert!(match_request(expected, actual).is_empty(), "Comma separated headers out of order, order can matter http://tools.ietf.org/html/rfc2616");
+       assert!(match_request(expected, actual).is_empty(), "Comma separated headers out of order, order can matter http://tools.ietf.org/html/rfc2616");
     } else {
-    //    assert!(!match_request(expected, actual).is_empty(), "Comma separated headers out of order, order can matter http://tools.ietf.org/html/rfc2616");
+       assert!(!match_request(expected, actual).is_empty(), "Comma separated headers out of order, order can matter http://tools.ietf.org/html/rfc2616");
     }
 }
 
@@ -216,9 +216,9 @@ fn unexpected_header_found() {
     println!("{:?}", actual);
     let pact_match = pact.find("match").unwrap();
     if pact_match.as_boolean().unwrap() {
-    //    assert!(match_request(expected, actual).is_empty(), "Extra headers allowed");
+       assert!(match_request(expected, actual).is_empty(), "Extra headers allowed");
     } else {
-    //    assert!(!match_request(expected, actual).is_empty(), "Extra headers allowed");
+       assert!(!match_request(expected, actual).is_empty(), "Extra headers allowed");
     }
 }
 
@@ -253,8 +253,8 @@ fn whitespace_after_comma_different() {
     println!("{:?}", actual);
     let pact_match = pact.find("match").unwrap();
     if pact_match.as_boolean().unwrap() {
-    //    assert!(match_request(expected, actual).is_empty(), "Whitespace between comma separated headers does not matter");
+       assert!(match_request(expected, actual).is_empty(), "Whitespace between comma separated headers does not matter");
     } else {
-    //    assert!(!match_request(expected, actual).is_empty(), "Whitespace between comma separated headers does not matter");
+       assert!(!match_request(expected, actual).is_empty(), "Whitespace between comma separated headers does not matter");
     }
 }

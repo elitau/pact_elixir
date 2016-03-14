@@ -1,7 +1,6 @@
 use std::collections::HashMap;
 use rustc_serialize::json::Json;
 use rustc_serialize::hex::FromHex;
-use std::char;
 
 #[allow(dead_code)]
 pub struct Consumer {
@@ -21,6 +20,21 @@ pub struct Request {
     pub headers: Option<HashMap<String, String>>,
     pub body: Option<String>,
     pub matching_rules: Option<HashMap<String, HashMap<String, String>>>
+}
+
+fn headers_from_json(request: &Json) -> Option<HashMap<String, String>> {
+    match request.find("headers") {
+        Some(v) => match *v {
+            Json::Object(ref m) => Some(m.iter().map(|(key, val)| {
+                match val {
+                    &Json::String(ref s) => (key.clone(), s.clone()),
+                    _ => (key.clone(), val.to_string())
+                }
+            }).collect()),
+            _ => None
+        },
+        None => None
+    }
 }
 
 impl Request {
@@ -44,7 +58,7 @@ impl Request {
             method: method_val,
             path: path_val,
             query: query_val,
-            headers: None,
+            headers: headers_from_json(request),
             body: None,
             matching_rules: None
         }
@@ -67,7 +81,7 @@ impl Response {
         };
         Response {
             status: status_val,
-            headers: None,
+            headers: headers_from_json(response),
             body: None,
             matching_rules: None
         }
