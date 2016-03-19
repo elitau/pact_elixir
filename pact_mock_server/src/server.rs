@@ -1,26 +1,54 @@
 
 
 use rustful::{Server, Handler, Context, Response, TreeRouter};
+use std::thread;
+use std::sync::mpsc::channel;
+use rustful::StatusCode;
 
 fn list_root(context: Context, mut response: Response) {
     response.send("Hello World!");
 }
 
+fn start_provider(context: Context, mut response: Response) {
+    let my_router = insert_routes!{
+        TreeRouter::new() => {
+            Get: list_root
+        }
+    };
+
+    let (tx, rx) = channel();
+    let child = thread::spawn(move || {
+        let server_result = Server {
+            handlers: my_router,
+            host: 8081.into(),
+            ..Server::default()
+        }.run();
+
+        match server_result {
+            Ok(server) => {
+                info!("Provider Server started on port {}", server.socket.port());
+                tx.send("OK".to_string()).unwrap();
+                tx.send(format!("Provider Server started on port {}", server.socket.port())).unwrap();
+            },
+            Err(e) => {
+                error!("could not start server: {}", e);
+                tx.send("ERROR".to_string()).unwrap();
+                tx.send(format!("could not start server: {}", e));
+            }
+        }
+    });
+    match &*rx.recv().unwrap() {
+        "OK" => response.set_status(StatusCode::Ok),
+        _ => response.set_status(StatusCode::BadRequest)
+    }
+    response.send(rx.recv().unwrap());
+}
+
 pub fn start_command() {
     let my_router = insert_routes!{
         TreeRouter::new() => {
-            // //Receive GET requests to /hello and /hello/:name
-            // "hello" => {
-            //     Get: Greeting("hello"),
-            //     ":name" => Get: Greeting("hello")
-            // },
-            // //Receive GET requests to /good_bye and /good_bye/:name
-            // "good_bye" => {
-            //     Get: Greeting("good bye"),
-            //     ":name" => Get: Greeting("good bye")
-            // }
-
-            Get: list_root
+            // Get: list_root,
+            Post: start_provider
         }
     };
 
