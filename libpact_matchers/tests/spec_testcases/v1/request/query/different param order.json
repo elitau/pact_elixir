@@ -1,6 +1,6 @@
 {
-  "match": false,
-  "comment": "Query strings are matched using basic string equality, these are not equal.",
+  "match": true,
+  "comment": "Query strings are matched using basic string equality, these are not equal. (Not supported)",
   "expected" : {
     "method": "GET",
     "path": "/path",
@@ -11,7 +11,7 @@
   "actual": {
     "method": "GET",
     "path": "/path",
-    "query": "alligator=Mary&hippo=John&",
+    "query": "hippo=John&alligator=Mary",
     "headers": {}
 
   }

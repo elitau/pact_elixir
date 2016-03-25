@@ -1,5 +1,5 @@
 extern crate getopts;
-extern crate pact_mock_server_matchers;
+extern crate libpact_matchers;
 #[macro_use] extern crate rustful;
 #[macro_use] extern crate p_macro;
 #[macro_use] extern crate log;

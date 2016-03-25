@@ -1,6 +1,5 @@
-use pact_mock_server_matchers::model::Response;
-use pact_mock_server_matchers::match_response;
-use rustc_serialize::json;
+use libpact::model::Response;
+use libpact_matchers::match_response;
 use rustc_serialize::json::Json;
 
 #[test]
@@ -37,65 +36,6 @@ fn array_in_different_order() {
     //    assert!(match_response(expected, actual).is_empty(), "Favourite colours in wrong order");
     } else {
     //    assert!(!match_response(expected, actual).is_empty(), "Favourite colours in wrong order");
-    }
-}
-
-#[test]
-fn deeply_nested_objects() {
-    let pact = Json::from_str(r#"
-      {
-      	"match": true,
-      	"comment": "Comparisons should work even on nested objects",
-      	"expected" : {
-      		"headers": {},
-      		"body": {
-      			"object1": {
-      				"object2": {
-      					"object4": {
-      						"object5": {
-      							"name": "Mary",
-      							"friends": ["Fred", "John"]
-      						},
-      						"object6": {
-      							"phoneNumber": 1234567890
-      						}
-      					}
-      				}
-      			}
-      		}
-      	},
-      	"actual": {
-      		"headers": {},
-      		"body": {
-      			"object1":{
-      				"object2": {
-      					"object4":{
-      						"object5": {
-      							"name": "Mary",
-      							"friends": ["Fred", "John"],
-      							"gender": "F"
-      						},
-      						"object6": {
-      							"phoneNumber": 1234567890
-      						}
-      					}
-      				},
-      				"color": "red"
-      			}
-      		}
-      	}
-      }
-    "#).unwrap();
-
-    let expected = Response::from_json(&pact.find("expected").unwrap());
-    println!("{:?}", expected);
-    let actual = Response::from_json(&pact.find("actual").unwrap());
-    println!("{:?}", actual);
-    let pact_match = pact.find("match").unwrap();
-    if pact_match.as_boolean().unwrap() {
-    //    assert!(match_response(expected, actual).is_empty(), "Comparisons should work even on nested objects");
-    } else {
-    //    assert!(!match_response(expected, actual).is_empty(), "Comparisons should work even on nested objects");
     }
 }
 
@@ -971,5 +911,64 @@ fn unexpected_key_with_null_value() {
     //    assert!(match_response(expected, actual).is_empty(), "Unexpected phone number with null value");
     } else {
     //    assert!(!match_response(expected, actual).is_empty(), "Unexpected phone number with null value");
+    }
+}
+
+#[test]
+fn deeply_nested_objects() {
+    let pact = Json::from_str(r#"
+      {
+      	"match": true,
+      	"comment": "Comparisons should work even on nested objects",
+      	"expected" : {
+      		"headers": {},
+      		"body": {
+      			"object1": {
+      				"object2": {
+      					"object4": {
+      						"object5": {
+      							"name": "Mary",
+      							"friends": ["Fred", "John"]
+      						},
+      						"object6": {
+      							"phoneNumber": 1234567890
+      						}
+      					}
+      				}
+      			}
+      		}
+      	},
+      	"actual": {
+      		"headers": {},
+      		"body": {
+      			"object1":{
+      				"object2": {
+      					"object4":{
+      						"object5": {
+      							"name": "Mary",
+      							"friends": ["Fred", "John"],
+      							"gender": "F"
+      						},
+      						"object6": {
+      							"phoneNumber": 1234567890
+      						}
+      					}
+      				},
+      				"color": "red"
+      			}
+      		}
+      	}
+      }
+    "#).unwrap();
+
+    let expected = Response::from_json(&pact.find("expected").unwrap());
+    println!("{:?}", expected);
+    let actual = Response::from_json(&pact.find("actual").unwrap());
+    println!("{:?}", actual);
+    let pact_match = pact.find("match").unwrap();
+    if pact_match.as_boolean().unwrap() {
+    //    assert!(match_response(expected, actual).is_empty(), "Comparisons should work even on nested objects");
+    } else {
+    //    assert!(!match_response(expected, actual).is_empty(), "Comparisons should work even on nested objects");
     }
 }
