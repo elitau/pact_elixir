@@ -8,7 +8,7 @@ rustc-serialize = "^0.3"
 log = "^0.3.5"
 regex = "^0.1.56"
 p-macro = "^0.2.0"
-libpact = { path = "../libpact" }
+libpact_models = { path = "../libpact_models" }
 
 [dev-dependencies]
 quickcheck = "^0.2"

@@ -1,4 +1,4 @@
-use libpact::model::Request;
+use libpact_models::model::Request;
 use libpact_matchers::match_request;
 use rustc_serialize::json::Json;
 

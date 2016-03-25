@@ -1,7 +1,7 @@
-all: libpact libpact_matchers pact_mock_server
+all: libpact_models libpact_matchers pact_mock_server
 
-libpact:
-	cd rust/v1/libpact && cargo build && cargo test
+libpact_models:
+	cd rust/v1/libpact_models && cargo build && cargo test
 
 libpact_matchers:
 	cd rust/v1/libpact_matchers && cargo build && cargo test

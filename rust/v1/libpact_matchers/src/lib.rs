@@ -1,9 +1,9 @@
 extern crate rustc_serialize;
 #[macro_use] extern crate log;
 #[macro_use] extern crate p_macro;
-extern crate libpact;
+extern crate libpact_models;
 
-use libpact::model::{Request, Response};
+use libpact_models::model::{Request, Response};
 use std::collections::HashMap;
 use std::iter::FromIterator;
 

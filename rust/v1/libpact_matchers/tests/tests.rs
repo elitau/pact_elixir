@@ -1,4 +1,4 @@
-extern crate libpact;
+extern crate libpact_models;
 extern crate libpact_matchers;
 extern crate rustc_serialize;
 

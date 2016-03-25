@@ -1,5 +1,5 @@
 [package]
-name = "libpact"
+name = "libpact_models"
 version = "0.0.0"
 authors = ["Ronald Holshausen <uglyog@gmail.com>"]
 
