@@ -3,5 +3,5 @@ os:
   - linux
   - osx
 script:
-  - make
+  - cd rust/v1 && make
   

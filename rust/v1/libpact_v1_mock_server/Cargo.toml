@@ -1,0 +1,6 @@
+[package]
+name = "libpact_v1_mock_server"
+version = "0.0.0"
+authors = ["Ronald Holshausen <uglyog@gmail.com>"]
+
+[dependencies]
