@@ -3,6 +3,5 @@ os:
   - linux
   - osx
 script:
-  - cd libpact && cargo build && cargo test
-  - cd ../libpact_matchers && cargo build && cargo test
-  - cd ../pact_mock_server && cargo build && cargo test
+  - make
+  
