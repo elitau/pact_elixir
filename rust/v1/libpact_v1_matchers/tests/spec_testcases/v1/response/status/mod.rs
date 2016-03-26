@@ -1,6 +1,7 @@
 use libpact_v1_models::model::Response;
 use libpact_v1_matchers::match_response;
 use rustc_serialize::json::Json;
+use expectest::prelude::*;
 
 #[test]
 fn different_status() {
@@ -23,9 +24,9 @@ fn different_status() {
     println!("{:?}", actual);
     let pact_match = pact.find("match").unwrap();
     if pact_match.as_boolean().unwrap() {
-       assert!(match_response(expected, actual).is_empty(), "Status is incorrect");
+       expect!(match_response(expected, actual)).to(be_empty());
     } else {
-       assert!(!match_response(expected, actual).is_empty(), "Status is incorrect");
+       expect!(match_response(expected, actual)).to_not(be_empty());
     }
 }
 
@@ -50,8 +51,8 @@ fn matches() {
     println!("{:?}", actual);
     let pact_match = pact.find("match").unwrap();
     if pact_match.as_boolean().unwrap() {
-       assert!(match_response(expected, actual).is_empty(), "Status matches");
+       expect!(match_response(expected, actual)).to(be_empty());
     } else {
-       assert!(!match_response(expected, actual).is_empty(), "Status matches");
+       expect!(match_response(expected, actual)).to_not(be_empty());
     }
 }

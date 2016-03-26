@@ -1,6 +1,7 @@
 use libpact_v1_models::model::Request;
 use libpact_v1_matchers::match_request;
 use rustc_serialize::json::Json;
+use expectest::prelude::*;
 
 #[test]
 fn different_param_order() {
@@ -31,9 +32,9 @@ fn different_param_order() {
     println!("{:?}", actual);
     let pact_match = pact.find("match").unwrap();
     if pact_match.as_boolean().unwrap() {
-       assert!(match_request(expected, actual).is_empty(), "Query strings are matched using basic string equality, these are not equal. (Not supported)");
+       expect!(match_request(expected, actual)).to(be_empty());
     } else {
-       assert!(!match_request(expected, actual).is_empty(), "Query strings are matched using basic string equality, these are not equal. (Not supported)");
+       expect!(match_request(expected, actual)).to_not(be_empty());
     }
 }
 
@@ -66,9 +67,9 @@ fn different_param_values() {
     println!("{:?}", actual);
     let pact_match = pact.find("match").unwrap();
     if pact_match.as_boolean().unwrap() {
-       assert!(match_request(expected, actual).is_empty(), "Queries are not the same - hippo is Fred instead of John");
+       expect!(match_request(expected, actual)).to(be_empty());
     } else {
-       assert!(!match_request(expected, actual).is_empty(), "Queries are not the same - hippo is Fred instead of John");
+       expect!(match_request(expected, actual)).to_not(be_empty());
     }
 }
 
@@ -101,9 +102,9 @@ fn matches() {
     println!("{:?}", actual);
     let pact_match = pact.find("match").unwrap();
     if pact_match.as_boolean().unwrap() {
-       assert!(match_request(expected, actual).is_empty(), "Queries are the same");
+       expect!(match_request(expected, actual)).to(be_empty());
     } else {
-       assert!(!match_request(expected, actual).is_empty(), "Queries are the same");
+       expect!(match_request(expected, actual)).to_not(be_empty());
     }
 }
 
@@ -136,8 +137,8 @@ fn trailing_amperand() {
     println!("{:?}", actual);
     let pact_match = pact.find("match").unwrap();
     if pact_match.as_boolean().unwrap() {
-       assert!(match_request(expected, actual).is_empty(), "Query strings are matched using basic string equality, these are not equal. (not supported)");
+       expect!(match_request(expected, actual)).to(be_empty());
     } else {
-       assert!(!match_request(expected, actual).is_empty(), "Query strings are matched using basic string equality, these are not equal. (not supported)");
+       expect!(match_request(expected, actual)).to_not(be_empty());
     }
 }

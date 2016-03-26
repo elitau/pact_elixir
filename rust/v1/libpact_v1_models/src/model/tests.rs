@@ -42,6 +42,114 @@ fn response_from_json_defaults_to_status_200() {
 }
 
 #[test]
+fn request_from_json_defaults_to_missing_body() {
+    let request_json = Json::from_str(r#"
+      {
+      }
+    "#).unwrap();
+    let request = Request::from_json(&request_json);
+    expect!(request.body).to(be_equal_to(OptionalBody::Missing));
+}
+
+#[test]
+fn request_from_json_handles_null_body() {
+    let request_json = Json::from_str(r#"
+      {
+          "body": null
+      }
+    "#).unwrap();
+    let request = Request::from_json(&request_json);
+    expect!(request.body).to(be_equal_to(OptionalBody::Null));
+}
+
+#[test]
+fn request_from_json_handles_empty_body() {
+    let request_json = Json::from_str(r#"
+      {
+          "body": ""
+      }
+    "#).unwrap();
+    let request = Request::from_json(&request_json);
+    expect!(request.body).to(be_equal_to(OptionalBody::Empty));
+}
+
+#[test]
+fn request_from_json_handles_string_body() {
+    let request_json = Json::from_str(r#"
+      {
+          "body": "{\"string\": \"body\"}"
+      }
+    "#).unwrap();
+    let request = Request::from_json(&request_json);
+    expect!(request.body).to(be_equal_to(OptionalBody::Present(s!("{\"string\": \"body\"}"))));
+}
+
+#[test]
+fn request_from_json_handles_json_body() {
+    let request_json = Json::from_str(r#"
+      {
+          "body": {"string": "body"}
+      }
+    "#).unwrap();
+    let request = Request::from_json(&request_json);
+    expect!(request.body).to(be_equal_to(OptionalBody::Present(s!("{\"string\":\"body\"}"))));
+}
+
+#[test]
+fn response_from_json_defaults_to_missing_body() {
+    let response_json = Json::from_str(r#"
+      {
+      }
+    "#).unwrap();
+    let response = Response::from_json(&response_json);
+    expect!(response.body).to(be_equal_to(OptionalBody::Missing));
+}
+
+#[test]
+fn response_from_json_handles_null_body() {
+    let response_json = Json::from_str(r#"
+      {
+          "body": null
+      }
+    "#).unwrap();
+    let response = Response::from_json(&response_json);
+    expect!(response.body).to(be_equal_to(OptionalBody::Null));
+}
+
+#[test]
+fn response_from_json_handles_empty_body() {
+    let response_json = Json::from_str(r#"
+      {
+          "body": ""
+      }
+    "#).unwrap();
+    let response = Response::from_json(&response_json);
+    expect!(response.body).to(be_equal_to(OptionalBody::Empty));
+}
+
+#[test]
+fn response_from_json_handles_string_body() {
+    let response_json = Json::from_str(r#"
+      {
+          "body": "{\"string\": \"body\"}"
+      }
+    "#).unwrap();
+    let response = Response::from_json(&response_json);
+    expect!(response.body).to(be_equal_to(OptionalBody::Present(s!("{\"string\": \"body\"}"))));
+}
+
+#[test]
+fn response_from_json_handles_json_body() {
+    let response_json = Json::from_str(r#"
+      {
+          "body": {"string": "body"}
+      }
+    "#).unwrap();
+    let response = Response::from_json(&response_json);
+    expect!(response.body).to(be_equal_to(OptionalBody::Present(s!("{\"string\":\"body\"}"))));
+}
+
+#[test]
 fn parse_query_string_test() {
     let query = "a=b&c=d".to_string();
     let mut expected = HashMap::new();
@@ -122,4 +230,20 @@ fn request_mimetype_is_based_on_the_content_type_header() {
     expect!(Request {
         body: OptionalBody::Present(s!("<html><body>this is also not json</body></html>")), .. request.clone() }.mimetype())
         .to(be_equal_to("text/html"));
+}
+
+#[test]
+fn optional_body_present() {
+    expect(OptionalBody::Missing.is_present()).to(be_false());
+    expect(OptionalBody::Null.is_present()).to(be_false());
+    expect(OptionalBody::Empty.is_present()).to(be_false());
+    expect(OptionalBody::Present(s!("")).is_present()).to(be_true());
+}
+
+#[test]
+fn optional_body_value() {
+    expect(OptionalBody::Missing.value()).to(be_equal_to(s!("")));
+    expect(OptionalBody::Null.value()).to(be_equal_to(s!("")));
+    expect(OptionalBody::Empty.value()).to(be_equal_to(s!("")));
+    expect(OptionalBody::Present(s!("hello")).value()).to(be_equal_to(s!("hello")));
 }

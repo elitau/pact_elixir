@@ -4,8 +4,9 @@ extern crate rustc_serialize;
 #[macro_use] extern crate libpact_v1_models;
 #[macro_use] extern crate maplit;
 
-use libpact_v1_models::model::{HttpPart, Request, Response};
+use libpact_v1_models::model::{HttpPart, Request, Response, OptionalBody};
 use std::collections::HashMap;
+use std::any::Any;
 
 mod json;
 
@@ -13,14 +14,51 @@ static BODY_MATCHERS: [(&'static str, fn(mismatches: &mut Vec<Mismatch>)); 1] = 
     ("application/json", json::match_json)
 ];
 
-#[derive(Debug, PartialEq, Clone)]
+#[derive(Debug, Clone)]
 pub enum Mismatch {
     MethodMismatch { expected: String, actual: String },
     PathMismatch { expected: String, actual: String },
     StatusMismatch { expected: u16, actual: u16 },
     QueryMismatch { parameter: String, expected: String, actual: String, mismatch: String },
     HeaderMismatch { key: String, expected: String, actual: String, mismatch: String },
-    BodyTypeMismatch { expected: String, actual: String }
+    BodyTypeMismatch { expected: String, actual: String },
+    BodyMismatch { path: String, expected: Option<String>, actual: Option<String>, mismatch: String }
+}
+
+impl PartialEq for Mismatch {
+    fn eq(&self, other: &Mismatch) -> bool {
+        match (self, other) {
+            (&Mismatch::MethodMismatch{ expected: ref e1, actual: ref a1 },
+                &Mismatch::MethodMismatch{ expected: ref e2, actual: ref a2 }) => {
+                e1 == e2 && a1 == a2
+            },
+            (&Mismatch::PathMismatch{ expected: ref e1, actual: ref a1 },
+                &Mismatch::PathMismatch{ expected: ref e2, actual: ref a2 }) => {
+                e1 == e2 && a1 == a2
+            },
+            (&Mismatch::StatusMismatch{ expected: ref e1, actual: ref a1 },
+                &Mismatch::StatusMismatch{ expected: ref e2, actual: ref a2 }) => {
+                e1 == e2 && a1 == a2
+            },
+            (&Mismatch::BodyTypeMismatch{ expected: ref e1, actual: ref a1 },
+                &Mismatch::BodyTypeMismatch{ expected: ref e2, actual: ref a2 }) => {
+                e1 == e2 && a1 == a2
+            },
+            (&Mismatch::QueryMismatch{ parameter: ref p1, expected: ref e1, actual: ref a1, mismatch: ref m1 },
+                &Mismatch::QueryMismatch{ parameter: ref p2, expected: ref e2, actual: ref a2, mismatch: ref m2 }) => {
+                p1 == p2 && e1 == e2 && a1 == a2
+            },
+            (&Mismatch::HeaderMismatch{ key: ref p1, expected: ref e1, actual: ref a1, mismatch: ref m1 },
+                &Mismatch::HeaderMismatch{ key: ref p2, expected: ref e2, actual: ref a2, mismatch: ref m2 }) => {
+                p1 == p2 && e1 == e2 && a1 == a2
+            },
+            (&Mismatch::BodyMismatch{ path: ref p1, expected: ref e1, actual: ref a1, mismatch: ref m1 },
+                &Mismatch::BodyMismatch{ path: ref p2, expected: ref e2, actual: ref a2, mismatch: ref m2 }) => {
+                p1 == p2 && e1 == e2 && a1 == a2
+            },
+            (_, _) => false
+        }
+    }
 }
 
 pub enum DiffConfig {
@@ -213,11 +251,30 @@ pub fn match_headers(expected: Option<HashMap<String, String>>,
     };
 }
 
-pub fn match_body(expected: &Request, actual: &Request, config: DiffConfig,
+pub fn match_body(expected: &HttpPart, actual: &HttpPart, config: DiffConfig,
     mismatches: &mut Vec<Mismatch>) {
     if expected.mimetype() == actual.mimetype() {
-
-    } else if expected.body.is_present() {
+        match (expected.body(), actual.body()) {
+            (&OptionalBody::Missing, _) => (),
+            (&OptionalBody::Null, &OptionalBody::Present(ref b)) => {
+                mismatches.push(Mismatch::BodyMismatch { expected: None, actual: Some(b.clone()),
+                    mismatch: format!("Expected empty body but received '{}'", b.clone()),
+                    path: s!("/")});
+            },
+            (&OptionalBody::Null, _) => (),
+            (e, &OptionalBody::Missing) => {
+                mismatches.push(Mismatch::BodyMismatch { expected: Some(e.value()), actual: None,
+                    mismatch: format!("Expected body '{}' but was missing", e.value()),
+                    path: s!("/")});
+            },
+            (_, _) => {
+                // if (expected.getBody.getValue == actual.getBody.getValue)
+                //   List()
+                // else
+                //   List(BodyMismatch(expected.getBody.getValue, actual.getBody.getValue))
+            }
+        }
+    } else if expected.body().is_present() {
         mismatches.push(Mismatch::BodyTypeMismatch { expected: expected.mimetype(),
             actual: actual.mimetype() });
     }
@@ -246,9 +303,9 @@ pub fn match_response(expected: Response, actual: Response) -> Vec<Mismatch> {
     let mut mismatches = vec![];
 
     debug!("comparing to expected response: {:?}", expected);
+    match_body(&expected, &actual, DiffConfig::ALLOW_UNEXPECTED_KEYS, &mut mismatches);
     match_status(expected.status, actual.status, &mut mismatches);
     match_headers(expected.headers, actual.headers, &mut mismatches);
-    //   ++ matchBody(expected, actual, providerDiffConfig)).toSeq
 
     mismatches
 }

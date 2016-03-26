@@ -19,11 +19,9 @@ pub fn strip_whitespace<'a, T: FromIterator<&'a str>>(val: &'a String, split_by:
 }
 
 #[cfg(test)]
-#[macro_use(expect)]
-extern crate expectest;
+#[macro_use(expect)] extern crate expectest;
 
-#[cfg(test)]
-extern crate quickcheck;
+#[cfg(test)] extern crate quickcheck;
 
 #[cfg(test)]
 mod tests {

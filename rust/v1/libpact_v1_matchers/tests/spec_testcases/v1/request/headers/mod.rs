@@ -1,6 +1,7 @@
 use libpact_v1_models::model::Request;
 use libpact_v1_matchers::match_request;
 use rustc_serialize::json::Json;
+use expectest::prelude::*;
 
 #[test]
 fn empty_headers() {
@@ -30,9 +31,9 @@ fn empty_headers() {
     println!("{:?}", actual);
     let pact_match = pact.find("match").unwrap();
     if pact_match.as_boolean().unwrap() {
-       assert!(match_request(expected, actual).is_empty(), "Empty headers match");
+       expect!(match_request(expected, actual)).to(be_empty());
     } else {
-       assert!(!match_request(expected, actual).is_empty(), "Empty headers match");
+       expect!(match_request(expected, actual)).to_not(be_empty());
     }
 }
 
@@ -67,9 +68,9 @@ fn header_name_is_different_case() {
     println!("{:?}", actual);
     let pact_match = pact.find("match").unwrap();
     if pact_match.as_boolean().unwrap() {
-       assert!(match_request(expected, actual).is_empty(), "Header name is case insensitive");
+       expect!(match_request(expected, actual)).to(be_empty());
     } else {
-       assert!(!match_request(expected, actual).is_empty(), "Header name is case insensitive");
+       expect!(match_request(expected, actual)).to_not(be_empty());
     }
 }
 
@@ -104,9 +105,9 @@ fn header_value_is_different_case() {
     println!("{:?}", actual);
     let pact_match = pact.find("match").unwrap();
     if pact_match.as_boolean().unwrap() {
-       assert!(match_request(expected, actual).is_empty(), "Headers values are case sensitive");
+       expect!(match_request(expected, actual)).to(be_empty());
     } else {
-       assert!(!match_request(expected, actual).is_empty(), "Headers values are case sensitive");
+       expect!(match_request(expected, actual)).to_not(be_empty());
     }
 }
 
@@ -143,9 +144,9 @@ fn matches() {
     println!("{:?}", actual);
     let pact_match = pact.find("match").unwrap();
     if pact_match.as_boolean().unwrap() {
-       assert!(match_request(expected, actual).is_empty(), "Headers match");
+       expect!(match_request(expected, actual)).to(be_empty());
     } else {
-       assert!(!match_request(expected, actual).is_empty(), "Headers match");
+       expect!(match_request(expected, actual)).to_not(be_empty());
     }
 }
 
@@ -180,9 +181,9 @@ fn order_of_comma_separated_header_values_different() {
     println!("{:?}", actual);
     let pact_match = pact.find("match").unwrap();
     if pact_match.as_boolean().unwrap() {
-       assert!(match_request(expected, actual).is_empty(), "Comma separated headers out of order, order can matter http://tools.ietf.org/html/rfc2616");
+       expect!(match_request(expected, actual)).to(be_empty());
     } else {
-       assert!(!match_request(expected, actual).is_empty(), "Comma separated headers out of order, order can matter http://tools.ietf.org/html/rfc2616");
+       expect!(match_request(expected, actual)).to_not(be_empty());
     }
 }
 
@@ -215,9 +216,9 @@ fn unexpected_header_found() {
     println!("{:?}", actual);
     let pact_match = pact.find("match").unwrap();
     if pact_match.as_boolean().unwrap() {
-       assert!(match_request(expected, actual).is_empty(), "Extra headers allowed");
+       expect!(match_request(expected, actual)).to(be_empty());
     } else {
-       assert!(!match_request(expected, actual).is_empty(), "Extra headers allowed");
+       expect!(match_request(expected, actual)).to_not(be_empty());
     }
 }
 
@@ -252,8 +253,8 @@ fn whitespace_after_comma_different() {
     println!("{:?}", actual);
     let pact_match = pact.find("match").unwrap();
     if pact_match.as_boolean().unwrap() {
-       assert!(match_request(expected, actual).is_empty(), "Whitespace between comma separated headers does not matter");
+       expect!(match_request(expected, actual)).to(be_empty());
     } else {
-       assert!(!match_request(expected, actual).is_empty(), "Whitespace between comma separated headers does not matter");
+       expect!(match_request(expected, actual)).to_not(be_empty());
     }
 }

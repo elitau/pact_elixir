@@ -1,6 +1,7 @@
 use libpact_v1_models::model::Request;
 use libpact_v1_matchers::match_request;
 use rustc_serialize::json::Json;
+use expectest::prelude::*;
 
 #[test]
 fn empty_path_found_when_forward_slash_expected() {
@@ -31,9 +32,9 @@ fn empty_path_found_when_forward_slash_expected() {
     println!("{:?}", actual);
     let pact_match = pact.find("match").unwrap();
     if pact_match.as_boolean().unwrap() {
-       assert!(match_request(expected, actual).is_empty(), "Empty path found when forward slash expected");
+       expect!(match_request(expected, actual)).to(be_empty());
     } else {
-       assert!(!match_request(expected, actual).is_empty(), "Empty path found when forward slash expected");
+       expect!(match_request(expected, actual)).to_not(be_empty());
     }
 }
 
@@ -66,9 +67,9 @@ fn forward_slash_found_when_empty_path_expected() {
     println!("{:?}", actual);
     let pact_match = pact.find("match").unwrap();
     if pact_match.as_boolean().unwrap() {
-       assert!(match_request(expected, actual).is_empty(), "Foward slash found when empty path expected");
+       expect!(match_request(expected, actual)).to(be_empty());
     } else {
-       assert!(!match_request(expected, actual).is_empty(), "Foward slash found when empty path expected");
+       expect!(match_request(expected, actual)).to_not(be_empty());
     }
 }
 
@@ -101,9 +102,9 @@ fn incorrect_path() {
     println!("{:?}", actual);
     let pact_match = pact.find("match").unwrap();
     if pact_match.as_boolean().unwrap() {
-       assert!(match_request(expected, actual).is_empty(), "Paths do not match");
+       expect!(match_request(expected, actual)).to(be_empty());
     } else {
-       assert!(!match_request(expected, actual).is_empty(), "Paths do not match");
+       expect!(match_request(expected, actual)).to_not(be_empty());
     }
 }
 
@@ -136,9 +137,9 @@ fn matches() {
     println!("{:?}", actual);
     let pact_match = pact.find("match").unwrap();
     if pact_match.as_boolean().unwrap() {
-       assert!(match_request(expected, actual).is_empty(), "Paths match");
+       expect!(match_request(expected, actual)).to(be_empty());
     } else {
-       assert!(!match_request(expected, actual).is_empty(), "Paths match");
+       expect!(match_request(expected, actual)).to_not(be_empty());
     }
 }
 
@@ -171,9 +172,9 @@ fn missing_trailing_slash_in_path() {
     println!("{:?}", actual);
     let pact_match = pact.find("match").unwrap();
     if pact_match.as_boolean().unwrap() {
-       assert!(match_request(expected, actual).is_empty(), "Path is missing trailing slash, trailing slashes can matter");
+       expect!(match_request(expected, actual)).to(be_empty());
     } else {
-       assert!(!match_request(expected, actual).is_empty(), "Path is missing trailing slash, trailing slashes can matter");
+       expect!(match_request(expected, actual)).to_not(be_empty());
     }
 }
 
@@ -206,8 +207,8 @@ fn unexpected_trailing_slash_in_path() {
     println!("{:?}", actual);
     let pact_match = pact.find("match").unwrap();
     if pact_match.as_boolean().unwrap() {
-       assert!(match_request(expected, actual).is_empty(), "Path has unexpected trailing slash, trailing slashes can matter");
+       expect!(match_request(expected, actual)).to(be_empty());
     } else {
-       assert!(!match_request(expected, actual).is_empty(), "Path has unexpected trailing slash, trailing slashes can matter");
+       expect!(match_request(expected, actual)).to_not(be_empty());
     }
 }

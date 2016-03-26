@@ -14,7 +14,7 @@ pub struct Provider {
     pub name: String
 }
 
-#[derive(RustcDecodable, Debug, Clone)]
+#[derive(RustcDecodable, Debug, Clone, PartialEq)]
 pub enum OptionalBody {
     Missing,
     Empty,
@@ -28,6 +28,13 @@ impl OptionalBody {
         match *self {
             OptionalBody::Present(_) => true,
             _ => false
+        }
+    }
+
+    pub fn value(&self) -> String {
+        match *self {
+            OptionalBody::Present(ref s) => s.clone(),
+            _ => s!("")
         }
     }
 
@@ -118,6 +125,23 @@ fn headers_from_json(request: &Json) -> Option<HashMap<String, String>> {
     }
 }
 
+fn body_from_json(request: &Json) -> OptionalBody {
+    match request.find("body") {
+        Some(v) => match *v {
+            Json::String(ref s) => {
+                if s.is_empty() {
+                    OptionalBody::Empty
+                } else {
+                    OptionalBody::Present(s.clone())
+                }
+            },
+            Json::Null => OptionalBody::Null,
+            _ => OptionalBody::Present(v.to_string())
+        },
+        None => OptionalBody::Missing
+    }
+}
+
 impl Request {
     pub fn from_json(request: &Json) -> Request {
         let method_val = match request.find("method") {
@@ -140,7 +164,7 @@ impl Request {
             path: path_val,
             query: query_val,
             headers: headers_from_json(request),
-            body: OptionalBody::Missing,
+            body: body_from_json(request),
             matching_rules: None
         }
     }
@@ -163,9 +187,23 @@ impl Response {
         Response {
             status: status_val,
             headers: headers_from_json(response),
-            body: OptionalBody::Missing,
+            body: body_from_json(response),
             matching_rules: None
         }
+    }
+}
+
+impl HttpPart for Response {
+    fn headers(&self) -> &Option<HashMap<String, String>> {
+        &self.headers
+    }
+
+    fn body(&self) -> &OptionalBody {
+        &self.body
+    }
+
+    fn matching_rules(&self) -> &Option<HashMap<String, HashMap<String, String>>> {
+        &self.matching_rules
     }
 }
 

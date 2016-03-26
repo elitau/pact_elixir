@@ -15,10 +15,12 @@ specs.eachFileRecurse(FileType.DIRECTORIES) { dir ->
       pw.println('use libpact_v1_models::model::Request;')
       pw.println('use libpact_v1_matchers::match_request;')
       pw.println('use rustc_serialize::json::Json;')
+      pw.println('use expectest::prelude::*;')
     } else if (requestResponsePath == 'response') {
       pw.println('use libpact_v1_models::model::Response;')
       pw.println('use libpact_v1_matchers::match_response;')
       pw.println('use rustc_serialize::json::Json;')
+      pw.println('use expectest::prelude::*;')
     }
 
     dir.eachDir {
@@ -44,9 +46,9 @@ specs.eachFileRecurse(FileType.DIRECTORIES) { dir ->
         |    println!("{:?}", actual);
         |    let pact_match = pact.find("match").unwrap();
         |    if pact_match.as_boolean().unwrap() {
-        |       assert!(match_request(expected, actual).is_empty(), "${json.comment}");
+        |       expect!(match_request(expected, actual)).to(be_empty());
         |    } else {
-        |       assert!(!match_request(expected, actual).is_empty(), "${json.comment}");
+        |       expect!(match_request(expected, actual)).to_not(be_empty());
         |    }
         """
       } else if (requestResponsePath == 'response') {
@@ -57,9 +59,9 @@ specs.eachFileRecurse(FileType.DIRECTORIES) { dir ->
         |    println!("{:?}", actual);
         |    let pact_match = pact.find("match").unwrap();
         |    if pact_match.as_boolean().unwrap() {
-        |       assert!(match_response(expected, actual).is_empty(), "${json.comment}");
+        |       expect!(match_response(expected, actual)).to(be_empty());
         |    } else {
-        |       assert!(!match_response(expected, actual).is_empty(), "${json.comment}");
+        |       expect!(match_response(expected, actual)).to_not(be_empty());
         |    }
         """
       }
