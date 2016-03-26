@@ -1,6 +1,8 @@
 use std::collections::HashMap;
 use rustc_serialize::json::Json;
 use rustc_serialize::hex::FromHex;
+use super::strip_whitespace;
+use regex::Regex;
 
 #[allow(dead_code)]
 pub struct Consumer {
@@ -12,14 +14,93 @@ pub struct Provider {
     pub name: String
 }
 
-#[derive(RustcDecodable, Debug)]
+#[derive(RustcDecodable, Debug, Clone)]
+pub enum OptionalBody {
+    Missing,
+    Empty,
+    Null,
+    Present(String)
+}
+
+impl OptionalBody {
+
+    pub fn is_present(&self) -> bool {
+        match *self {
+            OptionalBody::Present(_) => true,
+            _ => false
+        }
+    }
+
+}
+
+lazy_static! {
+    static ref XMLREGEXP: Regex = Regex::new(r"^\s*<\?xml\s*version.*").unwrap();
+    static ref HTMLREGEXP: Regex = Regex::new(r"^\s*(<!DOCTYPE)|(<HTML>).*").unwrap();
+    static ref JSONREGEXP: Regex = Regex::new(r#"^\s*(true|false|null|[0-9]+|"\w*|\{\s*(}|"\w+)|\[\s*"#).unwrap();
+    static ref XMLREGEXP2: Regex = Regex::new(r#"^\s*<\w+\s*(:\w+=["”][^"”]+["”])?.*"#).unwrap();
+}
+
+pub trait HttpPart {
+    fn headers(&self) -> &Option<HashMap<String, String>>;
+    fn body(&self) -> &OptionalBody;
+    fn matching_rules(&self) -> &Option<HashMap<String, HashMap<String, String>>>;
+
+    fn mimetype(&self) -> String {
+        match *self.headers() {
+            Some(ref h) => match h.iter().find(|kv| kv.0.to_lowercase() == s!("content-type")) {
+                Some(kv) => match strip_whitespace::<Vec<&str>>(kv.1, ";").first() {
+                    Some(v) => s!(*v),
+                    None => self.detect_content_type()
+                },
+                None => self.detect_content_type()
+            },
+            None => self.detect_content_type()
+        }
+    }
+
+    fn detect_content_type(&self) -> String {
+        match *self.body() {
+            OptionalBody::Present(ref body) => {
+                let s: String = body.chars().take(32).collect();
+                if XMLREGEXP.is_match(s.as_str()) {
+                    s!("application/xml")
+                } else if HTMLREGEXP.is_match(s.to_uppercase().as_str()) {
+                    s!("text/html")
+                } else if XMLREGEXP2.is_match(s.as_str()) {
+                    s!("application/xml")
+                } else if JSONREGEXP.is_match(s.as_str()) {
+                    s!("application/json")
+                } else {
+                    s!("text/plain")
+                }
+            },
+            _ => s!("text/plain")
+        }
+    }
+}
+
+#[derive(RustcDecodable, Debug, Clone)]
 pub struct Request {
     pub method: String,
     pub path: String,
     pub query: Option<HashMap<String, Vec<String>>>,
     pub headers: Option<HashMap<String, String>>,
-    pub body: Option<String>,
+    pub body: OptionalBody,
     pub matching_rules: Option<HashMap<String, HashMap<String, String>>>
+}
+
+impl HttpPart for Request {
+    fn headers(&self) -> &Option<HashMap<String, String>> {
+        &self.headers
+    }
+
+    fn body(&self) -> &OptionalBody {
+        &self.body
+    }
+
+    fn matching_rules(&self) -> &Option<HashMap<String, HashMap<String, String>>> {
+        &self.matching_rules
+    }
 }
 
 fn headers_from_json(request: &Json) -> Option<HashMap<String, String>> {
@@ -59,7 +140,7 @@ impl Request {
             path: path_val,
             query: query_val,
             headers: headers_from_json(request),
-            body: None,
+            body: OptionalBody::Missing,
             matching_rules: None
         }
     }
@@ -69,7 +150,7 @@ impl Request {
 pub struct Response {
     pub status: u16,
     pub headers: Option<HashMap<String, String>>,
-    pub body: Option<String>,
+    pub body: OptionalBody,
     pub matching_rules: Option<HashMap<String, HashMap<String, String>>>
 }
 
@@ -82,7 +163,7 @@ impl Response {
         Response {
             status: status_val,
             headers: headers_from_json(response),
-            body: None,
+            body: OptionalBody::Missing,
             matching_rules: None
         }
     }
@@ -166,84 +247,4 @@ pub fn parse_query_string(query: &String) -> Option<HashMap<String, Vec<String>>
 }
 
 #[cfg(test)]
-mod tests {
-    use super::*;
-    use std::collections::HashMap;
-    use rustc_serialize::json::Json;
-
-    #[test]
-    fn request_from_json_defaults_to_get() {
-        let request_json = Json::from_str(r#"
-          {
-              "path": "/",
-              "query": "",
-              "headers": {}
-          }
-        "#).unwrap();
-        let request = Request::from_json(&request_json);
-        assert_eq!(request.method, "GET".to_string());
-    }
-
-    #[test]
-    fn request_from_json_defaults_to_root_for_path() {
-        let request_json = Json::from_str(r#"
-          {
-              "method": "PUT",
-              "query": "",
-              "headers": {}
-          }
-        "#).unwrap();
-        println!("request_json: {}", request_json);
-        let request = Request::from_json(&request_json);
-        assert_eq!(request.path, "/".to_string());
-    }
-
-    #[test]
-    fn response_from_json_defaults_to_status_200() {
-        let response_json = Json::from_str(r#"
-          {
-              "headers": {}
-          }
-        "#).unwrap();
-        let response = Response::from_json(&response_json);
-        assert_eq!(response.status, 200);
-    }
-
-    #[test]
-    fn parse_query_string_test() {
-        let query = "a=b&c=d".to_string();
-        let mut expected = HashMap::new();
-        expected.insert("a".to_string(), vec!["b".to_string()]);
-        expected.insert("c".to_string(), vec!["d".to_string()]);
-        let result = parse_query_string(&query);
-        assert_eq!(result, Some(expected));
-    }
-
-    #[test]
-    fn parse_query_string_handles_empty_string() {
-        let query = "".to_string();
-        let expected = None;
-        let result = parse_query_string(&query);
-        assert_eq!(result, expected);
-    }
-
-    #[test]
-    fn parse_query_string_handles_missing_values() {
-        let query = "a=&c=d".to_string();
-        let mut expected = HashMap::new();
-        expected.insert("a".to_string(), vec!["".to_string()]);
-        expected.insert("c".to_string(), vec!["d".to_string()]);
-        let result = parse_query_string(&query);
-        assert_eq!(result, Some(expected));
-    }
-
-    #[test]
-    fn parse_query_string_decodes_values() {
-        let query = "a=a%20b%20c".to_string();
-        let mut expected = HashMap::new();
-        expected.insert("a".to_string(), vec!["a b c".to_string()]);
-        let result = parse_query_string(&query);
-        assert_eq!(result, Some(expected));
-    }
-
-}
+mod tests;
