@@ -266,7 +266,7 @@ fn body_does_not_match_if_different_content_types() {
     let actual = Request { method: "GET".to_string(), path: "/".to_string(), query: None,
         headers: Some(hashmap!{ "Content-Type".to_string() => "text/plain".to_string() }),
         body: OptionalBody::Missing, matching_rules: None };
-    match_body(&expected, &actual, DiffConfig::NO_UNEXPECTED_KEYS, &mut mismatches);
+    match_body(&expected, &actual, DiffConfig::NoUnexpectedKeys, &mut mismatches);
     expect!(mismatches.clone()).to_not(be_empty());
     expect!(mismatches[0].clone()).to(be_equal_to(Mismatch::BodyTypeMismatch { expected: "application/json".to_string(),
         actual: s!("text/plain") }));
@@ -281,7 +281,7 @@ fn body_matches_if_expected_is_missing() {
     let actual = Request { method: s!("GET"), path: s!("/"), query: None,
         headers: Some(hashmap!{ s!("Content-Type") => s!("application/json") }),
         body: OptionalBody::Present(s!("{}")), matching_rules: None };
-    match_body(&expected, &actual, DiffConfig::NO_UNEXPECTED_KEYS, &mut mismatches);
+    match_body(&expected, &actual, DiffConfig::NoUnexpectedKeys, &mut mismatches);
     expect!(mismatches.clone()).to(be_empty());
 }
 

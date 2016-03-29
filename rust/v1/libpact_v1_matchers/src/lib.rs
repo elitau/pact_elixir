@@ -10,7 +10,7 @@ use std::any::Any;
 
 mod json;
 
-static BODY_MATCHERS: [(&'static str, fn(mismatches: &mut Vec<Mismatch>)); 1] = [
+static BODY_MATCHERS: [(&'static str, fn(expected: &String, actual: &String, config: DiffConfig, mismatches: &mut Vec<Mismatch>)); 1] = [
     ("application/json", json::match_json)
 ];
 
@@ -62,12 +62,16 @@ impl PartialEq for Mismatch {
 }
 
 pub enum DiffConfig {
-    ALLOW_UNEXPECTED_KEYS,
-    NO_UNEXPECTED_KEYS
+    AllowUnexpectedKeys,
+    NoUnexpectedKeys
 }
 
-pub fn match_text(mismatches: &mut Vec<Mismatch>) {
-
+pub fn match_text(expected: &String, actual: &String, mismatches: &mut Vec<Mismatch>) {
+    if expected != actual {
+        mismatches.push(Mismatch::BodyMismatch { path: s!("/"), expected: Some(expected.clone()),
+            actual: Some(actual.clone()),
+            mismatch: format!("Expected text '{}' but received '{}'", expected, actual) });
+    }
 }
 
 pub fn match_method(expected: String, actual: String, mismatches: &mut Vec<Mismatch>) {
@@ -251,6 +255,14 @@ pub fn match_headers(expected: Option<HashMap<String, String>>,
     };
 }
 
+fn compare_bodies(mimetype: String, expected: &String, actual: &String, config: DiffConfig,
+    mismatches: &mut Vec<Mismatch>) {
+    match BODY_MATCHERS.iter().find(|mt| *mt.0 == mimetype) {
+        Some(ref match_fn) => match_fn.1(expected, actual, config, mismatches),
+        None => match_text(expected, actual, mismatches)
+    }
+}
+
 pub fn match_body(expected: &HttpPart, actual: &HttpPart, config: DiffConfig,
     mismatches: &mut Vec<Mismatch>) {
     if expected.mimetype() == actual.mimetype() {
@@ -268,10 +280,8 @@ pub fn match_body(expected: &HttpPart, actual: &HttpPart, config: DiffConfig,
                     path: s!("/")});
             },
             (_, _) => {
-                // if (expected.getBody.getValue == actual.getBody.getValue)
-                //   List()
-                // else
-                //   List(BodyMismatch(expected.getBody.getValue, actual.getBody.getValue))
+                compare_bodies(expected.mimetype(), &expected.body().value(), &actual.body().value(),
+                    config, mismatches);
             }
         }
     } else if expected.body().is_present() {
@@ -284,7 +294,7 @@ pub fn match_request(expected: Request, actual: Request) -> Vec<Mismatch> {
     let mut mismatches = vec![];
 
     debug!("comparing to expected request: {:?}", expected);
-    match_body(&expected, &actual, DiffConfig::NO_UNEXPECTED_KEYS, &mut mismatches);
+    match_body(&expected, &actual, DiffConfig::NoUnexpectedKeys, &mut mismatches);
     match_method(expected.method, actual.method, &mut mismatches);
     match_path(expected.path, actual.path, &mut mismatches);
     match_query(expected.query, actual.query, &mut mismatches);
@@ -303,7 +313,7 @@ pub fn match_response(expected: Response, actual: Response) -> Vec<Mismatch> {
     let mut mismatches = vec![];
 
     debug!("comparing to expected response: {:?}", expected);
-    match_body(&expected, &actual, DiffConfig::ALLOW_UNEXPECTED_KEYS, &mut mismatches);
+    match_body(&expected, &actual, DiffConfig::AllowUnexpectedKeys, &mut mismatches);
     match_status(expected.status, actual.status, &mut mismatches);
     match_headers(expected.headers, actual.headers, &mut mismatches);
 
