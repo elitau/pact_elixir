@@ -1,26 +1,27 @@
 use libpact_v1_models::model::Request;
-use libpact_v1_matchers::match_request;
+use libpact_v1_matching::match_request;
 use rustc_serialize::json::Json;
 use expectest::prelude::*;
 
 #[test]
-fn empty_headers() {
+fn empty_path_found_when_forward_slash_expected() {
     let pact = Json::from_str(r#"
       {
-        "match": true,
-        "comment": "Empty headers match",
+        "match": false,
+        "comment": "Empty path found when forward slash expected",
         "expected" : {
           "method": "POST",
-          "path": "/path",
+          "path": "/",
           "query": "",
           "headers": {}
       
         },
         "actual": {
           "method": "POST",
-          "path": "/path",
+          "path": "",
           "query": "",
           "headers": {}
+      
         }
       }
     "#).unwrap();
@@ -38,63 +39,59 @@ fn empty_headers() {
 }
 
 #[test]
-fn header_name_is_different_case() {
-    let pact = Json::from_str(r#"
-      {
-        "match": true,
-        "comment": "Header name is case insensitive",
-        "expected" : {
-          "method": "POST",
-          "path": "/path",
-          "query": "",
-          "headers": {
-            "Accept": "alligators"
-          }
-        },
-        "actual": {
-          "method": "POST",
-          "path": "/path",
-          "query": "",
-          "headers": {
-            "ACCEPT": "alligators"
-          }
-        }
-      }
-    "#).unwrap();
-
-    let expected = Request::from_json(&pact.find("expected").unwrap());
-    println!("{:?}", expected);
-    let actual = Request::from_json(&pact.find("actual").unwrap());
-    println!("{:?}", actual);
-    let pact_match = pact.find("match").unwrap();
-    if pact_match.as_boolean().unwrap() {
-       expect!(match_request(expected, actual)).to(be_empty());
-    } else {
-       expect!(match_request(expected, actual)).to_not(be_empty());
-    }
-}
-
-#[test]
-fn header_value_is_different_case() {
+fn forward_slash_found_when_empty_path_expected() {
     let pact = Json::from_str(r#"
       {
         "match": false,
-        "comment": "Headers values are case sensitive",
+        "comment": "Foward slash found when empty path expected",
         "expected" : {
           "method": "POST",
-          "path": "/path",
+          "path": "",
           "query": "",
-          "headers": {
-            "Accept": "alligators"
-          }
+          "headers": {}
+      
         },
         "actual": {
           "method": "POST",
-          "path": "/path",
+          "path": "/",
           "query": "",
-          "headers": {
-            "Accept": "Alligators"
-          }
+          "headers": {}
+      
+        }
+      }
+    "#).unwrap();
+
+    let expected = Request::from_json(&pact.find("expected").unwrap());
+    println!("{:?}", expected);
+    let actual = Request::from_json(&pact.find("actual").unwrap());
+    println!("{:?}", actual);
+    let pact_match = pact.find("match").unwrap();
+    if pact_match.as_boolean().unwrap() {
+       expect!(match_request(expected, actual)).to(be_empty());
+    } else {
+       expect!(match_request(expected, actual)).to_not(be_empty());
+    }
+}
+
+#[test]
+fn incorrect_path() {
+    let pact = Json::from_str(r#"
+      {
+        "match": false,
+        "comment": "Paths do not match",
+        "expected" : {
+          "method": "POST",
+          "path": "/path/to/something",
+          "query": "",
+          "headers": {}
+      
+        },
+        "actual": {
+          "method": "POST",
+          "path": "/path/to/something/else",
+          "query": "",
+          "headers": {}
+      
         }
       }
     "#).unwrap();
@@ -116,24 +113,20 @@ fn matches() {
     let pact = Json::from_str(r#"
       {
         "match": true,
-        "comment": "Headers match",
+        "comment": "Paths match",
         "expected" : {
           "method": "POST",
-          "path": "/path",
+          "path": "/path/to/something",
           "query": "",
-          "headers": {
-            "Accept": "alligators",
-            "Content-Type": "hippos"
-          }
+          "headers": {}
+      
         },
         "actual": {
           "method": "POST",
-          "path": "/path",
+          "path": "/path/to/something",
           "query": "",
-          "headers": {
-            "Content-Type": "hippos",
-            "Accept": "alligators"
-          }
+          "headers": {}
+      
         }
       }
     "#).unwrap();
@@ -151,61 +144,24 @@ fn matches() {
 }
 
 #[test]
-fn order_of_comma_separated_header_values_different() {
+fn missing_trailing_slash_in_path() {
     let pact = Json::from_str(r#"
       {
         "match": false,
-        "comment": "Comma separated headers out of order, order can matter http://tools.ietf.org/html/rfc2616",
+        "comment": "Path is missing trailing slash, trailing slashes can matter",
         "expected" : {
           "method": "POST",
-          "path": "/path",
-          "query": "",
-          "headers": {
-            "Accept": "alligators, hippos"
-          }
-        },
-        "actual": {
-          "method": "POST",
-          "path": "/path",
-          "query": "",
-          "headers": {
-            "Accept": "hippos, alligators"
-          }
-        }
-      }
-    "#).unwrap();
-
-    let expected = Request::from_json(&pact.find("expected").unwrap());
-    println!("{:?}", expected);
-    let actual = Request::from_json(&pact.find("actual").unwrap());
-    println!("{:?}", actual);
-    let pact_match = pact.find("match").unwrap();
-    if pact_match.as_boolean().unwrap() {
-       expect!(match_request(expected, actual)).to(be_empty());
-    } else {
-       expect!(match_request(expected, actual)).to_not(be_empty());
-    }
-}
-
-#[test]
-fn unexpected_header_found() {
-    let pact = Json::from_str(r#"
-      {
-        "match": true,
-        "comment": "Extra headers allowed",
-        "expected" : {
-          "method": "POST",
-          "path": "/path",
+          "path": "/path/to/something/",
           "query": "",
           "headers": {}
+      
         },
         "actual": {
           "method": "POST",
-          "path": "/path",
+          "path": "/path/to/something",
           "query": "",
-          "headers": {
-            "Accept": "alligators"
-          }
+          "headers": {}
+      
         }
       }
     "#).unwrap();
@@ -223,26 +179,24 @@ fn unexpected_header_found() {
 }
 
 #[test]
-fn whitespace_after_comma_different() {
+fn unexpected_trailing_slash_in_path() {
     let pact = Json::from_str(r#"
       {
-        "match": true,
-        "comment": "Whitespace between comma separated headers does not matter",
+        "match": false,
+        "comment": "Path has unexpected trailing slash, trailing slashes can matter",
         "expected" : {
           "method": "POST",
-          "path": "/path",
+          "path": "/path/to/something",
           "query": "",
-          "headers": {
-            "Accept": "alligators,hippos"
-          }
+          "headers": {}
+      
         },
         "actual": {
           "method": "POST",
-          "path": "/path",
+          "path": "/path/to/something/",
           "query": "",
-          "headers": {
-            "Accept": "alligators, hippos"
-          }
+          "headers": {}
+      
         }
       }
     "#).unwrap();

@@ -1,60 +1,24 @@
 use libpact_v1_models::model::Request;
-use libpact_v1_matchers::match_request;
+use libpact_v1_matching::match_request;
 use rustc_serialize::json::Json;
 use expectest::prelude::*;
 
 #[test]
-fn different_param_order() {
-    let pact = Json::from_str(r#"
-      {
-        "match": true,
-        "comment": "Query strings are matched using basic string equality, these are not equal. (Not supported)",
-        "expected" : {
-          "method": "GET",
-          "path": "/path",
-          "query": "alligator=Mary&hippo=John",
-          "headers": {}
-      
-        },
-        "actual": {
-          "method": "GET",
-          "path": "/path",
-          "query": "hippo=John&alligator=Mary",
-          "headers": {}
-      
-        }
-      }
-    "#).unwrap();
-
-    let expected = Request::from_json(&pact.find("expected").unwrap());
-    println!("{:?}", expected);
-    let actual = Request::from_json(&pact.find("actual").unwrap());
-    println!("{:?}", actual);
-    let pact_match = pact.find("match").unwrap();
-    if pact_match.as_boolean().unwrap() {
-       expect!(match_request(expected, actual)).to(be_empty());
-    } else {
-       expect!(match_request(expected, actual)).to_not(be_empty());
-    }
-}
-
-#[test]
-fn different_param_values() {
+fn different_method() {
     let pact = Json::from_str(r#"
       {
         "match": false,
-        "comment": "Queries are not the same - hippo is Fred instead of John",
+        "comment": "Methods is incorrect",
         "expected" : {
-          "method": "GET",
-          "path": "/path",
-          "query": "alligator=Mary&hippo=John",
+          "method": "POST",
+          "path": "/",
+          "query": "",
           "headers": {}
-      
         },
         "actual": {
           "method": "GET",
-          "path": "/path",
-          "query": "alligator=Mary&hippo=Fred",
+          "path": "/",
+          "query": "",
           "headers": {}
       
         }
@@ -78,18 +42,17 @@ fn matches() {
     let pact = Json::from_str(r#"
       {
         "match": true,
-        "comment": "Queries are the same",
+        "comment": "Methods match",
         "expected" : {
-          "method": "GET",
-          "path": "/path",
-          "query": "alligator=Mary&hippo=John",
+          "method": "POST",
+          "path": "/",
+          "query": "",
           "headers": {}
-      
         },
         "actual": {
-          "method": "GET",
-          "path": "/path",
-          "query": "alligator=Mary&hippo=John",
+          "method": "POST",
+          "path": "/",
+          "query": "",
           "headers": {}
       
         }
@@ -109,22 +72,21 @@ fn matches() {
 }
 
 #[test]
-fn trailing_amperand() {
+fn method_is_different_case() {
     let pact = Json::from_str(r#"
       {
         "match": true,
-        "comment": "Query strings are matched using basic string equality, these are not equal. (not supported)",
+        "comment": "Methods case does not matter",
         "expected" : {
-          "method": "GET",
-          "path": "/path",
-          "query": "alligator=Mary&hippo=John",
+          "method": "POST",
+          "path": "/",
+          "query": "",
           "headers": {}
-      
         },
         "actual": {
-          "method": "GET",
-          "path": "/path",
-          "query": "alligator=Mary&hippo=John&",
+          "method": "post",
+          "path": "/",
+          "query": "",
           "headers": {}
       
         }

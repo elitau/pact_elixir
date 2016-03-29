@@ -1,5 +1,5 @@
 [package]
-name = "libpact_v1_matchers"
+name = "libpact_v1_matching"
 version = "0.0.0"
 authors = ["Ronald Holshausen <uglyog@gmail.com>"]
 

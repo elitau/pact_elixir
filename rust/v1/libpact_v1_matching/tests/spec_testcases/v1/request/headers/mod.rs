@@ -1,5 +1,5 @@
-use libpact_v1_models::model::Response;
-use libpact_v1_matchers::match_response;
+use libpact_v1_models::model::Request;
+use libpact_v1_matching::match_request;
 use rustc_serialize::json::Json;
 use expectest::prelude::*;
 
@@ -10,24 +10,30 @@ fn empty_headers() {
         "match": true,
         "comment": "Empty headers match",
         "expected" : {
+          "method": "POST",
+          "path": "/path",
+          "query": "",
           "headers": {}
       
         },
         "actual": {
+          "method": "POST",
+          "path": "/path",
+          "query": "",
           "headers": {}
         }
       }
     "#).unwrap();
 
-    let expected = Response::from_json(&pact.find("expected").unwrap());
+    let expected = Request::from_json(&pact.find("expected").unwrap());
     println!("{:?}", expected);
-    let actual = Response::from_json(&pact.find("actual").unwrap());
+    let actual = Request::from_json(&pact.find("actual").unwrap());
     println!("{:?}", actual);
     let pact_match = pact.find("match").unwrap();
     if pact_match.as_boolean().unwrap() {
-       expect!(match_response(expected, actual)).to(be_empty());
+       expect!(match_request(expected, actual)).to(be_empty());
     } else {
-       expect!(match_response(expected, actual)).to_not(be_empty());
+       expect!(match_request(expected, actual)).to_not(be_empty());
     }
 }
 
@@ -38,11 +44,17 @@ fn header_name_is_different_case() {
         "match": true,
         "comment": "Header name is case insensitive",
         "expected" : {
+          "method": "POST",
+          "path": "/path",
+          "query": "",
           "headers": {
             "Accept": "alligators"
           }
         },
         "actual": {
+          "method": "POST",
+          "path": "/path",
+          "query": "",
           "headers": {
             "ACCEPT": "alligators"
           }
@@ -50,15 +62,15 @@ fn header_name_is_different_case() {
       }
     "#).unwrap();
 
-    let expected = Response::from_json(&pact.find("expected").unwrap());
+    let expected = Request::from_json(&pact.find("expected").unwrap());
     println!("{:?}", expected);
-    let actual = Response::from_json(&pact.find("actual").unwrap());
+    let actual = Request::from_json(&pact.find("actual").unwrap());
     println!("{:?}", actual);
     let pact_match = pact.find("match").unwrap();
     if pact_match.as_boolean().unwrap() {
-       expect!(match_response(expected, actual)).to(be_empty());
+       expect!(match_request(expected, actual)).to(be_empty());
     } else {
-       expect!(match_response(expected, actual)).to_not(be_empty());
+       expect!(match_request(expected, actual)).to_not(be_empty());
     }
 }
 
@@ -69,11 +81,17 @@ fn header_value_is_different_case() {
         "match": false,
         "comment": "Headers values are case sensitive",
         "expected" : {
+          "method": "POST",
+          "path": "/path",
+          "query": "",
           "headers": {
             "Accept": "alligators"
           }
         },
         "actual": {
+          "method": "POST",
+          "path": "/path",
+          "query": "",
           "headers": {
             "Accept": "Alligators"
           }
@@ -81,15 +99,15 @@ fn header_value_is_different_case() {
       }
     "#).unwrap();
 
-    let expected = Response::from_json(&pact.find("expected").unwrap());
+    let expected = Request::from_json(&pact.find("expected").unwrap());
     println!("{:?}", expected);
-    let actual = Response::from_json(&pact.find("actual").unwrap());
+    let actual = Request::from_json(&pact.find("actual").unwrap());
     println!("{:?}", actual);
     let pact_match = pact.find("match").unwrap();
     if pact_match.as_boolean().unwrap() {
-       expect!(match_response(expected, actual)).to(be_empty());
+       expect!(match_request(expected, actual)).to(be_empty());
     } else {
-       expect!(match_response(expected, actual)).to_not(be_empty());
+       expect!(match_request(expected, actual)).to_not(be_empty());
     }
 }
 
@@ -100,12 +118,18 @@ fn matches() {
         "match": true,
         "comment": "Headers match",
         "expected" : {
+          "method": "POST",
+          "path": "/path",
+          "query": "",
           "headers": {
             "Accept": "alligators",
             "Content-Type": "hippos"
           }
         },
         "actual": {
+          "method": "POST",
+          "path": "/path",
+          "query": "",
           "headers": {
             "Content-Type": "hippos",
             "Accept": "alligators"
@@ -114,15 +138,15 @@ fn matches() {
       }
     "#).unwrap();
 
-    let expected = Response::from_json(&pact.find("expected").unwrap());
+    let expected = Request::from_json(&pact.find("expected").unwrap());
     println!("{:?}", expected);
-    let actual = Response::from_json(&pact.find("actual").unwrap());
+    let actual = Request::from_json(&pact.find("actual").unwrap());
     println!("{:?}", actual);
     let pact_match = pact.find("match").unwrap();
     if pact_match.as_boolean().unwrap() {
-       expect!(match_response(expected, actual)).to(be_empty());
+       expect!(match_request(expected, actual)).to(be_empty());
     } else {
-       expect!(match_response(expected, actual)).to_not(be_empty());
+       expect!(match_request(expected, actual)).to_not(be_empty());
     }
 }
 
@@ -133,11 +157,17 @@ fn order_of_comma_separated_header_values_different() {
         "match": false,
         "comment": "Comma separated headers out of order, order can matter http://tools.ietf.org/html/rfc2616",
         "expected" : {
+          "method": "POST",
+          "path": "/path",
+          "query": "",
           "headers": {
             "Accept": "alligators, hippos"
           }
         },
         "actual": {
+          "method": "POST",
+          "path": "/path",
+          "query": "",
           "headers": {
             "Accept": "hippos, alligators"
           }
@@ -145,15 +175,15 @@ fn order_of_comma_separated_header_values_different() {
       }
     "#).unwrap();
 
-    let expected = Response::from_json(&pact.find("expected").unwrap());
+    let expected = Request::from_json(&pact.find("expected").unwrap());
     println!("{:?}", expected);
-    let actual = Response::from_json(&pact.find("actual").unwrap());
+    let actual = Request::from_json(&pact.find("actual").unwrap());
     println!("{:?}", actual);
     let pact_match = pact.find("match").unwrap();
     if pact_match.as_boolean().unwrap() {
-       expect!(match_response(expected, actual)).to(be_empty());
+       expect!(match_request(expected, actual)).to(be_empty());
     } else {
-       expect!(match_response(expected, actual)).to_not(be_empty());
+       expect!(match_request(expected, actual)).to_not(be_empty());
     }
 }
 
@@ -164,9 +194,15 @@ fn unexpected_header_found() {
         "match": true,
         "comment": "Extra headers allowed",
         "expected" : {
+          "method": "POST",
+          "path": "/path",
+          "query": "",
           "headers": {}
         },
         "actual": {
+          "method": "POST",
+          "path": "/path",
+          "query": "",
           "headers": {
             "Accept": "alligators"
           }
@@ -174,15 +210,15 @@ fn unexpected_header_found() {
       }
     "#).unwrap();
 
-    let expected = Response::from_json(&pact.find("expected").unwrap());
+    let expected = Request::from_json(&pact.find("expected").unwrap());
     println!("{:?}", expected);
-    let actual = Response::from_json(&pact.find("actual").unwrap());
+    let actual = Request::from_json(&pact.find("actual").unwrap());
     println!("{:?}", actual);
     let pact_match = pact.find("match").unwrap();
     if pact_match.as_boolean().unwrap() {
-       expect!(match_response(expected, actual)).to(be_empty());
+       expect!(match_request(expected, actual)).to(be_empty());
     } else {
-       expect!(match_response(expected, actual)).to_not(be_empty());
+       expect!(match_request(expected, actual)).to_not(be_empty());
     }
 }
 
@@ -193,11 +229,17 @@ fn whitespace_after_comma_different() {
         "match": true,
         "comment": "Whitespace between comma separated headers does not matter",
         "expected" : {
+          "method": "POST",
+          "path": "/path",
+          "query": "",
           "headers": {
             "Accept": "alligators,hippos"
           }
         },
         "actual": {
+          "method": "POST",
+          "path": "/path",
+          "query": "",
           "headers": {
             "Accept": "alligators, hippos"
           }
@@ -205,14 +247,14 @@ fn whitespace_after_comma_different() {
       }
     "#).unwrap();
 
-    let expected = Response::from_json(&pact.find("expected").unwrap());
+    let expected = Request::from_json(&pact.find("expected").unwrap());
     println!("{:?}", expected);
-    let actual = Response::from_json(&pact.find("actual").unwrap());
+    let actual = Request::from_json(&pact.find("actual").unwrap());
     println!("{:?}", actual);
     let pact_match = pact.find("match").unwrap();
     if pact_match.as_boolean().unwrap() {
-       expect!(match_response(expected, actual)).to(be_empty());
+       expect!(match_request(expected, actual)).to(be_empty());
     } else {
-       expect!(match_response(expected, actual)).to_not(be_empty());
+       expect!(match_request(expected, actual)).to_not(be_empty());
     }
 }
