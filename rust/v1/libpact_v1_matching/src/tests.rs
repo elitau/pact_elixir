@@ -3,8 +3,7 @@ use super::match_header_value;
 use std::collections::HashMap;
 use expectest::prelude::*;
 use quickcheck::{TestResult, quickcheck};
-use libpact_v1_models::*;
-use libpact_v1_models::model::{HttpPart, Request, Response, OptionalBody};
+use models::{HttpPart, Request, Response, OptionalBody};
 
 #[test]
 fn match_method_returns_nothing_if_the_method_matches() {

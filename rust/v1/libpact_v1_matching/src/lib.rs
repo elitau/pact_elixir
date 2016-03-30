@@ -1,14 +1,25 @@
 extern crate rustc_serialize;
 #[macro_use] extern crate log;
 #[macro_use] extern crate p_macro;
-#[macro_use] extern crate libpact_v1_models;
 #[macro_use] extern crate maplit;
+#[macro_use] extern crate lazy_static;
+extern crate regex;
 
-use libpact_v1_models::model::{HttpPart, Request, Response, OptionalBody};
+#[macro_export]
+macro_rules! s {
+    ($e:expr) => ($e.to_string())
+}
+
 use std::collections::HashMap;
 use std::any::Any;
+use std::iter::FromIterator;
 
+pub mod models;
 mod json;
+
+pub fn strip_whitespace<'a, T: FromIterator<&'a str>>(val: &'a String, split_by: &'a str) -> T {
+    val.split(split_by).map(|v| v.trim().clone() ).collect()
+}
 
 static BODY_MATCHERS: [(&'static str, fn(expected: &String, actual: &String, config: DiffConfig, mismatches: &mut Vec<Mismatch>)); 1] = [
     ("application/json", json::match_json)
@@ -182,8 +193,8 @@ fn parse_charset_parameters(parameters: &[&str]) -> HashMap<String, String> {
 }
 
 fn match_content_type(expected: &String, actual: &String, mismatches: &mut Vec<Mismatch>) {
-    let expected_values: Vec<&str> = libpact_v1_models::strip_whitespace(expected, ";");
-    let actual_values: Vec<&str> = libpact_v1_models::strip_whitespace(actual, ";");
+    let expected_values: Vec<&str> = strip_whitespace(expected, ";");
+    let actual_values: Vec<&str> = strip_whitespace(actual, ";");
     let expected_parameters = expected_values.as_slice().split_first().unwrap();
     let actual_parameters = actual_values.as_slice().split_first().unwrap();
     let header_mismatch = Mismatch::HeaderMismatch { key: "Content-Type".to_string(),
@@ -212,7 +223,7 @@ fn match_content_type(expected: &String, actual: &String, mismatches: &mut Vec<M
 fn match_header_value(key: &String, expected: &String, actual: &String, mismatches: &mut Vec<Mismatch>) {
     if key.to_lowercase() == "content-type" {
         match_content_type(expected, actual, mismatches);
-    } else if libpact_v1_models::strip_whitespace::<String>(expected, ",") != libpact_v1_models::strip_whitespace::<String>(actual, ",") {
+    } else if strip_whitespace::<String>(expected, ",") != strip_whitespace::<String>(actual, ",") {
         mismatches.push(Mismatch::HeaderMismatch { key: key.clone(),
             expected: format!("{}", expected),
             actual: format!("{}", actual),
@@ -263,18 +274,18 @@ fn compare_bodies(mimetype: String, expected: &String, actual: &String, config: 
     }
 }
 
-pub fn match_body(expected: &HttpPart, actual: &HttpPart, config: DiffConfig,
+pub fn match_body(expected: &models::HttpPart, actual: &models::HttpPart, config: DiffConfig,
     mismatches: &mut Vec<Mismatch>) {
     if expected.mimetype() == actual.mimetype() {
         match (expected.body(), actual.body()) {
-            (&OptionalBody::Missing, _) => (),
-            (&OptionalBody::Null, &OptionalBody::Present(ref b)) => {
+            (&models::OptionalBody::Missing, _) => (),
+            (&models::OptionalBody::Null, &models::OptionalBody::Present(ref b)) => {
                 mismatches.push(Mismatch::BodyMismatch { expected: None, actual: Some(b.clone()),
                     mismatch: format!("Expected empty body but received '{}'", b.clone()),
                     path: s!("/")});
             },
-            (&OptionalBody::Null, _) => (),
-            (e, &OptionalBody::Missing) => {
+            (&models::OptionalBody::Null, _) => (),
+            (e, &models::OptionalBody::Missing) => {
                 mismatches.push(Mismatch::BodyMismatch { expected: Some(e.value()), actual: None,
                     mismatch: format!("Expected body '{}' but was missing", e.value()),
                     path: s!("/")});
@@ -290,7 +301,7 @@ pub fn match_body(expected: &HttpPart, actual: &HttpPart, config: DiffConfig,
     }
 }
 
-pub fn match_request(expected: Request, actual: Request) -> Vec<Mismatch> {
+pub fn match_request(expected: models::Request, actual: models::Request) -> Vec<Mismatch> {
     let mut mismatches = vec![];
 
     debug!("comparing to expected request: {:?}", expected);
@@ -309,7 +320,7 @@ pub fn match_status(expected: u16, actual: u16, mismatches: &mut Vec<Mismatch>) 
     }
 }
 
-pub fn match_response(expected: Response, actual: Response) -> Vec<Mismatch> {
+pub fn match_response(expected: models::Response, actual: models::Response) -> Vec<Mismatch> {
     let mut mismatches = vec![];
 
     debug!("comparing to expected response: {:?}", expected);

@@ -1,7 +1,4 @@
-all: libpact_v1_models libpact_v1_matching libpact_v1_mock_server pact_v1_mock_server
-
-libpact_v1_models:
-	cd libpact_v1_models && cargo build && cargo test
+all: libpact_v1_matching libpact_v1_mock_server pact_v1_mock_server
 
 libpact_v1_matching:
 	cd libpact_v1_matching && cargo build && cargo test
