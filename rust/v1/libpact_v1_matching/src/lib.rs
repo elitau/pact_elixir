@@ -11,7 +11,6 @@ macro_rules! s {
 }
 
 use std::collections::HashMap;
-use std::any::Any;
 use std::iter::FromIterator;
 
 pub mod models;
@@ -55,16 +54,16 @@ impl PartialEq for Mismatch {
                 &Mismatch::BodyTypeMismatch{ expected: ref e2, actual: ref a2 }) => {
                 e1 == e2 && a1 == a2
             },
-            (&Mismatch::QueryMismatch{ parameter: ref p1, expected: ref e1, actual: ref a1, mismatch: ref m1 },
-                &Mismatch::QueryMismatch{ parameter: ref p2, expected: ref e2, actual: ref a2, mismatch: ref m2 }) => {
+            (&Mismatch::QueryMismatch{ parameter: ref p1, expected: ref e1, actual: ref a1, mismatch: _ },
+                &Mismatch::QueryMismatch{ parameter: ref p2, expected: ref e2, actual: ref a2, mismatch: _ }) => {
                 p1 == p2 && e1 == e2 && a1 == a2
             },
-            (&Mismatch::HeaderMismatch{ key: ref p1, expected: ref e1, actual: ref a1, mismatch: ref m1 },
-                &Mismatch::HeaderMismatch{ key: ref p2, expected: ref e2, actual: ref a2, mismatch: ref m2 }) => {
+            (&Mismatch::HeaderMismatch{ key: ref p1, expected: ref e1, actual: ref a1, mismatch: _ },
+                &Mismatch::HeaderMismatch{ key: ref p2, expected: ref e2, actual: ref a2, mismatch: _ }) => {
                 p1 == p2 && e1 == e2 && a1 == a2
             },
-            (&Mismatch::BodyMismatch{ path: ref p1, expected: ref e1, actual: ref a1, mismatch: ref m1 },
-                &Mismatch::BodyMismatch{ path: ref p2, expected: ref e2, actual: ref a2, mismatch: ref m2 }) => {
+            (&Mismatch::BodyMismatch{ path: ref p1, expected: ref e1, actual: ref a1, mismatch: _ },
+                &Mismatch::BodyMismatch{ path: ref p2, expected: ref e2, actual: ref a2, mismatch: _ }) => {
                 p1 == p2 && e1 == e2 && a1 == a2
             },
             (_, _) => false
