@@ -123,3 +123,215 @@ fn request_mimetype_is_based_on_the_content_type_header() {
         body: OptionalBody::Present(s!("<html><body>this is also not json</body></html>")), .. request.clone() }.mimetype())
         .to(be_equal_to("text/html"));
 }
+
+#[test]
+fn loading_interaction_from_json() {
+    let interaction_json = r#"{
+        "description": "String",
+        "providerState": "provider state"
+    }"#;
+    let interaction = Interaction::from_json(0, &Json::from_str(interaction_json).unwrap());
+    expect!(interaction.description).to(be_equal_to("String"));
+    expect!(interaction.provider_state).to(be_some().value("provider state"));
+}
+
+#[test]
+fn defaults_to_number_if_no_description() {
+    let interaction_json = r#"{
+        "providerState": "provider state"
+    }"#;
+    let interaction = Interaction::from_json(0, &Json::from_str(interaction_json).unwrap());
+    expect!(interaction.description).to(be_equal_to("Interaction 0"));
+    expect!(interaction.provider_state).to(be_some().value("provider state"));
+}
+
+#[test]
+fn defaults_to_none_if_no_provider_state() {
+    let interaction_json = r#"{
+    }"#;
+    let interaction = Interaction::from_json(0, &Json::from_str(interaction_json).unwrap());
+    expect!(interaction.provider_state).to(be_none());
+}
+
+#[test]
+fn defaults_to_none_if_provider_state_null() {
+    let interaction_json = r#"{
+        "providerState": null
+    }"#;
+    let interaction = Interaction::from_json(0, &Json::from_str(interaction_json).unwrap());
+    expect!(interaction.provider_state).to(be_none());
+}
+
+#[test]
+fn load_empty_pact() {
+    let pact_json = r#"{}"#;
+    let pact = Pact::from_json(&Json::from_str(pact_json).unwrap());
+    expect!(pact.provider.name).to(be_equal_to("provider"));
+    expect!(pact.consumer.name).to(be_equal_to("consumer"));
+    expect!(pact.interactions.iter()).to(have_count(0));
+    expect!(pact.metadata.iter()).to(have_count(0));
+}
+
+#[test]
+fn missing_metadata() {
+    let pact_json = r#"{}"#;
+    let pact = Pact::from_json(&Json::from_str(pact_json).unwrap());
+    expect!(pact.specification_version()).to(be_equal_to(PactSpecification::Unknown));
+}
+
+#[test]
+fn missing_spec_version() {
+    let pact_json = r#"{
+        "metadata" : {
+        }
+    }"#;
+    let pact = Pact::from_json(&Json::from_str(pact_json).unwrap());
+    expect!(pact.specification_version()).to(be_equal_to(PactSpecification::Unknown));
+}
+
+#[test]
+fn missing_version_in_spec_version() {
+    let pact_json = r#"{
+        "metadata" : {
+            "pact-specification": {
+
+            }
+        }
+    }"#;
+    let pact = Pact::from_json(&Json::from_str(pact_json).unwrap());
+    expect!(pact.specification_version()).to(be_equal_to(PactSpecification::Unknown));
+}
+
+#[test]
+fn empty_version_in_spec_version() {
+    let pact_json = r#"{
+        "metadata" : {
+            "pact-specification": {
+                "version": ""
+            }
+        }
+    }"#;
+    let pact = Pact::from_json(&Json::from_str(pact_json).unwrap());
+    expect!(pact.specification_version()).to(be_equal_to(PactSpecification::Unknown));
+}
+
+#[test]
+fn correct_version_in_spec_version() {
+    let pact_json = r#"{
+        "metadata" : {
+            "pact-specification": {
+                "version": "1.0.0"
+            }
+        }
+    }"#;
+    let pact = Pact::from_json(&Json::from_str(pact_json).unwrap());
+    expect!(pact.specification_version()).to(be_equal_to(PactSpecification::V1));
+}
+
+#[test]
+fn invalid_version_in_spec_version() {
+    let pact_json = r#"{
+        "metadata" : {
+            "pact-specification": {
+                "version": "znjclkazjs"
+            }
+        }
+    }"#;
+    let pact = Pact::from_json(&Json::from_str(pact_json).unwrap());
+    expect!(pact.specification_version()).to(be_equal_to(PactSpecification::Unknown));
+}
+
+
+#[test]
+fn load_basic_pact() {
+    let pact_json = r#"
+    {
+        "provider": {
+            "name": "Alice Service"
+        },
+        "consumer": {
+            "name": "Consumer"
+        },
+        "interactions": [
+          {
+              "description": "a retrieve Mallory request",
+              "request": {
+                "method": "GET",
+                "path": "/mallory",
+                "query": "name=ron&status=good"
+              },
+              "response": {
+                "status": 200,
+                "headers": {
+                  "Content-Type": "text/html"
+                },
+                "body": "\"That is some good Mallory.\""
+              }
+          }
+        ]
+    }
+    "#;
+    let pact = Pact::from_json(&Json::from_str(pact_json).unwrap());
+    expect!(&pact.provider.name).to(be_equal_to("Alice Service"));
+    expect!(&pact.consumer.name).to(be_equal_to("Consumer"));
+    expect!(pact.interactions.iter()).to(have_count(1));
+    let interaction = pact.interactions[0].clone();
+    expect!(interaction.description).to(be_equal_to("a retrieve Mallory request"));
+    expect!(pact.specification_version()).to(be_equal_to(PactSpecification::Unknown));
+    expect!(pact.metadata.iter()).to(have_count(0));
+}
+
+#[test]
+fn load_pact() {
+    let pact_json = r#"
+    {
+      "provider" : {
+        "name" : "test_provider"
+      },
+      "consumer" : {
+        "name" : "test_consumer"
+      },
+      "interactions" : [ {
+        "providerState" : "test state",
+        "description" : "test interaction",
+        "request" : {
+          "method" : "GET",
+          "path" : "/",
+          "headers" : {
+            "testreqheader" : "testreqheadervalue"
+          },
+          "query" : "q=p&q=p2&r=s",
+          "body" : {
+            "test" : true
+          }
+        },
+        "response" : {
+          "status" : 200,
+          "headers" : {
+            "testreqheader" : "testreqheaderval"
+          },
+          "body" : {
+            "responsetest" : true
+          }
+        }
+      } ],
+      "metadata" : {
+        "pact-specification" : {
+          "version" : "1.0.0"
+        },
+        "pact-jvm" : {
+          "version" : ""
+        }
+      }
+    }
+    "#;
+    let pact = Pact::from_json(&Json::from_str(pact_json).unwrap());
+    expect!(&pact.provider.name).to(be_equal_to("test_provider"));
+    expect!(&pact.consumer.name).to(be_equal_to("test_consumer"));
+    expect!(pact.metadata.iter()).to(have_count(2));
+    expect!(&pact.metadata["pact-specification"]["version"]).to(be_equal_to("1.0.0"));
+    expect!(pact.specification_version()).to(be_equal_to(PactSpecification::V1));
+    expect!(pact.interactions.iter()).to(have_count(1));
+    let interaction = pact.interactions[0].clone();
+    expect!(interaction.description).to(be_equal_to("test interaction"));
+}

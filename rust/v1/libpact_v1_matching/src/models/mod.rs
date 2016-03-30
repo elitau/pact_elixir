@@ -1,20 +1,54 @@
 use std::collections::HashMap;
+use std::collections::BTreeMap;
 use rustc_serialize::json::Json;
 use rustc_serialize::hex::FromHex;
 use super::strip_whitespace;
 use regex::Regex;
+use semver::Version;
 
-#[allow(dead_code)]
+#[derive(Debug, Clone, PartialEq)]
+pub enum PactSpecification {
+    Unknown,
+    V1
+}
+
+#[derive(Debug, Clone)]
 pub struct Consumer {
     pub name: String
 }
 
-#[allow(dead_code)]
+impl Consumer {
+    pub fn from_json(pact_json: &Json) -> Consumer {
+        let val = match pact_json.find("name") {
+            Some(v) => match v.clone() {
+                Json::String(s) => s,
+                _ => v.to_string()
+            },
+            None => "consumer".to_string()
+        };
+        Consumer { name: val.clone() }
+    }
+}
+
+#[derive(Debug, Clone)]
 pub struct Provider {
     pub name: String
 }
 
-#[derive(RustcDecodable, Debug, Clone, PartialEq)]
+impl Provider {
+    pub fn from_json(pact_json: &Json) -> Provider {
+        let val = match pact_json.find("name") {
+            Some(v) => match v.clone() {
+                Json::String(s) => s,
+                _ => v.to_string()
+            },
+            None => "provider".to_string()
+        };
+        Provider { name: val.clone() }
+    }
+}
+
+#[derive(RustcDecodable, RustcEncodable, Debug, Clone, PartialEq)]
 pub enum OptionalBody {
     Missing,
     Empty,
@@ -86,7 +120,7 @@ pub trait HttpPart {
     }
 }
 
-#[derive(RustcDecodable, Debug, Clone)]
+#[derive(RustcDecodable, RustcEncodable, Debug, Clone)]
 pub struct Request {
     pub method: String,
     pub path: String,
@@ -170,7 +204,7 @@ impl Request {
     }
 }
 
-#[derive(RustcDecodable, Debug)]
+#[derive(RustcDecodable, RustcEncodable, Debug, Clone)]
 pub struct Response {
     pub status: u16,
     pub headers: Option<HashMap<String, String>>,
@@ -207,20 +241,120 @@ impl HttpPart for Response {
     }
 }
 
-#[allow(dead_code)]
+#[derive(Debug, Clone)]
 pub struct Interaction {
     pub description: String,
-    pub provider_state: String,
-    pub request: Request,
-    pub response: Response
+    pub provider_state: Option<String>
+    // pub request: Request,
+    // pub response: Response
 }
 
-#[allow(dead_code)]
+impl Interaction {
+
+    pub fn from_json(index: usize, pact_json: &Json) -> Interaction {
+        let description = match pact_json.find("description") {
+            Some(v) => match *v {
+                Json::String(ref s) => s.clone(),
+                _ => v.to_string()
+            },
+            None => format!("Interaction {}", index)
+        };
+        let provider_state = match pact_json.find("providerState") {
+            Some(v) => match *v {
+                Json::String(ref s) => if s.is_empty() {
+                    None
+                } else {
+                    Some(s.clone())
+                },
+                Json::Null => None,
+                _ => Some(v.to_string())
+            },
+            None => None
+        };
+        Interaction {
+             description: description,
+             provider_state: provider_state
+         }
+    }
+
+}
+
+#[derive(Debug, Clone)]
 pub struct Pact {
     pub consumer: Consumer,
     pub provider: Provider,
-    pub interations: Vec<Interaction>,
-    pub metadata: HashMap<String, HashMap<String, String>>
+    pub interactions: Vec<Interaction>,
+    pub metadata: BTreeMap<String, BTreeMap<String, String>>
+}
+
+fn parse_meta_data(pact_json: &Json) -> BTreeMap<String, BTreeMap<String, String>> {
+    match pact_json.find("metadata") {
+        Some(v) => match *v {
+            Json::Object(ref obj) => obj.iter().map(|(k, v)| {
+                let val = match *v {
+                    Json::Object(ref obj) => obj.iter().map(|(k, v)| {
+                        match *v {
+                            Json::String(ref s) => (k.clone(), s.clone()),
+                            _ => (k.clone(), v.to_string())
+                        }
+                    }).collect(),
+                    _ => btreemap!{}
+                };
+                (k.clone(), val)
+            }).collect(),
+            _ => btreemap!{}
+        },
+        None => btreemap!{}
+    }
+}
+
+fn parse_interactions(pact_json: &Json) -> Vec<Interaction> {
+    match pact_json.find("interactions") {
+        Some(v) => match *v {
+            Json::Array(ref array) => array.iter().enumerate().map(|(index, ijson)| {
+                Interaction::from_json(index, ijson)
+            }).collect(),
+            _ => vec![]
+        },
+        None => vec![]
+    }
+}
+
+impl Pact {
+
+    pub fn from_json(pact_json: &Json) -> Pact {
+        let metadata = parse_meta_data(pact_json);
+        let consumer = match pact_json.find("consumer") {
+            Some(v) => Consumer::from_json(v),
+            None => Consumer { name: s!("consumer") }
+        };
+        let provider = match pact_json.find("provider") {
+            Some(v) => Provider::from_json(v),
+            None => Provider { name: s!("provider") }
+        };
+        Pact {
+            consumer: consumer,
+            provider: provider,
+            interactions: parse_interactions(pact_json),
+            metadata: metadata
+        }
+    }
+
+    pub fn specification_version(&self) -> PactSpecification {
+        match self.metadata.get("pact-specification") {
+            Some(spec_ver) => match spec_ver.get("version") {
+                Some(ver) => match Version::parse(ver) {
+                    Ok(ver) => match ver.major {
+                        1 => PactSpecification::V1,
+                        _ => PactSpecification::Unknown
+                    },
+                    _ => PactSpecification::Unknown
+                },
+                None => PactSpecification::Unknown
+            },
+            None => PactSpecification::Unknown
+        }
+    }
 }
 
 fn decode_query(query: &str) -> String {

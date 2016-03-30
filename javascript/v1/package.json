@@ -1,0 +1,16 @@
+{
+  "name": "pact-reference-v1-js",
+  "version": "1.0.0",
+  "description": "Reference implementation of calling pact mock server from JS",
+  "main": "index.js",
+  "dependencies": {
+    "ffi": "^2.0.0"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "simple_pact": "node lib/simple_pact.js"
+  },
+  "author": "",
+  "license": "ISC"
+}
