@@ -2,7 +2,7 @@ use super::*;
 use super::match_header_value;
 use std::collections::HashMap;
 use expectest::prelude::*;
-use models::{HttpPart, Request, Response, OptionalBody};
+use models::{Request, OptionalBody};
 
 #[test]
 fn match_method_returns_nothing_if_the_method_matches() {

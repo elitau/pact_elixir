@@ -5,6 +5,7 @@ extern crate rustc_serialize;
 #[macro_use] extern crate lazy_static;
 extern crate regex;
 extern crate semver;
+#[macro_use] extern crate itertools;
 
 #[macro_export]
 macro_rules! s {

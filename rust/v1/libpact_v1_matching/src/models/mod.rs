@@ -120,7 +120,7 @@ pub trait HttpPart {
     }
 }
 
-#[derive(RustcDecodable, RustcEncodable, Debug, Clone)]
+#[derive(PartialEq, Debug, Clone)]
 pub struct Request {
     pub method: String,
     pub path: String,
@@ -179,17 +179,23 @@ fn body_from_json(request: &Json) -> OptionalBody {
 impl Request {
     pub fn from_json(request: &Json) -> Request {
         let method_val = match request.find("method") {
-            Some(v) => v.to_string(),
+            Some(v) => match *v {
+                Json::String(ref s) => s.to_uppercase(),
+                _ => v.to_string().to_uppercase()
+            },
             None => "GET".to_string()
         };
         let path_val = match request.find("path") {
-            Some(v) => v.to_string(),
+            Some(v) => match *v {
+                Json::String(ref s) => s.clone(),
+                _ => v.to_string()
+            },
             None => "/".to_string()
         };
         let query_val = match request.find("query") {
             Some(v) => match *v {
                 Json::String(ref s) => parse_query_string(s),
-                _ => None
+                _ => parse_query_string(&v.to_string())
             },
             None => None
         };
@@ -202,9 +208,20 @@ impl Request {
             matching_rules: None
         }
     }
+
+    pub fn default_request() -> Request {
+        Request {
+            method: s!("GET"),
+            path: s!("/"),
+            query: None,
+            headers: None,
+            body: OptionalBody::Missing,
+            matching_rules: None
+        }
+    }
 }
 
-#[derive(RustcDecodable, RustcEncodable, Debug, Clone)]
+#[derive(PartialEq, Debug, Clone)]
 pub struct Response {
     pub status: u16,
     pub headers: Option<HashMap<String, String>>,
@@ -222,6 +239,15 @@ impl Response {
             status: status_val,
             headers: headers_from_json(response),
             body: body_from_json(response),
+            matching_rules: None
+        }
+    }
+
+    pub fn default_response() -> Response {
+        Response {
+            status: 200,
+            headers: None,
+            body: OptionalBody::Missing,
             matching_rules: None
         }
     }
@@ -244,9 +270,9 @@ impl HttpPart for Response {
 #[derive(Debug, Clone)]
 pub struct Interaction {
     pub description: String,
-    pub provider_state: Option<String>
-    // pub request: Request,
-    // pub response: Response
+    pub provider_state: Option<String>,
+    pub request: Request,
+    pub response: Response
 }
 
 impl Interaction {
@@ -271,9 +297,19 @@ impl Interaction {
             },
             None => None
         };
+        let request = match pact_json.find("request") {
+            Some(v) => Request::from_json(v),
+            None => Request::default_request()
+        };
+        let response = match pact_json.find("response") {
+            Some(v) => Response::from_json(v),
+            None => Response::default_response()
+        };
         Interaction {
              description: description,
-             provider_state: provider_state
+             provider_state: provider_state,
+             request: request,
+             response: response
          }
     }
 
@@ -387,6 +423,8 @@ fn decode_query(query: &str) -> String {
                 },
                 _ => result.push('%')
             }
+        } else if c == '+' {
+            result.push(' ');
         } else {
             result.push(c);
         }
@@ -400,15 +438,21 @@ fn decode_query(query: &str) -> String {
 pub fn parse_query_string(query: &String) -> Option<HashMap<String, Vec<String>>> {
     if !query.is_empty() {
         Some(query.split("&").map(|kv| {
-            if !kv.is_empty() {
+            if kv.is_empty() {
+                vec![]
+            } else if kv.contains("=") {
                 kv.split("=").collect::<Vec<&str>>()
             } else {
-                vec![]
+                vec![kv]
             }
         }).fold(HashMap::new(), |mut map, name_value| {
             if !name_value.is_empty() {
                 let name = decode_query(name_value[0]);
-                let value = decode_query(name_value[1]);
+                let value = if name_value.len() > 1 {
+                    decode_query(name_value[1])
+                } else {
+                    s!("")
+                };
                 map.entry(name).or_insert(vec![]).push(value);
             }
             map

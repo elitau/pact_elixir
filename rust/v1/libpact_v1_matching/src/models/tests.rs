@@ -79,6 +79,44 @@ fn parse_query_string_decodes_values() {
 }
 
 #[test]
+fn quickcheck_parse_query_string() {
+    use quickcheck::{TestResult, quickcheck};
+    use super::decode_query;
+    use itertools::Itertools;
+    fn prop(s: String) -> TestResult {
+        if s.chars().all(|c| c.is_alphanumeric() || c == '+' || c == '&' || c == '%') {
+            let result = match parse_query_string(&s) {
+                Some(map) => {
+                    if map.len() == 1 && !s.contains("=") {
+                        *map.keys().next().unwrap() == decode_query(&s)
+                    } else {
+                        let reconstructed_query = map.iter().map(|(k, v)| {
+                            v.iter().map(|qv| format!("{}={}", k, qv)).join("&")
+                        }).join("&");
+                        let r = decode_query(&s) == reconstructed_query;
+                        if !r {
+                            p!(reconstructed_query);
+                            p!(decode_query(&s) == reconstructed_query);
+                        }
+                        r
+                    }
+                },
+                None => s.is_empty()
+            };
+
+            if !result {
+                p!(s);
+                p!(decode_query(&s));
+            }
+            TestResult::from_bool(result)
+        } else {
+            TestResult::discard()
+        }
+    }
+    quickcheck(prop as fn(_) -> _);
+}
+
+#[test]
 fn request_mimetype_is_based_on_the_content_type_header() {
     let request = Request { method: s!("GET"), path: s!("/"), query: None, headers: None,
         body: OptionalBody::Missing, matching_rules: None };
@@ -277,6 +315,21 @@ fn load_basic_pact() {
     expect!(pact.interactions.iter()).to(have_count(1));
     let interaction = pact.interactions[0].clone();
     expect!(interaction.description).to(be_equal_to("a retrieve Mallory request"));
+    expect!(interaction.provider_state).to(be_none());
+    expect!(interaction.request).to(be_equal_to(Request {
+        method: s!("GET"),
+        path: s!("/mallory"),
+        query: Some(hashmap!{ s!("name") => vec![s!("ron")], s!("status") => vec![s!("good")] }),
+        headers: None,
+        body: OptionalBody::Missing,
+        matching_rules: None
+    }));
+    expect!(interaction.response).to(be_equal_to(Response {
+        status: 200,
+        headers: Some(hashmap!{ s!("Content-Type") => s!("text/html") }),
+        body: OptionalBody::Present(s!("\"That is some good Mallory.\"")),
+        matching_rules: None
+    }));
     expect!(pact.specification_version()).to(be_equal_to(PactSpecification::Unknown));
     expect!(pact.metadata.iter()).to(have_count(0));
 }
@@ -334,4 +387,106 @@ fn load_pact() {
     expect!(pact.interactions.iter()).to(have_count(1));
     let interaction = pact.interactions[0].clone();
     expect!(interaction.description).to(be_equal_to("test interaction"));
+    expect!(interaction.provider_state).to(be_some().value("test state"));
+    expect!(interaction.request).to(be_equal_to(Request {
+        method: s!("GET"),
+        path: s!("/"),
+        query: Some(hashmap!{ s!("q") => vec![s!("p"), s!("p2")], s!("r") => vec![s!("s")] }),
+        headers: Some(hashmap!{ s!("testreqheader") => s!("testreqheadervalue") }),
+        body: OptionalBody::Present(s!("{\"test\":true}")),
+        matching_rules: None
+    }));
+    expect!(interaction.response).to(be_equal_to(Response {
+        status: 200,
+        headers: Some(hashmap!{ s!("testreqheader") => s!("testreqheaderval") }),
+        body: OptionalBody::Present(s!("{\"responsetest\":true}")),
+        matching_rules: None
+    }));
+}
+
+#[test]
+fn load_pact_encoded_query_string() {
+    let pact_json = r#"
+    {
+      "provider" : {
+        "name" : "test_provider"
+      },
+      "consumer" : {
+        "name" : "test_consumer"
+      },
+      "interactions" : [ {
+        "providerState" : "test state",
+        "description" : "test interaction",
+        "request" : {
+          "method" : "GET",
+          "path" : "/",
+          "headers" : {
+            "testreqheader" : "testreqheadervalue"
+          },
+          "query" : "datetime=2011-12-03T10%3A15%3A30%2B01%3A00&description=hello+world%21",
+          "body" : {
+            "test" : true
+          }
+        },
+        "response" : {
+          "status" : 200,
+          "headers" : {
+            "testreqheader" : "testreqheaderval"
+          },
+          "body" : {
+            "responsetest" : true
+          }
+        }
+      } ],
+      "metadata" : {
+        "pact-specification" : {
+          "version" : "2.0.0"
+        },
+        "pact-jvm" : {
+          "version" : ""
+        }
+      }
+    }
+    "#;
+    let pact = Pact::from_json(&Json::from_str(pact_json).unwrap());
+    expect!(pact.interactions.iter()).to(have_count(1));
+    let interaction = pact.interactions[0].clone();
+    expect!(interaction.request).to(be_equal_to(Request {
+        method: s!("GET"),
+        path: s!("/"),
+        query: Some(hashmap!{ s!("datetime") => vec![s!("2011-12-03T10:15:30+01:00")],
+            s!("description") => vec![s!("hello world!")] }),
+        headers: Some(hashmap!{ s!("testreqheader") => s!("testreqheadervalue") }),
+        body: OptionalBody::Present(s!("{\"test\":true}")),
+        matching_rules: None
+    }));
+}
+
+#[test]
+fn load_pact_converts_methods_to_uppercase() {
+    let pact_json = r#"
+    {
+      "interactions" : [ {
+        "description" : "test interaction",
+        "request" : {
+          "method" : "get"
+        },
+        "response" : {
+          "status" : 200
+        }
+      } ],
+      "metadata" : {}
+    }
+    "#;
+    let pact = Pact::from_json(&Json::from_str(pact_json).unwrap());
+    expect!(pact.interactions.iter()).to(have_count(1));
+    let interaction = pact.interactions[0].clone();
+    expect!(interaction.request).to(be_equal_to(Request {
+        method: s!("GET"),
+        path: s!("/"),
+        query: None,
+        headers: None,
+        body: OptionalBody::Missing,
+        matching_rules: None
+    }));
 }
