@@ -79,6 +79,7 @@ fn parse_query_string_decodes_values() {
 }
 
 #[test]
+#[ignore]
 fn quickcheck_parse_query_string() {
     use quickcheck::{TestResult, quickcheck};
     use super::decode_query;

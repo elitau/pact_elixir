@@ -421,25 +421,26 @@ fn partial_equal_for_body_mismatch() {
     expect!(&mismatch).to_not(be_equal_to(&Mismatch::QueryMismatch { parameter: s!(""), expected: s!("get"), actual: s!("post"), mismatch: s!("") }));
 }
 
-// use quickcheck::{TestResult, quickcheck};
-// #[test]
-// fn strip_whitespace_test() {
-//     use std::iter::FromIterator;
-//     fn prop(s: String, c: String) -> TestResult {
-//         if c.is_empty() || c.chars().any(|ch| !ch.is_alphanumeric() ) {
-//             TestResult::discard()
-//         } else {
-//             let cs = c.as_str();
-//             let stripped: Vec<&str> = strip_whitespace(&s, cs);
-//             let result = s.trim() == stripped.join(cs).to_string();
-//             if !result {
-//                 p!(s.trim());
-//                 p!(c);
-//                 p!(stripped);
-//                 p!(stripped.join(cs).to_string());
-//             }
-//             TestResult::from_bool(result)
-//         }
-//     }
-//     quickcheck(prop as fn(_, _) -> _);
-// }
+#[test]
+#[ignore]
+fn strip_whitespace_quickcheck() {
+    use std::iter::FromIterator;
+    use quickcheck::{TestResult, quickcheck};
+    fn prop(s: String, c: String) -> TestResult {
+        if c.is_empty() || c.chars().any(|ch| !ch.is_alphanumeric() ) {
+            TestResult::discard()
+        } else {
+            let cs = c.as_str();
+            let stripped: Vec<&str> = strip_whitespace(&s, cs);
+            let result = s.trim() == stripped.join(cs).to_string();
+            if !result {
+                p!(s.trim());
+                p!(c);
+                p!(stripped);
+                p!(stripped.join(cs).to_string());
+            }
+            TestResult::from_bool(result)
+        }
+    }
+    quickcheck(prop as fn(_, _) -> _);
+}

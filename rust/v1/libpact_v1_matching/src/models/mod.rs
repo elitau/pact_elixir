@@ -267,7 +267,7 @@ impl HttpPart for Response {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct Interaction {
     pub description: String,
     pub provider_state: Option<String>,
