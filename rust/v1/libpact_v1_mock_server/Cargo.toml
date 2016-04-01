@@ -18,7 +18,7 @@ uuid = "^0.1.18"
 [dependencies.rustful]
 version = "^0.7.0"
 default-features = false
-features = ["rustc_json_body", "ssl"]
+features = ["rustc_json_body"]
 
 [lib]
 name = "pact_v1_mock_server"
