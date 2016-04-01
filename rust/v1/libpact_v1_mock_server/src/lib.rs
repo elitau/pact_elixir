@@ -104,9 +104,15 @@ fn extract_path(uri: &RequestUri) -> String {
 
 fn extract_query_string(uri: &RequestUri) -> Option<HashMap<String, Vec<String>>> {
     match uri {
-        &RequestUri::AbsolutePath(ref s) => match s.splitn(2, "?").last() {
-            Some(q) => parse_query_string(&s!(q)),
-            None => None
+        &RequestUri::AbsolutePath(ref s) => {
+            if s.contains("?") {
+                match s.splitn(2, "?").last() {
+                    Some(q) => parse_query_string(&s!(q)),
+                    None => None
+                }
+            } else {
+                None
+            }
         },
         &RequestUri::AbsoluteUri(ref url) => match url.query {
             Some(ref q) => parse_query_string(q),
