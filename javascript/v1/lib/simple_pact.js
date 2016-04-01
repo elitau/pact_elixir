@@ -5,7 +5,8 @@ const net = require('net');
 const url = require('url');
 
 var lib = ffi.Library(path.join(__dirname, '../../../rust/v1/libpact_v1_mock_server/target/debug/libpact_v1_mock_server.so'), {
-  create_mock_server: ['int32', ['string']]
+  create_mock_server: ['int32', ['string']],
+  mock_server_matched: ['bool', ['int32']]
 });
 
 var pact = "{\n" +
@@ -43,7 +44,7 @@ var pact = "{\n" +
 "}\n";
 
 var port = lib.create_mock_server(pact);
-console.log(port);
+console.log("Mock server port=" + port);
 
 var options = {
   hostname: 'localhost',
@@ -63,7 +64,12 @@ var req = http.request(options, (res) => {
     console.log(`BODY: ${chunk}`);
   });
   res.on('end', () => {
-    console.log('No more data in response.')
+    console.log('No more data in response.');
+    if (lib.mock_server_matched(port)) {
+      console.log("Mock server matched all requests, Yay!");
+    } else {
+      console.log("We got some mismatches, Boo!");
+    }
   })
 });
 
