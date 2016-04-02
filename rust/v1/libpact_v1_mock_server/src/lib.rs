@@ -12,7 +12,6 @@ extern crate uuid;
 use libc::{c_char, int32_t};
 use std::ffi::CStr;
 use std::ffi::CString;
-use std::mem;
 use std::str;
 use libpact_v1_matching::models::{Pact, Interaction, Request, Response, OptionalBody};
 use libpact_v1_matching::models::parse_query_string;
@@ -23,7 +22,7 @@ use std::thread;
 use std::sync::Mutex;
 use std::sync::mpsc::channel;
 use std::io::{Read, Write};
-use hyper::server::Server;
+use hyper::server::{Server, Listening};
 use hyper::status::StatusCode;
 use hyper::header::{Headers, ContentType, AccessControlAllowOrigin, ContentLength};
 use hyper::mime::{Mime, TopLevel, SubLevel, Attr, Value};
@@ -90,20 +89,32 @@ fn mismatches_to_json(mismatches: &Vec<(Interaction, Vec<Mismatch>)>) -> Json {
     })
 }
 
-#[derive(Debug, Clone, PartialEq)]
 pub struct MockServer {
     pub id: String,
     pub port: i32,
-    pub matches: Vec<MatchResult>
+    pub server: u64,
+    pub matches: Vec<MatchResult>,
+    pub resources: Vec<CString>
 }
 
 impl MockServer {
     pub fn new(id: String) -> MockServer {
-        MockServer { id: id.clone(), port: -1, matches: vec![] }
+        MockServer { id: id.clone(), port: -1, server: 0, matches: vec![], resources: vec![] }
     }
 
     pub fn port(&mut self, port: i32) {
         self.port = port;
+    }
+
+    pub fn server(&mut self, server: &Listening) {
+        let p = server as *const Listening;
+        self.server = p as u64;
+    }
+}
+
+impl PartialEq for MockServer {
+    fn eq(&self, other: &MockServer) -> bool {
+        self.id == other.id
     }
 }
 
@@ -264,9 +275,13 @@ fn start_mock_server(id: String, pact: Pact) -> Result<i32, String> {
         });
 
         match server_result {
-            Ok(server) => {
+            Ok(ref server) => {
                 let port = server.socket.port() as i32;
                 info!("Mock Provider Server started on port {}", port);
+                update_mock_server(&id, &|mock_server| {
+                    mock_server.port(port);
+                    mock_server.server(server);
+                });
                 out_tx.send(Ok(port)).unwrap();
             },
             Err(e) => {
@@ -276,13 +291,7 @@ fn start_mock_server(id: String, pact: Pact) -> Result<i32, String> {
         }
     });
 
-    match out_rx.recv().unwrap() {
-        Err(err) => Err(err),
-        Ok(port) => {
-            update_mock_server(&id, &|mock_server| mock_server.port(port) );
-            Ok(port)
-        }
-    }
+    out_rx.recv().unwrap()
 }
 
 fn lookup_mock_server<R>(mock_server_port: i32, f: &Fn(&mut MockServer) -> R) -> Option<R> {
@@ -334,25 +343,40 @@ pub extern fn mock_server_matched(mock_server_port: int32_t) -> bool {
 
 #[no_mangle]
 pub extern fn mock_server_mismatches(mock_server_port: int32_t) -> *mut c_char {
-    let mismatches = lookup_mock_server(mock_server_port, &|mock_server| {
-        mock_server.matches.iter()
+    let result = lookup_mock_server(mock_server_port, &|mock_server| {
+        let mismatches = mock_server.matches.iter()
             .filter(|mismatch| !mismatch.matched())
             .map(|mismatch| mismatch.to_json() )
-            .collect::<Vec<Json>>()
+            .collect::<Vec<Json>>();
+        let json = Json::Array(mismatches);
+        let s = CString::new(json.to_string()).unwrap();
+        let p = s.as_ptr();
+        mock_server.resources.push(s);
+        p
     });
-    let json = match mismatches {
-        Some(array) => Json::Array(array),
-        None => Json::Null
-    };
-    let s = CString::new(json.to_string()).unwrap();
-    let p = s.as_ptr();
-    mem::forget(s);
-    p as *mut _
+    match result {
+        Some(p) => p as *mut _,
+        None => 0 as *mut _
+    }
 }
 
 #[no_mangle]
 pub extern fn cleanup_mock_server(mock_server_port: int32_t) -> bool {
-    lookup_mock_server(mock_server_port, &|mock_server| {
-        true
-    }).unwrap_or(false)
+    let id_result = lookup_mock_server(mock_server_port, &|mock_server| {
+        mock_server.resources.clear();
+        if mock_server.server > 0 {
+            let server_raw = mock_server.server as *mut Listening;
+            let mut server_ref = unsafe { &mut *server_raw };
+            server_ref.close().unwrap();
+        }
+        mock_server.id.clone()
+    });
+
+    match id_result {
+        Some(ref id) => {
+            MOCK_SERVERS.lock().unwrap().remove(id);
+            true
+        },
+        None => false
+    }
 }
