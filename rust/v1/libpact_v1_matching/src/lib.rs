@@ -14,6 +14,7 @@ macro_rules! s {
 
 use std::collections::HashMap;
 use std::iter::FromIterator;
+use rustc_serialize::json::{Json, ToJson};
 
 pub mod models;
 mod json;
@@ -35,6 +36,81 @@ pub enum Mismatch {
     HeaderMismatch { key: String, expected: String, actual: String, mismatch: String },
     BodyTypeMismatch { expected: String, actual: String },
     BodyMismatch { path: String, expected: Option<String>, actual: Option<String>, mismatch: String }
+}
+
+impl Mismatch {
+    pub fn to_json(&self) -> Json {
+        match self {
+            &Mismatch::MethodMismatch { expected: ref e, actual: ref a } => {
+                let map = btreemap!{
+                    s!("type") => s!("MethodMismatch").to_json(),
+                    s!("expected") => e.to_json(),
+                    s!("actual") => a.to_json()
+                };
+                Json::Object(map)
+            },
+            &Mismatch::PathMismatch { expected: ref e, actual: ref a } => {
+                let map = btreemap!{
+                    s!("type") => s!("PathMismatch").to_json(),
+                    s!("expected") => e.to_json(),
+                    s!("actual") => a.to_json()
+                };
+                Json::Object(map)
+            },
+            &Mismatch::StatusMismatch { expected: ref e, actual: ref a } => {
+                let map = btreemap!{
+                    s!("type") => s!("StatusMismatch").to_json(),
+                    s!("expected") => e.to_json(),
+                    s!("actual") => a.to_json()
+                };
+                Json::Object(map)
+            },
+            &Mismatch::QueryMismatch { parameter: ref p, expected: ref e, actual: ref a, mismatch: ref m } => {
+                let map = btreemap!{
+                    s!("type") => s!("QueryMismatch").to_json(),
+                    s!("parameter") => p.to_json(),
+                    s!("expected") => e.to_json(),
+                    s!("actual") => a.to_json(),
+                    s!("mismatch") => m.to_json()
+                };
+                Json::Object(map)
+            },
+            &Mismatch::HeaderMismatch { key: ref k, expected: ref e, actual: ref a, mismatch: ref m } => {
+                let map = btreemap!{
+                    s!("type") => s!("HeaderMismatch").to_json(),
+                    s!("key") => k.to_json(),
+                    s!("expected") => e.to_json(),
+                    s!("actual") => a.to_json(),
+                    s!("mismatch") => m.to_json()
+                };
+                Json::Object(map)
+            },
+            &Mismatch::BodyTypeMismatch { expected: ref e, actual: ref a } => {
+                let map = btreemap!{
+                    s!("type") => s!("BodyTypeMismatch").to_json(),
+                    s!("expected") => e.to_json(),
+                    s!("actual") => a.to_json()
+                };
+                Json::Object(map)
+            },
+            &Mismatch::BodyMismatch { path: ref p, expected: ref e, actual: ref a, mismatch: ref m } => {
+                let map = btreemap!{
+                    s!("type") => s!("BodyMismatch").to_json(),
+                    s!("path") => p.to_json(),
+                    s!("expected") => match e {
+                        &Some(ref v) => v.to_json(),
+                        &None => Json::Null
+                    },
+                    s!("actual") => match a {
+                        &Some(ref v) => v.to_json(),
+                        &None => Json::Null
+                    },
+                    s!("mismatch") => m.to_json()
+                };
+                Json::Object(map)
+            }
+        }
+    }
 }
 
 impl PartialEq for Mismatch {

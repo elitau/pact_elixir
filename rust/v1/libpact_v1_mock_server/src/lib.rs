@@ -11,14 +11,14 @@ extern crate uuid;
 
 use libc::{c_char, int32_t};
 use std::ffi::CStr;
+use std::ffi::CString;
+use std::mem;
 use std::str;
 use libpact_v1_matching::models::{Pact, Interaction, Request, Response, OptionalBody};
 use libpact_v1_matching::models::parse_query_string;
 use libpact_v1_matching::Mismatch;
-use rustc_serialize::json;
-use rustc_serialize::json::Json;
+use rustc_serialize::json::{self, Json, ToJson};
 use std::collections::{BTreeMap, HashMap};
-use std::cell::Cell;
 use std::thread;
 use std::sync::Mutex;
 use std::sync::mpsc::channel;
@@ -52,6 +52,42 @@ impl MatchResult {
             _ => false
         }
     }
+
+    pub fn to_json(&self) -> Json {
+        match self {
+            &MatchResult::RequestMatch(_) => Json::Object(btreemap!{ s!("type") => s!("request-match").to_json() }),
+            &MatchResult::RequestMismatch(ref mismatches) => mismatches_to_json(mismatches),
+            &MatchResult::RequestNotFound(ref req) => Json::Object(btreemap!{
+                s!("type") => s!("request-not-found").to_json(),
+                s!("method") => req.method.to_json(),
+                s!("path") => req.path.to_json()
+            })
+        }
+    }
+}
+
+fn mismatches_to_json(mismatches: &Vec<(Interaction, Vec<Mismatch>)>) -> Json {
+    let req = &mismatches[0].0.request;
+    let mut array = vec![];
+    for ref mismatch_ref in mismatches {
+        let mut map = btreemap!{
+            s!("type") => s!("request-mismatch").to_json(),
+            s!("method") => mismatch_ref.0.request.method.to_json(),
+            s!("path") => mismatch_ref.0.request.path.to_json()
+        };
+        let mut mismatch_array = vec![];
+        for ms in &mismatch_ref.1 {
+            mismatch_array.push(ms.to_json());
+        }
+        map.insert(s!("mismatches"), Json::Array(mismatch_array));
+        array.push(Json::Object(map));
+    }
+    Json::Object(btreemap!{
+        s!("type") => s!("request-mismatch").to_json(),
+        s!("method") => req.method.to_json(),
+        s!("path") => req.path.to_json(),
+        s!("mismatches") => Json::Array(array)
+    })
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -249,11 +285,11 @@ fn start_mock_server(id: String, pact: Pact) -> Result<i32, String> {
     }
 }
 
-fn lookup_mock_server(mock_server_port: i32, f: &Fn(&mut MockServer)) -> bool {
+fn lookup_mock_server<R>(mock_server_port: i32, f: &Fn(&mut MockServer) -> R) -> Option<R> {
     let mut map = MOCK_SERVERS.lock().unwrap();
     match map.iter_mut().find(|ms| ms.1.port == mock_server_port ) {
-        Some(mock_server) => { f(&mut *mock_server.1); true },
-        None => false
+        Some(mock_server) => Some(f(&mut *mock_server.1)),
+        None => None
     }
 }
 
@@ -291,12 +327,32 @@ pub extern fn create_mock_server(pact_str: *const c_char) -> int32_t {
 
 #[no_mangle]
 pub extern fn mock_server_matched(mock_server_port: int32_t) -> bool {
-    let ok = Cell::new(false);
-    if lookup_mock_server(mock_server_port, &|mock_server| {
-        ok.set(!mock_server.matches.iter().any(|mismatch| !mismatch.matched()));
-    }) {
-        ok.get()
-    } else {
-        false
-    }
+    lookup_mock_server(mock_server_port, &|mock_server| {
+        !mock_server.matches.iter().any(|mismatch| !mismatch.matched())
+    }).unwrap_or(false)
+}
+
+#[no_mangle]
+pub extern fn mock_server_mismatches(mock_server_port: int32_t) -> *mut c_char {
+    let mismatches = lookup_mock_server(mock_server_port, &|mock_server| {
+        mock_server.matches.iter()
+            .filter(|mismatch| !mismatch.matched())
+            .map(|mismatch| mismatch.to_json() )
+            .collect::<Vec<Json>>()
+    });
+    let json = match mismatches {
+        Some(array) => Json::Array(array),
+        None => Json::Null
+    };
+    let s = CString::new(json.to_string()).unwrap();
+    let p = s.as_ptr();
+    mem::forget(s);
+    p as *mut _
+}
+
+#[no_mangle]
+pub extern fn cleanup_mock_server(mock_server_port: int32_t) -> bool {
+    lookup_mock_server(mock_server_port, &|mock_server| {
+        true
+    }).unwrap_or(false)
 }

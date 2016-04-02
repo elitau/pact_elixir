@@ -4,14 +4,11 @@ const http = require('http');
 const net = require('net');
 const url = require('url');
 
-var dll = '../../../rust/v1/libpact_v1_mock_server/target/debug/libpact_v1_mock_server.so';
-if (process.platform == 'darwin') {
-  dll = '../../../rust/v1/libpact_v1_mock_server/target/debug/libpact_v1_mock_server';
-}
-
+var dll = '../../../rust/v1/libpact_v1_mock_server/target/debug/libpact_v1_mock_server';
 var lib = ffi.Library(path.join(__dirname, dll), {
   create_mock_server: ['int32', ['string']],
-  mock_server_matched: ['bool', ['int32']]
+  mock_server_matched: ['bool', ['int32']],
+  cleanup_mock_server: ['bool', ['int32']]
 });
 
 var pact = "{\n" +
@@ -75,6 +72,8 @@ var req = http.request(options, (res) => {
     } else {
       console.log("We got some mismatches, Boo!");
     }
+
+    lib.cleanup_mock_server(port);
   })
 });
 

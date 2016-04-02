@@ -9,7 +9,8 @@
   "devDependencies": {},
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "simple_pact": "node lib/simple_pact.js"
+    "simple_pact": "node lib/simple_pact.js",
+    "simple_pact_error": "node lib/simple_pact_error.js"
   },
   "author": "",
   "license": "ISC"
