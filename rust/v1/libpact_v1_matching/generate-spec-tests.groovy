@@ -12,13 +12,13 @@ specs.eachFileRecurse(FileType.DIRECTORIES) { dir ->
 
   testFile.withPrintWriter { pw ->
     if (requestResponsePath == 'request') {
-      pw.println('use libpact_v1_matching::models::Request;')
-      pw.println('use libpact_v1_matching::match_request;')
+      pw.println('use pact_v1_matching::models::Request;')
+      pw.println('use pact_v1_matching::match_request;')
       pw.println('use rustc_serialize::json::Json;')
       pw.println('use expectest::prelude::*;')
     } else if (requestResponsePath == 'response') {
-      pw.println('use libpact_v1_matching::models::Response;')
-      pw.println('use libpact_v1_matching::match_response;')
+      pw.println('use pact_v1_matching::models::Response;')
+      pw.println('use pact_v1_matching::match_response;')
       pw.println('use rustc_serialize::json::Json;')
       pw.println('use expectest::prelude::*;')
     }

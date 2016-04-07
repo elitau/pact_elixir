@@ -1,5 +1,5 @@
-use libpact_v1_matching::models::Response;
-use libpact_v1_matching::match_response;
+use pact_v1_matching::models::Response;
+use pact_v1_matching::match_response;
 use rustc_serialize::json::Json;
 use expectest::prelude::*;
 

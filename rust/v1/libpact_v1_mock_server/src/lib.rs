@@ -3,7 +3,7 @@
 #[macro_use] extern crate maplit;
 #[macro_use] extern crate lazy_static;
 extern crate libc;
-#[macro_use] extern crate libpact_v1_matching;
+#[macro_use] extern crate pact_v1_matching;
 extern crate rustc_serialize;
 extern crate env_logger;
 #[macro_use] extern crate hyper;
@@ -13,9 +13,9 @@ use libc::{c_char, int32_t};
 use std::ffi::CStr;
 use std::ffi::CString;
 use std::str;
-use libpact_v1_matching::models::{Pact, Interaction, Request, Response, OptionalBody};
-use libpact_v1_matching::models::parse_query_string;
-use libpact_v1_matching::Mismatch;
+use pact_v1_matching::models::{Pact, Interaction, Request, Response, OptionalBody};
+use pact_v1_matching::models::parse_query_string;
+use pact_v1_matching::Mismatch;
 use rustc_serialize::json::{self, Json, ToJson};
 use std::collections::{BTreeMap, HashMap};
 use std::thread;
@@ -131,7 +131,7 @@ fn match_request(req: &Request, interactions: &Vec<Interaction>) -> MatchResult 
         MatchResult::RequestNotFound(req.clone())
     } else {
         let matches: Vec<(Interaction, Vec<Mismatch>)> = list.iter().map(|i| {
-            let mismatches = libpact_v1_matching::match_request(i.request.clone(), req.clone());
+            let mismatches = pact_v1_matching::match_request(i.request.clone(), req.clone());
             (i.clone(), mismatches)
         }).collect();
         match matches.iter().find(|i| i.1.is_empty()) {
@@ -226,7 +226,7 @@ fn record_result(id: &String, match_result: &MatchResult) {
     });
 }
 
-fn start_mock_server(id: String, pact: Pact) -> Result<i32, String> {
+pub fn start_mock_server(id: String, pact: Pact) -> Result<i32, String> {
     insert_new_mock_server(&id);
     let (out_tx, out_rx) = channel();
     let (in_tx, in_rx) = channel();

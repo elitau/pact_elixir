@@ -1,47 +1,34 @@
-
-
 use rustful::{Server, Handler, Context, Response, TreeRouter};
 use std::thread;
 use std::sync::mpsc::channel;
 use rustful::StatusCode;
+use pact_v1_matching::models::Pact;
+use pact_v1_mock_server::start_mock_server;
+use uuid::Uuid;
+use rustc_serialize::json::ParserError;
+use  std::error::Error;
 
-fn list_root(context: Context, mut response: Response) {
-    response.send("Hello World!");
-}
+fn start_provider(mut context: Context, mut response: Response) {
+    let json_result = context.body.read_json_body();
+    match json_result {
+        Ok(pact_json) => {
+            let pact = Pact::from_json(&pact_json);
+            match start_mock_server(Uuid::new_v4().to_string(), pact) {
+                Ok(mock_server) => {
 
-fn start_provider(context: Context, mut response: Response) {
-    let my_router = insert_routes!{
-        TreeRouter::new() => {
-            Get: list_root
-        }
-    };
-
-    let (tx, rx) = channel();
-    let child = thread::spawn(move || {
-        let server_result = Server {
-            handlers: my_router,
-            host: 8081.into(),
-            ..Server::default()
-        }.run();
-
-        match server_result {
-            Ok(server) => {
-                info!("Provider Server started on port {}", server.socket.port());
-                tx.send("OK".to_string()).unwrap();
-                tx.send(format!("Provider Server started on port {}", server.socket.port())).unwrap();
-            },
-            Err(e) => {
-                error!("could not start server: {}", e);
-                tx.send("ERROR".to_string()).unwrap();
-                tx.send(format!("could not start server: {}", e));
+                },
+                Err(msg) => {
+                    response.set_status(StatusCode::BadRequest);
+                    response.send(msg);
+                }
             }
+        },
+        Err(err) => {
+            error!("Could not parse pact json: {}", err);
+            response.set_status(StatusCode::BadRequest);
+            response.send(err.description());
         }
-    });
-    match &*rx.recv().unwrap() {
-        "OK" => response.set_status(StatusCode::Ok),
-        _ => response.set_status(StatusCode::BadRequest)
     }
-    response.send(rx.recv().unwrap());
 }
 
 pub fn start_command() {
