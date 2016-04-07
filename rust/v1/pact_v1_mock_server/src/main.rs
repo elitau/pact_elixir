@@ -6,7 +6,6 @@ extern crate pact_v1_mock_server;
 #[macro_use] extern crate log;
 extern crate env_logger;
 extern crate uuid;
-extern crate rustc_serialize;
 
 use getopts::{Options, Matches};
 use std::env;
