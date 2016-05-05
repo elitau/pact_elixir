@@ -14,6 +14,7 @@ use rustful::header::{
     Host
 };
 use hyper::method::Method;
+use hyper::mime::{Mime, TopLevel, SubLevel, Attr, Value};
 use pact_v1_matching::models::Pact;
 use pact_v1_mock_server::start_mock_server;
 use uuid::Uuid;
@@ -36,6 +37,10 @@ fn start_provider(mut context: Context, mut response: Response) {
             match start_mock_server(mock_server_id.clone(), pact) {
                 Ok(mock_server) => {
                     response.set_status(StatusCode::Ok);
+                    response.headers_mut().set(
+                        ContentType(Mime(TopLevel::Application, SubLevel::Json,
+                                         vec![(Attr::Charset, Value::Utf8)]))
+                    );
                     let mock_server_json = Json::Object(btreemap!{
                         s!("id") => Json::String(mock_server_id),
                         s!("port") => Json::I64(mock_server as i64),
