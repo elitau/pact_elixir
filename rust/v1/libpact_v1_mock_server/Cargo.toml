@@ -4,7 +4,7 @@ version = "0.0.0"
 authors = ["Ronald Holshausen <uglyog@gmail.com>"]
 
 [dependencies]
-libc = "^0.2.8"
+libc = "^0.2.9"
 rustc-serialize = "^0.3"
 pact_v1_matching = { path = "../libpact_v1_matching" }
 p-macro = "^0.2.0"

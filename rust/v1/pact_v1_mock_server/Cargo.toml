@@ -4,7 +4,8 @@ version = "0.0.0"
 authors = ["Ronald Holshausen <uglyog@gmail.com>"]
 
 [dependencies]
-getopts = "^0.2"
+libc = "^0.2.9"
+clap = "^2.4.0"
 rustc-serialize = "^0.3"
 pact_v1_matching = { path = "../libpact_v1_matching" }
 pact_v1_mock_server = { path = "../libpact_v1_mock_server" }

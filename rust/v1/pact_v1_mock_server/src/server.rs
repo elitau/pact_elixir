@@ -62,7 +62,7 @@ fn start_provider(mut context: Context, mut response: Response) {
     }
 }
 
-pub fn start_command() {
+pub fn start_server(port: u16) {
     let my_router = insert_routes!{
         TreeRouter::new() => {
             Post: start_provider
@@ -71,7 +71,7 @@ pub fn start_command() {
 
     let server_result = Server {
         handlers: my_router,
-        host: 8080.into(),
+        host: port.into(),
         ..Server::default()
     }.run();
 
