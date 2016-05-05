@@ -31,7 +31,9 @@ To get more details on any command, run '{} <command> -h' replacing <command> wi
 fn print_command_usage(program: String, opts: Options, matches: Matches, command: String) {
     match command.as_str() {
         "start" => {
-            let brief = format!("Usage: {} [options] start", program);
+            let brief = format!(r#"Usage: {} [options] start
+
+This starts a new master mock server."#, program);
             println!("{}", opts.usage(&brief));
         },
         _ => ()
@@ -95,16 +97,16 @@ fn main() {
         Ok(m) => { m }
         Err(f) => display_error(f.to_string(), program, opts)
     };
-    if matches.free.is_empty() || matches.opt_present("h") {
+
+    if matches.opt_present("v") {
+        print_version();
+        std::process::exit(0);
+    } else if matches.free.is_empty() || matches.opt_present("h") {
         print_usage(program, opts, Some(matches));
         std::process::exit(1);
     } else if !COMMANDS.contains(&&*matches.free[0]) {
         display_error(format!("{} is not a valid command.", matches.free[0].clone()), program, opts);
     }
 
-    if matches.opt_present("v") {
-        print_version();
-    } else {
-        execute_command(&matches.free[0], &matches);
-    }
+    execute_command(&matches.free[0], &matches);
 }
