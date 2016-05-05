@@ -1,19 +1,47 @@
-use rustful::{Server, Handler, Context, Response, TreeRouter};
+use rustful::{
+    Server,
+    Handler,
+    Context,
+    Response,
+    TreeRouter
+};
 use rustful::StatusCode;
+use rustful::header::{
+    ContentType,
+    AccessControlAllowOrigin,
+    AccessControlAllowMethods,
+    AccessControlAllowHeaders,
+    Host
+};
+use hyper::method::Method;
 use pact_v1_matching::models::Pact;
 use pact_v1_mock_server::start_mock_server;
 use uuid::Uuid;
-use  std::error::Error;
+use std::error::Error;
+use rustc_serialize::json::Json;
+
+fn add_cors_headers(response: &mut Response) {
+    response.headers_mut().set(AccessControlAllowOrigin::Any);
+    response.headers_mut().set(AccessControlAllowMethods(vec![Method::Post]));
+    response.headers_mut().set(AccessControlAllowHeaders(vec!["Content-Type".into()]));
+}
 
 fn start_provider(mut context: Context, mut response: Response) {
+    add_cors_headers(&mut response);
     let json_result = context.body.read_json_body();
     match json_result {
         Ok(pact_json) => {
             let pact = Pact::from_json(&pact_json);
-            match start_mock_server(Uuid::new_v4().to_string(), pact) {
+            let mock_server_id = Uuid::new_v4().to_string();
+            match start_mock_server(mock_server_id.clone(), pact) {
                 Ok(mock_server) => {
                     response.set_status(StatusCode::Ok);
-                    response.send(format!("Mock server started on port {}", mock_server));
+                    let mock_server_json = Json::Object(btreemap!{
+                        s!("id") => Json::String(mock_server_id),
+                        s!("port") => Json::I64(mock_server as i64),
+                    });
+                    let json_response = Json::Object(btreemap!{ s!("mockServer") => mock_server_json });
+                    response.send(json_response.to_string());
                 },
                 Err(msg) => {
                     response.set_status(StatusCode::BadRequest);

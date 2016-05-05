@@ -1,11 +1,14 @@
 extern crate getopts;
-extern crate pact_v1_matching;
+#[macro_use] extern crate pact_v1_matching;
 extern crate pact_v1_mock_server;
 #[macro_use] extern crate rustful;
 #[macro_use] extern crate p_macro;
 #[macro_use] extern crate log;
+#[macro_use] extern crate maplit;
 extern crate env_logger;
 extern crate uuid;
+extern crate rustc_serialize;
+#[macro_use] extern crate hyper;
 
 use getopts::{Options, Matches};
 use std::env;
