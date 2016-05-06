@@ -22,6 +22,7 @@ fn display_error(error: String, matches: &ArgMatches) -> ! {
 
 mod server;
 mod create_mock;
+mod list;
 
 static SPEC_VERSION: &'static str = "1.0.0";
 
@@ -84,7 +85,7 @@ fn main() {
                 Ok(p) => {
                     match matches.subcommand() {
                         ("start", Some(_)) => server::start_server(p),
-                        ("list", Some(sub_matches)) => (),
+                        ("list", Some(sub_matches)) => list::list_mock_servers(host, p, sub_matches),
                         ("create", Some(sub_matches)) => create_mock::create_mock_server(host, p, sub_matches),
                         _ => ()
                     }

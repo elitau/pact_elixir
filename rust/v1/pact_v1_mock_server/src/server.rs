@@ -3,6 +3,7 @@ use rustful::{
     Handler,
     Context,
     Response,
+    Router,
     TreeRouter
 };
 use rustful::StatusCode;
@@ -10,13 +11,13 @@ use rustful::header::{
     ContentType,
     AccessControlAllowOrigin,
     AccessControlAllowMethods,
-    AccessControlAllowHeaders,
-    Host
+    AccessControlAllowHeaders
 };
+use rustful::Method::{Get, Post};
 use hyper::method::Method;
 use hyper::mime::{Mime, TopLevel, SubLevel, Attr, Value};
 use pact_v1_matching::models::Pact;
-use pact_v1_mock_server::start_mock_server;
+use pact_v1_mock_server::{start_mock_server, iterate_mock_servers, MockServer};
 use uuid::Uuid;
 use std::error::Error;
 use rustc_serialize::json::Json;
@@ -25,6 +26,18 @@ fn add_cors_headers(response: &mut Response) {
     response.headers_mut().set(AccessControlAllowOrigin::Any);
     response.headers_mut().set(AccessControlAllowMethods(vec![Method::Post]));
     response.headers_mut().set(AccessControlAllowHeaders(vec!["Content-Type".into()]));
+}
+
+struct MasterServerHandler;
+
+impl Handler for MasterServerHandler {
+    fn handle_request(&self, context: Context, response: Response) {
+        match context.method {
+            Get => list_servers(context, response),
+            Post => start_provider(context, response),
+            _ => (),
+        }
+    }
 }
 
 fn start_provider(mut context: Context, mut response: Response) {
@@ -62,15 +75,37 @@ fn start_provider(mut context: Context, mut response: Response) {
     }
 }
 
+fn list_servers(mut context: Context, mut response: Response) {
+    add_cors_headers(&mut response);
+    response.set_status(StatusCode::Ok);
+    response.headers_mut().set(
+        ContentType(Mime(TopLevel::Application, SubLevel::Json,
+                         vec![(Attr::Charset, Value::Utf8)]))
+    );
+
+    let mut mock_servers = vec![];
+    iterate_mock_servers(&mut |id: &String, ms: &MockServer| {
+        let mock_server_json = Json::Object(btreemap!{
+            s!("id") => Json::String(id.clone()),
+            s!("port") => Json::U64(ms.port as u64),
+        });
+        mock_servers.push(mock_server_json);
+    });
+
+    let json_response = Json::Object(btreemap!{ s!("mockServers") => Json::Array(mock_servers) });
+    response.send(json_response.to_string());
+}
+
 pub fn start_server(port: u16) {
-    let my_router = insert_routes!{
+    let router = insert_routes! {
         TreeRouter::new() => {
-            Post: start_provider
+            Get: MasterServerHandler,
+            Post: MasterServerHandler,
         }
     };
 
     let server_result = Server {
-        handlers: my_router,
+        handlers: router,
         host: port.into(),
         ..Server::default()
     }.run();

@@ -302,6 +302,13 @@ fn lookup_mock_server<R>(mock_server_port: i32, f: &Fn(&mut MockServer) -> R) ->
     }
 }
 
+pub fn iterate_mock_servers(f: &mut FnMut(&String, &MockServer)) {
+    let map = MOCK_SERVERS.lock().unwrap();
+    for (key, value) in map.iter() {
+        f(key, value);
+    }
+}
+
 #[no_mangle]
 pub extern fn create_mock_server(pact_str: *const c_char) -> int32_t {
     env_logger::init().unwrap();
