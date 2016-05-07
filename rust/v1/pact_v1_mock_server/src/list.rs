@@ -20,12 +20,23 @@ pub fn list_mock_servers(host: &str, port: u16, matches: &ArgMatches) {
                     Ok(json) => {
                         let mock_servers_json = json.find("mockServers").unwrap();
                         let mock_servers = mock_servers_json.as_array().unwrap();
+                        let provider_len = mock_servers.iter().fold(0, |acc, ref ms| {
+                            let provider = ms.find("provider").unwrap().as_string().unwrap();
+                            if provider.len() > acc {
+                                provider.len()
+                            } else {
+                                acc
+                            }
+                        });
 
-                        println!("Mock Server Id                     \tPort");
+                        println!("{0:36}  {1:5}  {2:3$}  {4}", "Mock Server Id", "Port",
+                            "Provider", provider_len, "Status");
                         for ms in mock_servers {
                             let id = ms.find("id").unwrap().as_string().unwrap();
                             let port = ms.find("port").unwrap();
-                            println!("{}\t{}", id, port);
+                            let provider = ms.find("provider").unwrap().as_string().unwrap();
+                            let status = ms.find("status").unwrap().as_string().unwrap();
+                            println!("{}  {}  {}  {}", id, port, provider, status);
                         }
                     },
                     Err(_) => {

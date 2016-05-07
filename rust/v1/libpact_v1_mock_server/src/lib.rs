@@ -94,12 +94,14 @@ pub struct MockServer {
     pub port: i32,
     pub server: u64,
     pub matches: Vec<MatchResult>,
-    pub resources: Vec<CString>
+    pub resources: Vec<CString>,
+    pub pact: Pact
 }
 
 impl MockServer {
-    pub fn new(id: String) -> MockServer {
-        MockServer { id: id.clone(), port: -1, server: 0, matches: vec![], resources: vec![] }
+    pub fn new(id: String, pact: &Pact) -> MockServer {
+        MockServer { id: id.clone(), port: -1, server: 0, matches: vec![], resources: vec![],
+            pact : pact.clone() }
     }
 
     pub fn port(&mut self, port: i32) {
@@ -209,8 +211,8 @@ fn error_body(req: &Request, error: &String) -> String {
     json.clone()
 }
 
-fn insert_new_mock_server(id: &String) {
-    MOCK_SERVERS.lock().unwrap().insert(id.clone(), Box::new(MockServer::new(id.clone())));
+fn insert_new_mock_server(id: &String, pact: &Pact) {
+    MOCK_SERVERS.lock().unwrap().insert(id.clone(), Box::new(MockServer::new(id.clone(), pact)));
 }
 
 fn update_mock_server(id: &String, f: &Fn(&mut MockServer) -> ()) -> bool {
@@ -227,7 +229,7 @@ fn record_result(id: &String, match_result: &MatchResult) {
 }
 
 pub fn start_mock_server(id: String, pact: Pact) -> Result<i32, String> {
-    insert_new_mock_server(&id);
+    insert_new_mock_server(&id, &pact);
     let (out_tx, out_rx) = channel();
     let (in_tx, in_rx) = channel();
     in_tx.send((id.clone(), pact)).unwrap();

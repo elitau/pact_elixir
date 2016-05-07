@@ -88,6 +88,13 @@ fn list_servers(context: Context, mut response: Response) {
         let mock_server_json = Json::Object(btreemap!{
             s!("id") => Json::String(id.clone()),
             s!("port") => Json::U64(ms.port as u64),
+            s!("provider") => Json::String(ms.pact.provider.name.clone()),
+            s!("status") => Json::String(if ms.matches.iter().any(|m| !m.matched() ) {
+                    s!("error")
+                } else {
+                    s!("ok")
+                }
+            )
         });
         mock_servers.push(mock_server_json);
     });
