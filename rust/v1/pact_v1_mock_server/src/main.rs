@@ -14,8 +14,11 @@ use clap::{Arg, App, SubCommand, AppSettings, ErrorKind, ArgMatches};
 use std::env;
 use std::str::FromStr;
 use std::fs::{self, File};
+use std::io;
 use log::{LogLevelFilter};
 use simplelog::{CombinedLogger, TermLogger, FileLogger};
+use std::path::PathBuf;
+use std::fs::OpenOptions;
 
 fn display_error(error: String, matches: &ArgMatches) -> ! {
     println!("ERROR: {}", error);
@@ -35,28 +38,37 @@ fn print_version() {
     println!("pact specification version: v{}", SPEC_VERSION);
 }
 
-fn setup_loggers(level: &str, command: &str, output: Option<&str>) {
+fn setup_loggers(level: &str, command: &str, output: Option<&str>) -> Result<(), io::Error> {
     let log_level = match level {
         "none" => LogLevelFilter::Off,
         _ => LogLevelFilter::from_str(level).unwrap()
     };
     if command == "start" {
         let log_file = match output {
-            Some(path) => {
-                fs::create_dir_all(path).unwrap();
-                format!("{}/pact_v1_mock_server.log", path)
+            Some(p) => {
+                try!(fs::create_dir_all(p));
+                let mut path = PathBuf::from(p);
+                path.push("pact_v1_mock_server.log");
+                path
             },
-            None => s!("pact_v1_mock_server.log")
+            None => PathBuf::from("pact_v1_mock_server.log")
         };
+        let file = try!(OpenOptions::new()
+            .read(false)
+            .write(true)
+            .append(true)
+            .create(true)
+            .open(log_file));
         CombinedLogger::init(
             vec![
                 TermLogger::new(log_level),
-                FileLogger::new(log_level, File::create(log_file).unwrap())
+                FileLogger::new(log_level, file)
             ]
         ).unwrap();
     } else {
         TermLogger::init(log_level).unwrap();
     }
+    Ok(())
 }
 
 fn main() {
@@ -118,8 +130,11 @@ fn main() {
     let matches = app.get_matches_safe();
     match matches {
         Ok(ref matches) => {
-            setup_loggers(matches.value_of("loglevel").unwrap_or("info"),
-                matches.subcommand_name().unwrap(), matches.subcommand().1.unwrap().value_of("output"));
+            if let Err(err) = setup_loggers(matches.value_of("loglevel").unwrap_or("info"),
+                matches.subcommand_name().unwrap(),
+                matches.subcommand().1.unwrap().value_of("output")) {
+                display_error(format!("Could not setup loggers: {}", err), matches);
+            }
             let port = matches.value_of("port").unwrap_or("8080");
             let host = matches.value_of("host").unwrap_or("localhost");
             match port.parse::<u16>() {
