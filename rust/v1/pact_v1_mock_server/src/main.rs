@@ -5,13 +5,17 @@ extern crate pact_v1_mock_server;
 #[macro_use] extern crate p_macro;
 #[macro_use] extern crate log;
 #[macro_use] extern crate maplit;
-extern crate env_logger;
+extern crate simplelog;
 extern crate uuid;
 extern crate rustc_serialize;
 #[macro_use] extern crate hyper;
 
 use clap::{Arg, App, SubCommand, AppSettings, ErrorKind, ArgMatches};
 use std::env;
+use std::str::FromStr;
+use std::fs::{self, File};
+use log::{LogLevelFilter};
+use simplelog::{CombinedLogger, TermLogger, FileLogger};
 
 fn display_error(error: String, matches: &ArgMatches) -> ! {
     println!("ERROR: {}", error);
@@ -31,9 +35,31 @@ fn print_version() {
     println!("pact specification version: v{}", SPEC_VERSION);
 }
 
-fn main() {
-    env_logger::init().unwrap();
+fn setup_loggers(level: &str, command: &str, output: Option<&str>) {
+    let log_level = match level {
+        "none" => LogLevelFilter::Off,
+        _ => LogLevelFilter::from_str(level).unwrap()
+    };
+    if command == "start" {
+        let log_file = match output {
+            Some(path) => {
+                fs::create_dir_all(path).unwrap();
+                format!("{}/pact_v1_mock_server.log", path)
+            },
+            None => s!("pact_v1_mock_server.log")
+        };
+        CombinedLogger::init(
+            vec![
+                TermLogger::new(log_level),
+                FileLogger::new(log_level, File::create(log_file).unwrap())
+            ]
+        ).unwrap();
+    } else {
+        TermLogger::init(log_level).unwrap();
+    }
+}
 
+fn main() {
     let args: Vec<String> = env::args().collect();
     let program = args[0].clone();
 
@@ -52,16 +78,32 @@ fn main() {
             .long("port")
             .takes_value(true)
             .use_delimiter(false)
+            .global(true)
             .help("port the master mock server runs on (defaults to 8080)"))
         .arg(Arg::with_name("host")
             .short("h")
             .long("host")
             .takes_value(true)
             .use_delimiter(false)
+            .global(true)
             .help("hostname the master mock server runs on (defaults to localhost)"))
+        .arg(Arg::with_name("loglevel")
+            .short("l")
+            .long("loglevel")
+            .takes_value(true)
+            .use_delimiter(false)
+            .global(true)
+            .possible_values(&["error", "warn", "info", "debug", "trace", "none"])
+            .help("Log level for mock servers to write to the log file (defaults to info)"))
         .subcommand(SubCommand::with_name("start")
-                  .about("Starts the master mock server")
-                  .setting(AppSettings::ColoredHelp))
+                .about("Starts the master mock server")
+                .setting(AppSettings::ColoredHelp)
+                .arg(Arg::with_name("output")
+                      .short("o")
+                      .long("output")
+                      .takes_value(true)
+                      .use_delimiter(false)
+                      .help("the directory where to write files to (defaults to current directory)")))
         .subcommand(SubCommand::with_name("list")
                 .about("Lists all the running mock servers")
                 .setting(AppSettings::ColoredHelp))
@@ -79,6 +121,8 @@ fn main() {
     let matches = app.get_matches_safe();
     match matches {
         Ok(ref matches) => {
+            setup_loggers(matches.value_of("loglevel").unwrap_or("info"),
+                matches.subcommand_name().unwrap(), matches.subcommand().1.unwrap().value_of("output"));
             let port = matches.value_of("port").unwrap_or("8080");
             let host = matches.value_of("host").unwrap_or("localhost");
             match port.parse::<u16>() {

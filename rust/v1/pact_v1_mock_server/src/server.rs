@@ -24,7 +24,7 @@ use rustc_serialize::json::Json;
 
 fn add_cors_headers(response: &mut Response) {
     response.headers_mut().set(AccessControlAllowOrigin::Any);
-    response.headers_mut().set(AccessControlAllowMethods(vec![Method::Post]));
+    response.headers_mut().set(AccessControlAllowMethods(vec![Method::Get, Method::Post]));
     response.headers_mut().set(AccessControlAllowHeaders(vec!["Content-Type".into()]));
 }
 
@@ -75,7 +75,7 @@ fn start_provider(mut context: Context, mut response: Response) {
     }
 }
 
-fn list_servers(mut context: Context, mut response: Response) {
+fn list_servers(context: Context, mut response: Response) {
     add_cors_headers(&mut response);
     response.set_status(StatusCode::Ok);
     response.headers_mut().set(

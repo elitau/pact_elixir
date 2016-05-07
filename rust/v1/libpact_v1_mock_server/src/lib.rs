@@ -236,13 +236,14 @@ pub fn start_mock_server(id: String, pact: Pact) -> Result<i32, String> {
         let server = Server::http("0.0.0.0:0").unwrap();
         let server_result = server.handle(move |mut req: hyper::server::Request, mut res: hyper::server::Response| {
             let req = hyper_request_to_pact_request(&mut req);
-            debug!("Received request {:?}", req);
+            info!("Received request {:?}", req);
             let match_result = match_request(&req, &pact.interactions);
             record_result(&mock_server_id, &match_result);
             match match_result {
                 MatchResult::RequestMatch(ref response) => {
-                    debug!("Request matched, sending response {:?}", response);
+                    info!("Request matched, sending response {:?}", response);
                     *res.status_mut() = StatusCode::from_u16(response.status);
+                    res.headers_mut().set(AccessControlAllowOrigin::Any);
                     match response.headers {
                         Some(ref headers) => {
                             for (k, v) in headers.clone() {

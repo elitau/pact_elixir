@@ -381,7 +381,7 @@ pub fn match_body(expected: &models::HttpPart, actual: &models::HttpPart, config
 pub fn match_request(expected: models::Request, actual: models::Request) -> Vec<Mismatch> {
     let mut mismatches = vec![];
 
-    debug!("comparing to expected request: {:?}", expected);
+    info!("comparing to expected request: {:?}", expected);
     match_body(&expected, &actual, DiffConfig::NoUnexpectedKeys, &mut mismatches);
     match_method(expected.method, actual.method, &mut mismatches);
     match_path(expected.path, actual.path, &mut mismatches);
@@ -400,7 +400,7 @@ pub fn match_status(expected: u16, actual: u16, mismatches: &mut Vec<Mismatch>) 
 pub fn match_response(expected: models::Response, actual: models::Response) -> Vec<Mismatch> {
     let mut mismatches = vec![];
 
-    debug!("comparing to expected response: {:?}", expected);
+    info!("comparing to expected response: {:?}", expected);
     match_body(&expected, &actual, DiffConfig::AllowUnexpectedKeys, &mut mismatches);
     match_status(expected.status, actual.status, &mut mismatches);
     match_headers(expected.headers, actual.headers, &mut mismatches);
