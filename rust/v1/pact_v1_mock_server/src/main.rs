@@ -71,6 +71,21 @@ fn setup_loggers(level: &str, command: &str, output: Option<&str>) -> Result<(),
     Ok(())
 }
 
+fn lookup_global_option<'a>(option: &str, matches: &'a ArgMatches<'a>) -> Option<&'a str> {
+    let global_value = matches.value_of(option);
+    let command_value = matches.subcommand().1.unwrap().value_of(option);
+    match (global_value, command_value) {
+        (Some(v), None) => Some(v),
+        (None, Some(v)) => Some(v),
+        (Some(_), Some(v)) => {
+            println!("WARNING: The value for '{}' has been provided twice, defaulting to the second value '{}'",
+                option, v);
+            Some(v)
+        },
+        (None, None) => None
+    }
+}
+
 fn main() {
     let args: Vec<String> = env::args().collect();
     let program = args[0].clone();
@@ -90,18 +105,21 @@ fn main() {
             .long("port")
             .takes_value(true)
             .use_delimiter(false)
+            .global(true)
             .help("port the master mock server runs on (defaults to 8080)"))
         .arg(Arg::with_name("host")
             .short("h")
             .long("host")
             .takes_value(true)
             .use_delimiter(false)
+            .global(true)
             .help("hostname the master mock server runs on (defaults to localhost)"))
         .arg(Arg::with_name("loglevel")
             .short("l")
             .long("loglevel")
             .takes_value(true)
             .use_delimiter(false)
+            .global(true)
             .possible_values(&["error", "warn", "info", "debug", "trace", "none"])
             .help("Log level for mock servers to write to the log file (defaults to info)"))
         .subcommand(SubCommand::with_name("start")
@@ -130,13 +148,14 @@ fn main() {
     let matches = app.get_matches_safe();
     match matches {
         Ok(ref matches) => {
-            if let Err(err) = setup_loggers(matches.value_of("loglevel").unwrap_or("info"),
+            let log_level = lookup_global_option("loglevel", matches);
+            if let Err(err) = setup_loggers(log_level.unwrap_or("info"),
                 matches.subcommand_name().unwrap(),
                 matches.subcommand().1.unwrap().value_of("output")) {
                 display_error(format!("Could not setup loggers: {}", err), matches);
             }
-            let port = matches.value_of("port").unwrap_or("8080");
-            let host = matches.value_of("host").unwrap_or("localhost");
+            let port = lookup_global_option("port", matches).unwrap_or("8080");
+            let host = lookup_global_option("host", matches).unwrap_or("localhost");
             match port.parse::<u16>() {
                 Ok(p) => {
                     match matches.subcommand() {
