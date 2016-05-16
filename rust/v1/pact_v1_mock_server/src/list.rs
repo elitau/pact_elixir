@@ -7,8 +7,7 @@ use rustc_serialize::json::Json;
 pub fn list_mock_servers(host: &str, port: u16, matches: &ArgMatches) {
     let client = Client::new();
     let url = Url::parse(format!("http://{}:{}/", host, port).as_str()).unwrap();
-    let res = client.get(url.clone())
-        .send();
+    let res = client.get(url.clone()).send();
 
     match res {
         Ok(mut result) => {
@@ -29,7 +28,7 @@ pub fn list_mock_servers(host: &str, port: u16, matches: &ArgMatches) {
                             }
                         });
 
-                        println!("{0:36}  {1:5}  {2:3$}  {4}", "Mock Server Id", "Port",
+                        println!("{0:32}  {1:5}  {2:3$}  {4}", "Mock Server Id", "Port",
                             "Provider", provider_len, "Status");
                         for ms in mock_servers {
                             let id = ms.find("id").unwrap().as_string().unwrap();

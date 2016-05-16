@@ -329,7 +329,7 @@ pub extern fn create_mock_server(pact_str: *const c_char) -> int32_t {
     match result {
         Ok(pact_json) => {
             let pact = Pact::from_json(&pact_json);
-            match start_mock_server(Uuid::new_v4().to_string(), pact) {
+            match start_mock_server(Uuid::new_v4().simple().to_string(), pact) {
                 Ok(mock_server) => mock_server as i32,
                 Err(msg) => {
                     error!("Could not start mock server: {}", msg);

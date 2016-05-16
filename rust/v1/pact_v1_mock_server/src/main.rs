@@ -9,16 +9,25 @@ extern crate simplelog;
 extern crate uuid;
 extern crate rustc_serialize;
 #[macro_use] extern crate hyper;
+extern crate rand;
+
+#[cfg(test)]
+extern crate quickcheck;
+
+#[cfg(test)]
+#[macro_use(expect)]
+extern crate expectest;
 
 use clap::{Arg, App, SubCommand, AppSettings, ErrorKind, ArgMatches};
 use std::env;
 use std::str::FromStr;
-use std::fs::{self, File};
+use std::fs;
 use std::io;
 use log::{LogLevelFilter};
 use simplelog::{CombinedLogger, TermLogger, FileLogger};
 use std::path::PathBuf;
 use std::fs::OpenOptions;
+use uuid::Uuid;
 
 fn display_error(error: String, matches: &ArgMatches) -> ! {
     println!("ERROR: {}", error);
@@ -30,6 +39,7 @@ fn display_error(error: String, matches: &ArgMatches) -> ! {
 mod server;
 mod create_mock;
 mod list;
+mod verify;
 
 static SPEC_VERSION: &'static str = "1.0.0";
 
@@ -84,6 +94,14 @@ fn lookup_global_option<'a>(option: &str, matches: &'a ArgMatches<'a>) -> Option
         },
         (None, None) => None
     }
+}
+
+fn integer_value(v: String) -> Result<(), String> {
+    v.parse::<u16>().map(|_| ()).map_err(|e| format!("'{}' is not a valid port value: {}", v, e) )
+}
+
+fn uuid_value(v: String) -> Result<(), String> {
+    Uuid::parse_str(v.as_str()).map(|_| ()).map_err(|e| format!("'{}' is not a valid UUID value: {}", v, e) )
 }
 
 fn main() {
@@ -143,6 +161,26 @@ fn main() {
                     .use_delimiter(false)
                     .required(true)
                     .help("the pact file to define the mock server"))
+                .setting(AppSettings::ColoredHelp))
+        .subcommand(SubCommand::with_name("verify")
+                .about("Verify the mock server by id or port number, and generate a pact file if all ok")
+                .arg(Arg::with_name("mock-server-id")
+                    .short("i")
+                    .long("mock-server-id")
+                    .takes_value(true)
+                    .use_delimiter(false)
+                    .required_unless("mock-server-port")
+                    .conflicts_with("mock-server-port")
+                    .help("the ID of the mock server")
+                    .validator(uuid_value))
+                .arg(Arg::with_name("mock-server-port")
+                    .short("m")
+                    .long("mock-server-port")
+                    .takes_value(true)
+                    .use_delimiter(false)
+                    .required_unless("mock-server-host")
+                    .help("the port number of the mock server")
+                    .validator(integer_value))
                 .setting(AppSettings::ColoredHelp));
 
     let matches = app.get_matches_safe();
@@ -162,6 +200,7 @@ fn main() {
                         ("start", Some(_)) => server::start_server(p),
                         ("list", Some(sub_matches)) => list::list_mock_servers(host, p, sub_matches),
                         ("create", Some(sub_matches)) => create_mock::create_mock_server(host, p, sub_matches),
+                        ("verify", Some(sub_matches)) => verify::verify_mock_server(host, p, sub_matches),
                         _ => ()
                     }
                 },
@@ -176,4 +215,55 @@ fn main() {
             }
         }
     }
+}
+
+#[cfg(test)]
+mod test {
+
+    use std::iter::FromIterator;
+    use quickcheck::{TestResult, quickcheck};
+    use rand::Rng;
+    use super::{integer_value, uuid_value};
+    use expectest::prelude::*;
+
+    #[test]
+    fn validates_integer_value() {
+        fn prop(s: String) -> TestResult {
+            let mut rng = ::rand::thread_rng();
+            if rng.gen() && s.chars().any(|ch| !ch.is_numeric()) {
+                TestResult::discard()
+            } else {
+                let validation = integer_value(s.clone());
+                match validation {
+                    Ok(_) => TestResult::from_bool(!s.is_empty() && s.chars().all(|ch| ch.is_numeric() )),
+                    Err(_) => TestResult::from_bool(s.is_empty() || s.chars().find(|ch| !ch.is_numeric() ).is_some())
+                }
+            }
+        }
+        quickcheck(prop as fn(_) -> _);
+
+        expect!(integer_value(s!("1234"))).to(be_ok());
+        expect!(integer_value(s!("1234x"))).to(be_err());
+    }
+
+    #[test]
+    fn validates_uuid_value() {
+        fn prop(s: String) -> TestResult {
+            let mut rng = ::rand::thread_rng();
+            if rng.gen() && s.chars().any(|ch| !ch.is_digit(16)) {
+                TestResult::discard()
+            } else {
+                let validation = uuid_value(s.clone());
+                match validation {
+                    Ok(_) => TestResult::from_bool(!s.is_empty() && s.len() == 32 && s.chars().all(|ch| ch.is_digit(16) )),
+                    Err(_) => TestResult::from_bool(s.is_empty() || s.len() != 32 || s.chars().find(|ch| !ch.is_digit(16) ).is_some())
+                }
+            }
+        }
+        quickcheck(prop as fn(_) -> _);
+
+        expect!(uuid_value(s!("5159135ceb064af8a6baa447d81e4fbd"))).to(be_ok());
+        expect!(uuid_value(s!("1234x"))).to(be_err());
+    }
+
 }

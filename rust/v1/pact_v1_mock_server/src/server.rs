@@ -33,9 +33,16 @@ struct MasterServerHandler;
 impl Handler for MasterServerHandler {
     fn handle_request(&self, context: Context, response: Response) {
         match context.method {
-            Get => list_servers(context, response),
-            Post => start_provider(context, response),
-            _ => (),
+            Get => list_servers(response),
+            Post => {
+                let path = context.uri.clone();
+                if path.as_utf8_path().unwrap() == "/" {
+                    start_provider(context, response)
+                } else {
+                    verify_mock_server_request(context, response)
+                }
+            },
+            _ => ()
         }
     }
 }
@@ -46,7 +53,7 @@ fn start_provider(mut context: Context, mut response: Response) {
     match json_result {
         Ok(pact_json) => {
             let pact = Pact::from_json(&pact_json);
-            let mock_server_id = Uuid::new_v4().to_string();
+            let mock_server_id = Uuid::new_v4().simple().to_string();
             match start_mock_server(mock_server_id.clone(), pact) {
                 Ok(mock_server) => {
                     response.set_status(StatusCode::Ok);
@@ -75,7 +82,7 @@ fn start_provider(mut context: Context, mut response: Response) {
     }
 }
 
-fn list_servers(context: Context, mut response: Response) {
+fn list_servers(mut response: Response) {
     add_cors_headers(&mut response);
     response.set_status(StatusCode::Ok);
     response.headers_mut().set(
@@ -103,11 +110,20 @@ fn list_servers(context: Context, mut response: Response) {
     response.send(json_response.to_string());
 }
 
+pub fn verify_mock_server_request(context: Context, mut response: Response) {
+    add_cors_headers(&mut response);
+
+    let id = context.variables.get("id").unwrap();
+}
+
 pub fn start_server(port: u16) {
     let router = insert_routes! {
         TreeRouter::new() => {
-            Get: MasterServerHandler,
-            Post: MasterServerHandler,
+            "/" => {
+                Get: MasterServerHandler,
+                Post: MasterServerHandler
+            },
+            "/mockserver/:id/verify" => Post: MasterServerHandler
         }
     };
 
