@@ -4,7 +4,7 @@ use hyper::Url;
 use std::io::prelude::*;
 use rustc_serialize::json::Json;
 
-pub fn list_mock_servers(host: &str, port: u16, matches: &ArgMatches) {
+pub fn list_mock_servers(host: &str, port: u16, matches: &ArgMatches) -> Result<(), i32> {
     let client = Client::new();
     let url = Url::parse(format!("http://{}:{}/", host, port).as_str()).unwrap();
     let res = client.get(url.clone()).send();
@@ -36,10 +36,12 @@ pub fn list_mock_servers(host: &str, port: u16, matches: &ArgMatches) {
                             let provider = ms.find("provider").unwrap().as_string().unwrap();
                             let status = ms.find("status").unwrap().as_string().unwrap();
                             println!("{}  {}  {}  {}", id, port, provider, status);
-                        }
+                        };
+                        Ok(())
                     },
-                    Err(_) => {
-                        println!("{}", body);
+                    Err(err) => {
+                        error!("Failed to parse JSON: {}\n{}", err, body);
+                        ::display_error(format!("Failed to parse JSON: {}\n{}", err, body), matches);
                     }
                 }
             } else {

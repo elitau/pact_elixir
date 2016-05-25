@@ -105,6 +105,13 @@ fn uuid_value(v: String) -> Result<(), String> {
 }
 
 fn main() {
+    match handle_command_args() {
+        Ok(_) => (),
+        Err(err) => std::process::exit(err)
+    }
+}
+
+fn handle_command_args() -> Result<(), i32> {
     let args: Vec<String> = env::args().collect();
     let program = args[0].clone();
 
@@ -201,7 +208,7 @@ fn main() {
                         ("list", Some(sub_matches)) => list::list_mock_servers(host, p, sub_matches),
                         ("create", Some(sub_matches)) => create_mock::create_mock_server(host, p, sub_matches),
                         ("verify", Some(sub_matches)) => verify::verify_mock_server(host, p, sub_matches),
-                        _ => ()
+                        _ => Err(3)
                     }
                 },
                 Err(_) => display_error(format!("{} is not a valid port number", port), matches)
@@ -209,8 +216,11 @@ fn main() {
         },
         Err(ref err) => {
             match err.kind {
-                ErrorKind::HelpDisplayed => (),
-                ErrorKind::VersionDisplayed => print_version(),
+                ErrorKind::HelpDisplayed => Ok(()),
+                ErrorKind::VersionDisplayed => {
+                    print_version();
+                    Ok(())
+                },
                 _ => err.exit()
             }
         }

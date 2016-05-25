@@ -112,6 +112,20 @@ impl MockServer {
         let p = server as *const Listening;
         self.server = p as u64;
     }
+
+    pub fn to_json(&self) -> Json {
+        Json::Object(btreemap!{
+            s!("id") => Json::String(self.id.clone()),
+            s!("port") => Json::U64(self.port as u64),
+            s!("provider") => Json::String(self.pact.provider.name.clone()),
+            s!("status") => Json::String(if self.matches.iter().any(|m| !m.matched() ) {
+                    s!("error")
+                } else {
+                    s!("ok")
+                }
+            )
+        })
+    }
 }
 
 impl PartialEq for MockServer {
@@ -215,10 +229,18 @@ fn insert_new_mock_server(id: &String, pact: &Pact) {
     MOCK_SERVERS.lock().unwrap().insert(id.clone(), Box::new(MockServer::new(id.clone(), pact)));
 }
 
-fn update_mock_server(id: &String, f: &Fn(&mut MockServer) -> ()) -> bool {
+fn update_mock_server<R>(id: &String, f: &Fn(&mut MockServer) -> R) -> Option<R> {
     match MOCK_SERVERS.lock().unwrap().get_mut(id) {
-        Some(mock_server) => { f(mock_server); true },
-        _ => false
+        Some(mock_server) => Some(f(mock_server)),
+        _ => None
+    }
+}
+
+fn update_mock_server_by_port<R>(port: i32, f: &Fn(&mut MockServer) -> R) -> Option<R> {
+    let mut map = MOCK_SERVERS.lock().unwrap();
+    match map.iter_mut().find(|ms| ms.1.port == port ) {
+        Some(mock_server) => Some(f(mock_server.1)),
+        None => None
     }
 }
 
@@ -297,10 +319,18 @@ pub fn start_mock_server(id: String, pact: Pact) -> Result<i32, String> {
     out_rx.recv().unwrap()
 }
 
-fn lookup_mock_server<R>(mock_server_port: i32, f: &Fn(&mut MockServer) -> R) -> Option<R> {
-    let mut map = MOCK_SERVERS.lock().unwrap();
-    match map.iter_mut().find(|ms| ms.1.port == mock_server_port ) {
-        Some(mock_server) => Some(f(&mut *mock_server.1)),
+pub fn lookup_mock_server<R>(id: String, f: &Fn(&MockServer) -> R) -> Option<R> {
+    let map = MOCK_SERVERS.lock().unwrap();
+    match map.get(&id) {
+        Some(ref mock_server) => Some(f(mock_server)),
+        None => None
+    }
+}
+
+pub fn lookup_mock_server_by_port<R>(mock_server_port: i32, f: &Fn(&MockServer) -> R) -> Option<R> {
+    let map = MOCK_SERVERS.lock().unwrap();
+    match map.iter().find(|ms| ms.1.port == mock_server_port ) {
+        Some(mock_server) => Some(f(mock_server.1)),
         None => None
     }
 }
@@ -346,14 +376,14 @@ pub extern fn create_mock_server(pact_str: *const c_char) -> int32_t {
 
 #[no_mangle]
 pub extern fn mock_server_matched(mock_server_port: int32_t) -> bool {
-    lookup_mock_server(mock_server_port, &|mock_server| {
+    lookup_mock_server_by_port(mock_server_port, &|mock_server| {
         !mock_server.matches.iter().any(|mismatch| !mismatch.matched())
     }).unwrap_or(false)
 }
 
 #[no_mangle]
 pub extern fn mock_server_mismatches(mock_server_port: int32_t) -> *mut c_char {
-    let result = lookup_mock_server(mock_server_port, &|mock_server| {
+    let result = update_mock_server_by_port(mock_server_port, &|ref mut mock_server| {
         let mismatches = mock_server.matches.iter()
             .filter(|mismatch| !mismatch.matched())
             .map(|mismatch| mismatch.to_json() )
@@ -372,7 +402,7 @@ pub extern fn mock_server_mismatches(mock_server_port: int32_t) -> *mut c_char {
 
 #[no_mangle]
 pub extern fn cleanup_mock_server(mock_server_port: int32_t) -> bool {
-    let id_result = lookup_mock_server(mock_server_port, &|mock_server| {
+    let id_result = update_mock_server_by_port(mock_server_port, &|mock_server| {
         mock_server.resources.clear();
         if mock_server.server > 0 {
             let server_raw = mock_server.server as *mut Listening;

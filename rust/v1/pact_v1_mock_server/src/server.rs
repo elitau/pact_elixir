@@ -17,10 +17,17 @@ use rustful::Method::{Get, Post};
 use hyper::method::Method;
 use hyper::mime::{Mime, TopLevel, SubLevel, Attr, Value};
 use pact_v1_matching::models::Pact;
-use pact_v1_mock_server::{start_mock_server, iterate_mock_servers, MockServer};
+use pact_v1_mock_server::{
+    start_mock_server,
+    iterate_mock_servers,
+    MockServer
+};
 use uuid::Uuid;
 use std::error::Error;
 use rustc_serialize::json::Json;
+use std::borrow::Borrow;
+use std::iter::FromIterator;
+use verify;
 
 fn add_cors_headers(response: &mut Response) {
     response.headers_mut().set(AccessControlAllowOrigin::Any);
@@ -92,17 +99,7 @@ fn list_servers(mut response: Response) {
 
     let mut mock_servers = vec![];
     iterate_mock_servers(&mut |id: &String, ms: &MockServer| {
-        let mock_server_json = Json::Object(btreemap!{
-            s!("id") => Json::String(id.clone()),
-            s!("port") => Json::U64(ms.port as u64),
-            s!("provider") => Json::String(ms.pact.provider.name.clone()),
-            s!("status") => Json::String(if ms.matches.iter().any(|m| !m.matched() ) {
-                    s!("error")
-                } else {
-                    s!("ok")
-                }
-            )
-        });
+        let mock_server_json = ms.to_json();
         mock_servers.push(mock_server_json);
     });
 
@@ -112,11 +109,38 @@ fn list_servers(mut response: Response) {
 
 pub fn verify_mock_server_request(context: Context, mut response: Response) {
     add_cors_headers(&mut response);
+    response.headers_mut().set(
+        ContentType(Mime(TopLevel::Application, SubLevel::Json,
+                         vec![(Attr::Charset, Value::Utf8)]))
+    );
 
     let id = context.variables.get("id").unwrap();
+    match verify::validate_id(id.borrow()) {
+        Ok(ms) => {
+            let mut map = btreemap!{ s!("mockServer") => ms.to_json() };
+            let mismatches = ms.matches.iter().any(|m| !m.matched() );
+            let missing = ms.matches.iter().filter(|m| m.matched() );
+            if mismatches {
+                response.set_status(StatusCode::BadRequest);
+                map.insert(s!("mismatches"), Json::Array(
+                    Vec::from_iter(ms.matches.iter()
+                        .filter(|m| !m.matched())
+                        .map(|m| m.to_json()))));
+            } else {
+                response.set_status(StatusCode::Ok);
+            }
+
+            let json_response = Json::Object(map);
+            response.send(json_response.to_string());
+        },
+        Err(err) => {
+            response.set_status(StatusCode::UnprocessableEntity);
+            response.send(Json::String(err).to_string());
+        }
+    }
 }
 
-pub fn start_server(port: u16) {
+pub fn start_server(port: u16) -> Result<(), i32> {
     let router = insert_routes! {
         TreeRouter::new() => {
             "/" => {
@@ -134,7 +158,13 @@ pub fn start_server(port: u16) {
     }.run();
 
     match server_result {
-        Ok(server) => info!("Server started on port {}", server.socket.port()),
-        Err(e) => panic!("could not start server: {}", e)
+        Ok(server) => {
+            info!("Server started on port {}", server.socket.port());
+            Ok(())
+        },
+        Err(e) => {
+            error!("could not start server: {}", e);
+            Err(1)
+        }
     }
 }

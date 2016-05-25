@@ -15,7 +15,7 @@ fn read_pact_file(file: &str) -> io::Result<String> {
     Ok(buffer)
 }
 
-pub fn create_mock_server(host: &str, port: u16, matches: &ArgMatches) {
+pub fn create_mock_server(host: &str, port: u16, matches: &ArgMatches) -> Result<(), i32> {
     let file = matches.value_of("file").unwrap();
     info!("Creating mock server from file {}", file);
 
@@ -41,9 +41,11 @@ pub fn create_mock_server(host: &str, port: u16, matches: &ArgMatches) {
                                 let id = mock_server.find("id").unwrap();
                                 let port = mock_server.find("port").unwrap();
                                 println!("Mock server {} started on port {}", id, port);
+                                Ok(())
                             },
-                            Err(_) => {
-                                println!("{}", body);
+                            Err(err) => {
+                                error!("Failed to parse JSON: {}\n{}", err, body);
+                                ::display_error(format!("Failed to parse JSON: {}\n{}", err, body), matches);
                             }
                         }
                     } else {
