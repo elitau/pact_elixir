@@ -1,0 +1,27 @@
+[package]
+name = "pact_mock_server"
+version = "0.0.0"
+authors = ["Ronald Holshausen <uglyog@gmail.com>"]
+
+[dependencies]
+libc = "^0.2.9"
+rustc-serialize = "^0.3"
+pact_matching = { path = "../libpact_matching" }
+p-macro = "^0.2.0"
+env_logger = "^0.3.2"
+log = "^0.3.5"
+maplit = "^0.1.3"
+lazy_static = "^0.1.15"
+uuid = "^0.2.2"
+
+[dependencies.rustful]
+version = "^0.8.0"
+default-features = false
+features = ["rustc_json_body"]
+
+[dependencies.hyper]
+version = "^0.8.0"
+default-features = false
+
+[lib]
+crate-type = ["dylib", "rlib"]
