@@ -13,6 +13,7 @@ log = "^0.3.5"
 maplit = "^0.1.3"
 lazy_static = "^0.1.15"
 uuid = "^0.2.2"
+itertools = "^0.4.11"
 
 [dependencies.rustful]
 version = "^0.8.0"
@@ -25,3 +26,7 @@ default-features = false
 
 [lib]
 crate-type = ["dylib", "rlib"]
+
+[dev-dependencies]
+quickcheck = "^0.2"
+expectest = "^0.5.1"

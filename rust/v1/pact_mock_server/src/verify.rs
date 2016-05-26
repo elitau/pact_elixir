@@ -35,6 +35,7 @@ pub fn verify_mock_server(host: &str, port: u16, matches: &ArgMatches) -> Result
                         Ok(())
                     } else {
                         println!("Mock server {}/{} failed verification", id, port);
+                        display_verification_errors(&json);
                         Err(2)
                     }
                 },
@@ -82,4 +83,8 @@ pub fn validate_id(id: &str) -> Result<MockServer, String> {
     } else {
         validate_uuid(&s!(id))
     }
+}
+
+fn display_verification_errors(json: &Json) {
+
 }

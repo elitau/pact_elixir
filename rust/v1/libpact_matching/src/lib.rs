@@ -111,6 +111,18 @@ impl Mismatch {
             }
         }
     }
+
+    pub fn mismatch_type(&self) -> String {
+        match *self {
+            Mismatch::MethodMismatch { .. } => s!("MethodMismatch"),
+            Mismatch::PathMismatch { .. } => s!("PathMismatch"),
+            Mismatch::StatusMismatch { .. } => s!("StatusMismatch"),
+            Mismatch::QueryMismatch { .. } => s!("QueryMismatch"),
+            Mismatch::HeaderMismatch { .. } => s!("HeaderMismatch"),
+            Mismatch::BodyTypeMismatch { .. } => s!("BodyTypeMismatch"),
+            Mismatch::BodyMismatch { .. } => s!("BodyMismatch")
+        }
+    }
 }
 
 impl PartialEq for Mismatch {

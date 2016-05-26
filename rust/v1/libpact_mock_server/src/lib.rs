@@ -8,12 +8,13 @@ extern crate rustc_serialize;
 extern crate env_logger;
 #[macro_use] extern crate hyper;
 extern crate uuid;
+#[macro_use] extern crate itertools;
 
 use libc::{c_char, int32_t};
 use std::ffi::CStr;
 use std::ffi::CString;
 use std::str;
-use pact_matching::models::{Pact, Interaction, Request, Response, OptionalBody};
+use pact_matching::models::{Pact, Interaction, Request, OptionalBody};
 use pact_matching::models::parse_query_string;
 use pact_matching::Mismatch;
 use rustc_serialize::json::{self, Json, ToJson};
@@ -28,11 +29,12 @@ use hyper::header::{Headers, ContentType, AccessControlAllowOrigin, ContentLengt
 use hyper::mime::{Mime, TopLevel, SubLevel, Attr, Value};
 use hyper::uri::RequestUri;
 use uuid::Uuid;
+use itertools::Itertools;
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum MatchResult {
-    RequestMatch(Response),
-    RequestMismatch(Vec<(Interaction, Vec<Mismatch>)>),
+    RequestMatch(Interaction),
+    RequestMismatch(Interaction, Vec<Mismatch>),
     RequestNotFound(Request)
 }
 
@@ -40,7 +42,7 @@ impl MatchResult {
     pub fn match_key(&self) -> String {
         match self {
             &MatchResult::RequestMatch(_) => s!("Request-Matched"),
-            &MatchResult::RequestMismatch(_) => s!("Request-Mismatch"),
+            &MatchResult::RequestMismatch(_, _) => s!("Request-Mismatch"),
             &MatchResult::RequestNotFound(_) => s!("Unexpected-Request")
         }
     }
@@ -55,7 +57,7 @@ impl MatchResult {
     pub fn to_json(&self) -> Json {
         match self {
             &MatchResult::RequestMatch(_) => Json::Object(btreemap!{ s!("type") => s!("request-match").to_json() }),
-            &MatchResult::RequestMismatch(ref mismatches) => mismatches_to_json(mismatches),
+            &MatchResult::RequestMismatch(ref interaction, ref mismatches) => mismatches_to_json(&interaction.request, mismatches),
             &MatchResult::RequestNotFound(ref req) => Json::Object(btreemap!{
                 s!("type") => s!("request-not-found").to_json(),
                 s!("method") => req.method.to_json(),
@@ -65,27 +67,12 @@ impl MatchResult {
     }
 }
 
-fn mismatches_to_json(mismatches: &Vec<(Interaction, Vec<Mismatch>)>) -> Json {
-    let req = &mismatches[0].0.request;
-    let mut array = vec![];
-    for ref mismatch_ref in mismatches {
-        let mut map = btreemap!{
-            s!("type") => s!("request-mismatch").to_json(),
-            s!("method") => mismatch_ref.0.request.method.to_json(),
-            s!("path") => mismatch_ref.0.request.path.to_json()
-        };
-        let mut mismatch_array = vec![];
-        for ms in &mismatch_ref.1 {
-            mismatch_array.push(ms.to_json());
-        }
-        map.insert(s!("mismatches"), Json::Array(mismatch_array));
-        array.push(Json::Object(map));
-    }
+fn mismatches_to_json(request: &Request, mismatches: &Vec<Mismatch>) -> Json {
     Json::Object(btreemap!{
         s!("type") => s!("request-mismatch").to_json(),
-        s!("method") => req.method.to_json(),
-        s!("path") => req.path.to_json(),
-        s!("mismatches") => Json::Array(array)
+        s!("method") => request.method.to_json(),
+        s!("path") => request.path.to_json(),
+        s!("mismatches") => Json::Array(mismatches.iter().map(|m| m.to_json()).collect())
     })
 }
 
@@ -139,22 +126,33 @@ lazy_static! {
 }
 
 fn match_request(req: &Request, interactions: &Vec<Interaction>) -> MatchResult {
-    let list = interactions.clone();
-    let list: Vec<Interaction> = list.iter().filter(|i| {
-        i.request.method == req.method && i.request.path == req.path
-    }).map(|i| i.clone() ).collect();
-    if list.is_empty() {
-        MatchResult::RequestNotFound(req.clone())
-    } else {
-        let matches: Vec<(Interaction, Vec<Mismatch>)> = list.iter().map(|i| {
-            let mismatches = pact_matching::match_request(i.request.clone(), req.clone());
-            (i.clone(), mismatches)
-        }).collect();
-        match matches.iter().find(|i| i.1.is_empty()) {
-            Some(i) => MatchResult::RequestMatch(i.clone().0.response),
-            None => MatchResult::RequestMismatch(matches.clone())
-        }
+    let match_results = interactions
+        .into_iter()
+        .map(|i| (i.clone(), pact_matching::match_request(i.request.clone(), req.clone())))
+        .sorted_by(|i1, i2| {
+            let list1 = i1.1.clone().into_iter().map(|m| m.mismatch_type()).unique().count();
+            let list2 = i2.1.clone().into_iter().map(|m| m.mismatch_type()).unique().count();
+            Ord::cmp(&list1, &list2)
+        });
+    match match_results.first() {
+        Some(res) => {
+            if res.1.is_empty() {
+                MatchResult::RequestMatch(res.0.clone())
+            } else if method_or_path_mismatch(&res.1) {
+                MatchResult::RequestNotFound(req.clone())
+            } else {
+                MatchResult::RequestMismatch(res.0.clone(), res.1.clone())
+            }
+        },
+        None => MatchResult::RequestNotFound(req.clone())
     }
+}
+
+fn method_or_path_mismatch(mismatches: &Vec<Mismatch>) -> bool {
+    let mismatch_types: Vec<String> = mismatches.iter()
+        .map(|mismatch| mismatch.mismatch_type())
+        .collect();
+    mismatch_types.contains(&s!("MethodMismatch")) || mismatch_types.contains(&s!("PathMismatch"))
 }
 
 fn extract_path(uri: &RequestUri) -> String {
@@ -264,11 +262,11 @@ pub fn start_mock_server(id: String, pact: Pact) -> Result<i32, String> {
             let match_result = match_request(&req, &pact.interactions);
             record_result(&mock_server_id, &match_result);
             match match_result {
-                MatchResult::RequestMatch(ref response) => {
-                    info!("Request matched, sending response {:?}", response);
-                    *res.status_mut() = StatusCode::from_u16(response.status);
+                MatchResult::RequestMatch(ref interaction) => {
+                    info!("Request matched, sending response {:?}", interaction.response);
+                    *res.status_mut() = StatusCode::from_u16(interaction.response.status);
                     res.headers_mut().set(AccessControlAllowOrigin::Any);
-                    match response.headers {
+                    match interaction.response.headers {
                         Some(ref headers) => {
                             for (k, v) in headers.clone() {
                                 res.headers_mut().set_raw(k, vec![v.into_bytes()]);
@@ -276,7 +274,7 @@ pub fn start_mock_server(id: String, pact: Pact) -> Result<i32, String> {
                         },
                         None => ()
                     }
-                    match response.body {
+                    match interaction.response.body {
                         OptionalBody::Present(ref body) => {
                             res.send(body.as_bytes()).unwrap();
                         },
@@ -420,3 +418,13 @@ pub extern fn cleanup_mock_server(mock_server_port: int32_t) -> bool {
         None => false
     }
 }
+
+#[cfg(test)]
+#[macro_use(expect)]
+extern crate expectest;
+
+#[cfg(test)]
+extern crate quickcheck;
+
+#[cfg(test)]
+mod tests;
