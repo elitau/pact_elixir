@@ -230,7 +230,6 @@ fn handle_command_args() -> Result<(), i32> {
 #[cfg(test)]
 mod test {
 
-    use std::iter::FromIterator;
     use quickcheck::{TestResult, quickcheck};
     use rand::Rng;
     use super::{integer_value, uuid_value};

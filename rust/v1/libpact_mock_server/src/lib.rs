@@ -35,7 +35,8 @@ use itertools::Itertools;
 pub enum MatchResult {
     RequestMatch(Interaction),
     RequestMismatch(Interaction, Vec<Mismatch>),
-    RequestNotFound(Request)
+    RequestNotFound(Request),
+    MissingRequest(Interaction)
 }
 
 impl MatchResult {
@@ -43,7 +44,8 @@ impl MatchResult {
         match self {
             &MatchResult::RequestMatch(_) => s!("Request-Matched"),
             &MatchResult::RequestMismatch(_, _) => s!("Request-Mismatch"),
-            &MatchResult::RequestNotFound(_) => s!("Unexpected-Request")
+            &MatchResult::RequestNotFound(_) => s!("Unexpected-Request"),
+            &MatchResult::MissingRequest(_) => s!("Missing-Request")
         }
     }
 
@@ -62,6 +64,11 @@ impl MatchResult {
                 s!("type") => s!("request-not-found").to_json(),
                 s!("method") => req.method.to_json(),
                 s!("path") => req.path.to_json()
+            }),
+            &MatchResult::MissingRequest(ref interaction) => Json::Object(btreemap!{
+                s!("type") => s!("missing-request").to_json(),
+                s!("method") => interaction.request.method.to_json(),
+                s!("path") => interaction.request.path.to_json()
             })
         }
     }
@@ -105,13 +112,31 @@ impl MockServer {
             s!("id") => Json::String(self.id.clone()),
             s!("port") => Json::U64(self.port as u64),
             s!("provider") => Json::String(self.pact.provider.name.clone()),
-            s!("status") => Json::String(if self.matches.iter().any(|m| !m.matched() ) {
-                    s!("error")
-                } else {
+            s!("status") => Json::String(if self.mismatches().is_empty() {
                     s!("ok")
+                } else {
+                    s!("error")
                 }
             )
         })
+    }
+
+    pub fn mismatches(&self) -> Vec<MatchResult> {
+        let mismatches = self.matches.iter()
+            .filter(|m| !m.matched())
+            .map(|m| m.clone());
+        let interactions: Vec<&Interaction> = self.matches.iter().map(|m| {
+            match *m {
+                MatchResult::RequestMatch(ref interaction) => Some(interaction),
+                MatchResult::RequestMismatch(ref interaction, _) => Some(interaction),
+                MatchResult::RequestNotFound(_) => None,
+                MatchResult::MissingRequest(_) => None
+            }
+        }).filter(|o| o.is_some()).map(|o| o.unwrap()).collect();
+        let missing = self.pact.interactions.iter()
+            .filter(|i| !interactions.contains(i))
+            .map(|i| MatchResult::MissingRequest(i.clone()));
+        mismatches.chain(missing).collect()
     }
 }
 
@@ -375,15 +400,14 @@ pub extern fn create_mock_server(pact_str: *const c_char) -> int32_t {
 #[no_mangle]
 pub extern fn mock_server_matched(mock_server_port: int32_t) -> bool {
     lookup_mock_server_by_port(mock_server_port, &|mock_server| {
-        !mock_server.matches.iter().any(|mismatch| !mismatch.matched())
+        mock_server.mismatches().is_empty()
     }).unwrap_or(false)
 }
 
 #[no_mangle]
 pub extern fn mock_server_mismatches(mock_server_port: int32_t) -> *mut c_char {
     let result = update_mock_server_by_port(mock_server_port, &|ref mut mock_server| {
-        let mismatches = mock_server.matches.iter()
-            .filter(|mismatch| !mismatch.matched())
+        let mismatches = mock_server.mismatches().iter()
             .map(|mismatch| mismatch.to_json() )
             .collect::<Vec<Json>>();
         let json = Json::Array(mismatches);

@@ -118,13 +118,11 @@ pub fn verify_mock_server_request(context: Context, mut response: Response) {
     match verify::validate_id(id.borrow()) {
         Ok(ms) => {
             let mut map = btreemap!{ s!("mockServer") => ms.to_json() };
-            let mismatches = ms.matches.iter().any(|m| !m.matched() );
-            let missing = ms.matches.iter().filter(|m| m.matched() );
-            if mismatches {
+            let mismatches = ms.mismatches();
+            if !mismatches.is_empty() {
                 response.set_status(StatusCode::BadRequest);
                 map.insert(s!("mismatches"), Json::Array(
-                    Vec::from_iter(ms.matches.iter()
-                        .filter(|m| !m.matched())
+                    Vec::from_iter(mismatches.iter()
                         .map(|m| m.to_json()))));
             } else {
                 response.set_status(StatusCode::Ok);
