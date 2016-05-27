@@ -3,6 +3,7 @@ init:
   - git config --global core.autocrlf input
 
 environment:
+  RUST_BACKTRACE: 1
   matrix:
   - TARGET: x86_64-pc-windows-msvc
   - TARGET: i686-pc-windows-msvc
@@ -14,15 +15,11 @@ install:
   - SET PATH=%PATH%;C:\Program Files (x86)\Rust\bin
   - SET PATH=%PATH%;C:\MinGW\bin
 
-# Post-install test scripts.
-test_script:
-  # Output useful info for debugging.
-  - rustc -V
-  - cargo -V
-
 build: false
 
 build_script:
+  - rustc -V
+  - cargo -V
   - cd "%APPVEYOR_BUILD_FOLDER%\rust\v1\libpact_matching"
   - cargo build
   - cargo test
