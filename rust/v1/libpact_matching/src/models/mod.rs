@@ -5,6 +5,7 @@ use rustc_serialize::hex::FromHex;
 use super::strip_whitespace;
 use regex::Regex;
 use semver::Version;
+use itertools::Itertools;
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum PactSpecification {
@@ -176,6 +177,18 @@ fn body_from_json(request: &Json) -> OptionalBody {
     }
 }
 
+fn build_query_string(query: HashMap<String, Vec<String>>) -> String {
+    query.into_iter()
+        .sorted_by(|a, b| Ord::cmp(&a.0, &b.0))
+        .iter()
+        .flat_map(|kv| {
+            kv.1.iter()
+                .map(|v| format!("{}={}", kv.0, encode_query(v)))
+                .collect_vec()
+        })
+        .join("&")
+}
+
 impl Request {
     pub fn from_json(request: &Json) -> Request {
         let method_val = match request.find("method") {
@@ -207,6 +220,17 @@ impl Request {
             body: body_from_json(request),
             matching_rules: None
         }
+    }
+
+    pub fn to_json(&self) -> Json {
+        let mut json = btreemap!{
+            s!("method") => Json::String(self.method.to_uppercase()),
+            s!("path") => Json::String(self.path.clone())
+        };
+        if self.query.is_some() {
+            json.insert(s!("query"), Json::String(build_query_string(self.query.clone().unwrap())));
+        }
+        Json::Object(json)
     }
 
     pub fn default_request() -> Request {
@@ -433,6 +457,28 @@ fn decode_query(query: &str) -> String {
     }
 
     result
+}
+
+fn encode_query(query: &str) -> String {
+    query.chars().map(|ch| {
+        match ch {
+            ' ' => s!("+"),
+            '-' => ch.to_string(),
+            'a'...'z' => ch.to_string(),
+            'A'...'Z' => ch.to_string(),
+            '0'...'9' => ch.to_string(),
+            _ => ch.escape_unicode()
+                .filter(|u| u.is_digit(16))
+                .batching(|mut it| {
+                    match it.next() {
+                        None => None,
+                        Some(x) => Some((x, it.next().unwrap()))
+                    }
+                })
+                .map(|u| format!("%{}{}", u.0, u.1))
+                .collect()
+        }
+    }).collect()
 }
 
 pub fn parse_query_string(query: &String) -> Option<HashMap<String, Vec<String>>> {

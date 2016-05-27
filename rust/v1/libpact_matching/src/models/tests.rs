@@ -491,3 +491,46 @@ fn load_pact_converts_methods_to_uppercase() {
         matching_rules: None
     }));
 }
+
+#[test]
+fn request_to_json_with_defaults() {
+    let request = Request::default_request();
+    expect!(request.to_json().to_string()).to(be_equal_to("{\"method\":\"GET\",\"path\":\"/\"}"));
+}
+
+#[test]
+fn request_to_json_converts_methods_to_upper_case() {
+    let request = Request { method: s!("post"), .. Request::default_request() };
+    expect!(request.to_json().to_string()).to(be_equal_to("{\"method\":\"POST\",\"path\":\"/\"}"));
+}
+
+#[test]
+fn request_to_json_with_a_query() {
+    let request = Request { query: Some(hashmap!{
+        s!("a") => vec![s!("1"), s!("2")],
+        s!("b") => vec![s!("3")]
+    }), .. Request::default_request() };
+    expect!(request.to_json().to_string()).to(
+        be_equal_to(r#"{"method":"GET","path":"/","query":"a=1&a=2&b=3"}"#)
+    );
+}
+
+#[test]
+fn request_to_json_with_a_query_must_encode_the_query() {
+    let request = Request { query: Some(hashmap!{
+        s!("datetime") => vec![s!("2011-12-03T10:15:30+01:00")],
+        s!("description") => vec![s!("hello world!")] }), .. Request::default_request() };
+    expect!(request.to_json().to_string()).to(
+        be_equal_to(r#"{"method":"GET","path":"/","query":"datetime=2011-12-03T10%3a15%3a30%2b01%3a00&description=hello+world%21"}"#)
+    );
+}
+
+#[test]
+fn request_to_json_with_a_query_must_encode_the_query_with_utf8_chars() {
+    let request = Request { query: Some(hashmap!{
+        s!("a") => vec![s!("b=c&d❤")]
+    }), .. Request::default_request() };
+    expect!(request.to_json().to_string()).to(
+        be_equal_to(r#"{"method":"GET","path":"/","query":"a=b%3dc%26d%27%64"}"#)
+    );
+}

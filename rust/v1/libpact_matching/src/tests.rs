@@ -424,7 +424,6 @@ fn partial_equal_for_body_mismatch() {
 #[test]
 #[ignore]
 fn strip_whitespace_quickcheck() {
-    use std::iter::FromIterator;
     use quickcheck::{TestResult, quickcheck};
     fn prop(s: String, c: String) -> TestResult {
         if c.is_empty() || c.chars().any(|ch| !ch.is_alphanumeric() ) {
