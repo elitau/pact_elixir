@@ -21,3 +21,14 @@ test_script:
   - cargo -V
 
 build: false
+
+build_script:
+  - cd "%APPVEYOR_BUILD_FOLDER%\rust\v1\libpact_matching"
+  - cargo build
+  - cargo test
+  - cd cd "%APPVEYOR_BUILD_FOLDER%\rust\v1\libpact_mock_server"
+  - cargo build
+  - cargo test
+  - cd cd "%APPVEYOR_BUILD_FOLDER%\rust\v1\pact_mock_server"
+  - cargo build
+  - cargo test
