@@ -28,14 +28,13 @@ pub fn verify_mock_server(host: &str, port: u16, matches: &ArgMatches) -> Result
                 Ok(json) => {
                     let mock_server = json.find("mockServer").unwrap();
                     let id = mock_server.find("id").unwrap().as_string().unwrap();
-                    let port = mock_server.find("port").unwrap();
+                    let port = mock_server.find("port").unwrap().as_u64().unwrap();
                     let status = mock_server.find("status").unwrap().as_string().unwrap();
                     if status == "ok" {
                         println!("Mock server {}/{} verified ok", id, port);
                         Ok(())
                     } else {
-                        println!("Mock server {}/{} failed verification", id, port);
-                        display_verification_errors(&json);
+                        display_verification_errors(id, port, &json);
                         Err(2)
                     }
                 },
@@ -85,6 +84,30 @@ pub fn validate_id(id: &str) -> Result<MockServer, String> {
     }
 }
 
-fn display_verification_errors(json: &Json) {
+fn display_verification_errors(id: &str, port: u64, json: &Json) {
+    let mismatches = json.find("mismatches").unwrap().as_array().unwrap();
+    println!("Mock server {}/{} failed verification with {} errors\n", id, port, mismatches.len());
 
+    for (i, mismatch) in mismatches.iter().enumerate() {
+        match mismatch.find("type").unwrap().as_string().unwrap() {
+            "missing-request" => {
+                let request = mismatch.find("request").unwrap();
+                println!("{} - Expected request was not received - {}", i, request)
+            },
+            "request-not-found" => {
+                let request = mismatch.find("request").unwrap();
+                println!("{} - Received a request that was not expected - {}", i, request)
+            },
+            "request-mismatch" => {
+                let path = mismatch.find("path").unwrap().as_string().unwrap();
+                let method = mismatch.find("method").unwrap().as_string().unwrap();
+                println!("{} - Received a request that did not match with expected - {} {}", i, method, path);
+                let request_mismatches = mismatch.find("mismatches").unwrap().as_array().unwrap();
+                for request_mismatch in request_mismatches {
+                    println!("        {}", request_mismatch.find("mismatch").unwrap().as_string().unwrap())
+                }
+            },
+            _ => println!("{} - Known failure - {}", i, mismatch),
+        }
+    }
 }

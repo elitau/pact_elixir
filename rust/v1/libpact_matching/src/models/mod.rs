@@ -160,6 +160,13 @@ fn headers_from_json(request: &Json) -> Option<HashMap<String, String>> {
     }
 }
 
+fn headers_to_json(headers: &HashMap<String, String>) -> Json {
+    Json::Object(headers.iter().fold(BTreeMap::new(), |mut map, kv| {
+        map.insert(kv.0.clone(), Json::String(kv.1.clone()));
+        map
+    }))
+}
+
 fn body_from_json(request: &Json) -> OptionalBody {
     match request.find("body") {
         Some(v) => match *v {
@@ -229,6 +236,27 @@ impl Request {
         };
         if self.query.is_some() {
             json.insert(s!("query"), Json::String(build_query_string(self.query.clone().unwrap())));
+        }
+        if self.headers.is_some() {
+            json.insert(s!("headers"), headers_to_json(&self.headers.clone().unwrap()));
+        }
+        match self.body {
+            OptionalBody::Present(ref body) => {
+                if self.mimetype() == "application/json" {
+                    match Json::from_str(body) {
+                        Ok(json_body) => { json.insert(s!("body"), json_body); },
+                        Err(err) => {
+                            warn!("Failed to parse json body: {}", err);
+                            json.insert(s!("body"), Json::String(body.clone()));
+                        }
+                    }
+                } else {
+                    json.insert(s!("body"), Json::String(body.clone()));
+                }
+            },
+            OptionalBody::Empty => { json.insert(s!("body"), Json::String(s!(""))); },
+            OptionalBody::Missing => (),
+            OptionalBody::Null => { json.insert(s!("body"), Json::Null); }
         }
         Json::Object(json)
     }

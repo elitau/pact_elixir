@@ -534,3 +534,50 @@ fn request_to_json_with_a_query_must_encode_the_query_with_utf8_chars() {
         be_equal_to(r#"{"method":"GET","path":"/","query":"a=b%3dc%26d%27%64"}"#)
     );
 }
+
+#[test]
+fn request_to_json_with_headers() {
+    let request = Request { headers: Some(hashmap!{
+        s!("HEADERA") => s!("VALUEA"),
+        s!("HEADERB") => s!("VALUEB1, VALUEB2")
+    }), .. Request::default_request() };
+    expect!(request.to_json().to_string()).to(
+        be_equal_to(r#"{"headers":{"HEADERA":"VALUEA","HEADERB":"VALUEB1, VALUEB2"},"method":"GET","path":"/"}"#)
+    );
+}
+
+#[test]
+fn request_to_json_with_json_body() {
+    let request = Request { headers: Some(hashmap!{
+        s!("Content-Type") => s!("application/json")
+    }), body: OptionalBody::Present(s!(r#"{"key": "value"}"#)), .. Request::default_request() };
+    expect!(request.to_json().to_string()).to(
+        be_equal_to(r#"{"body":{"key":"value"},"headers":{"Content-Type":"application/json"},"method":"GET","path":"/"}"#)
+    );
+}
+
+
+#[test]
+fn request_to_json_with_non_json_body() {
+    let request = Request { headers: Some(hashmap!{ s!("Content-Type") => s!("text/plain") }),
+        body: OptionalBody::Present(s!("This is some text")), .. Request::default_request() };
+    expect!(request.to_json().to_string()).to(
+        be_equal_to(r#"{"body":"This is some text","headers":{"Content-Type":"text/plain"},"method":"GET","path":"/"}"#)
+    );
+}
+
+#[test]
+fn request_to_json_with_empty_body() {
+    let request = Request { body: OptionalBody::Empty, .. Request::default_request() };
+    expect!(request.to_json().to_string()).to(
+        be_equal_to(r#"{"body":"","method":"GET","path":"/"}"#)
+    );
+}
+
+#[test]
+fn request_to_json_with_null_body() {
+    let request = Request { body: OptionalBody::Null, .. Request::default_request() };
+    expect!(request.to_json().to_string()).to(
+        be_equal_to(r#"{"body":null,"method":"GET","path":"/"}"#)
+    );
+}

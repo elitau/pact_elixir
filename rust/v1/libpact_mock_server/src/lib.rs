@@ -63,12 +63,14 @@ impl MatchResult {
             &MatchResult::RequestNotFound(ref req) => Json::Object(btreemap!{
                 s!("type") => s!("request-not-found").to_json(),
                 s!("method") => req.method.to_json(),
-                s!("path") => req.path.to_json()
+                s!("path") => req.path.to_json(),
+                s!("request") => req.to_json()
             }),
             &MatchResult::MissingRequest(ref interaction) => Json::Object(btreemap!{
                 s!("type") => s!("missing-request").to_json(),
                 s!("method") => interaction.request.method.to_json(),
-                s!("path") => interaction.request.path.to_json()
+                s!("path") => interaction.request.path.to_json(),
+                s!("request") => interaction.request.to_json()
             })
         }
     }

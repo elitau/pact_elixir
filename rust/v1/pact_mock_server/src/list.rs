@@ -35,7 +35,7 @@ pub fn list_mock_servers(host: &str, port: u16, matches: &ArgMatches) -> Result<
                             let port = ms.find("port").unwrap();
                             let provider = ms.find("provider").unwrap().as_string().unwrap();
                             let status = ms.find("status").unwrap().as_string().unwrap();
-                            println!("{}  {}  {}  {}", id, port, provider, status);
+                            println!("{0}  {1}  {2:3$}  {4}", id, port, provider, provider_len, status);
                         };
                         Ok(())
                     },
