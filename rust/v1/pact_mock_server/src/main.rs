@@ -28,6 +28,7 @@ use simplelog::{CombinedLogger, TermLogger, FileLogger};
 use std::path::PathBuf;
 use std::fs::OpenOptions;
 use uuid::Uuid;
+use pact_matching::models::PactSpecification;
 
 fn display_error(error: String, matches: &ArgMatches) -> ! {
     println!("ERROR: {}", error);
@@ -41,11 +42,9 @@ mod create_mock;
 mod list;
 mod verify;
 
-static SPEC_VERSION: &'static str = "1.0.0";
-
 fn print_version() {
     println!("\npact mock server version  : v{}", crate_version!());
-    println!("pact specification version: v{}", SPEC_VERSION);
+    println!("pact specification version: v{}", PactSpecification::V1.version_str());
 }
 
 fn setup_loggers(level: &str, command: &str, output: Option<&str>) -> Result<(), io::Error> {
@@ -204,7 +203,7 @@ fn handle_command_args() -> Result<(), i32> {
             match port.parse::<u16>() {
                 Ok(p) => {
                     match matches.subcommand() {
-                        ("start", Some(_)) => server::start_server(p),
+                        ("start", Some(sub_matches)) => server::start_server(p, sub_matches),
                         ("list", Some(sub_matches)) => list::list_mock_servers(host, p, sub_matches),
                         ("create", Some(sub_matches)) => create_mock::create_mock_server(host, p, sub_matches),
                         ("verify", Some(sub_matches)) => verify::verify_mock_server(host, p, sub_matches),

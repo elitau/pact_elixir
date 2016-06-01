@@ -27,7 +27,10 @@ use std::error::Error;
 use rustc_serialize::json::Json;
 use std::borrow::Borrow;
 use std::iter::FromIterator;
+use std::io;
 use verify;
+use std::path::PathBuf;
+use clap::ArgMatches;
 
 fn add_cors_headers(response: &mut Response) {
     response.headers_mut().set(AccessControlAllowOrigin::Any);
@@ -35,7 +38,9 @@ fn add_cors_headers(response: &mut Response) {
     response.headers_mut().set(AccessControlAllowHeaders(vec!["Content-Type".into()]));
 }
 
-struct MasterServerHandler;
+struct MasterServerHandler {
+    output_path: Option<String>
+}
 
 impl Handler for MasterServerHandler {
     fn handle_request(&self, context: Context, response: Response) {
@@ -46,7 +51,7 @@ impl Handler for MasterServerHandler {
                 if path.as_utf8_path().unwrap() == "/" {
                     start_provider(context, response)
                 } else {
-                    verify_mock_server_request(context, response)
+                    verify_mock_server_request(context, response, &self.output_path)
                 }
             },
             _ => ()
@@ -98,7 +103,7 @@ fn list_servers(mut response: Response) {
     );
 
     let mut mock_servers = vec![];
-    iterate_mock_servers(&mut |id: &String, ms: &MockServer| {
+    iterate_mock_servers(&mut |_: &String, ms: &MockServer| {
         let mock_server_json = ms.to_json();
         mock_servers.push(mock_server_json);
     });
@@ -107,7 +112,27 @@ fn list_servers(mut response: Response) {
     response.send(json_response.to_string());
 }
 
-pub fn verify_mock_server_request(context: Context, mut response: Response) {
+fn write_pact(pact: &Pact, output_path: &Option<String>) -> io::Result<()> {
+    let pact_file_name = pact.default_file_name();
+    let filename = match *output_path {
+        Some(ref path) => {
+            let mut path = PathBuf::from(path);
+            path.push(pact_file_name);
+            path
+        },
+        None => PathBuf::from(pact_file_name)
+    };
+    info!("Writing pact out to '{}'", filename.display());
+    match pact.write_pact(filename.as_path()) {
+        Ok(_) => Ok(()),
+        Err(err) => {
+            warn!("Failed to write pact to file - {}", err);
+            Err(err)
+        }
+    }
+}
+
+pub fn verify_mock_server_request(context: Context, mut response: Response, output_path: &Option<String>) {
     add_cors_headers(&mut response);
     response.headers_mut().set(
         ContentType(Mime(TopLevel::Application, SubLevel::Json,
@@ -125,7 +150,13 @@ pub fn verify_mock_server_request(context: Context, mut response: Response) {
                     Vec::from_iter(mismatches.iter()
                         .map(|m| m.to_json()))));
             } else {
-                response.set_status(StatusCode::Ok);
+                match write_pact(&ms.pact, output_path) {
+                    Ok(_) => response.set_status(StatusCode::Ok),
+                    Err(err) => {
+                        response.set_status(StatusCode::UnprocessableEntity);
+                        map.insert(s!("error"), Json::String(s!(err.description())));
+                    }
+                }
             }
 
             let json_response = Json::Object(map);
@@ -138,14 +169,15 @@ pub fn verify_mock_server_request(context: Context, mut response: Response) {
     }
 }
 
-pub fn start_server(port: u16) -> Result<(), i32> {
+pub fn start_server(port: u16, matches: &ArgMatches) -> Result<(), i32> {
+    let output_path = matches.value_of("output").map(|o| s!(o));
     let router = insert_routes! {
         TreeRouter::new() => {
             "/" => {
-                Get: MasterServerHandler,
-                Post: MasterServerHandler
+                Get: MasterServerHandler { output_path: output_path.clone() },
+                Post: MasterServerHandler { output_path: output_path.clone() }
             },
-            "/mockserver/:id/verify" => Post: MasterServerHandler
+            "/mockserver/:id/verify" => Post: MasterServerHandler { output_path: output_path.clone() }
         }
     };
 

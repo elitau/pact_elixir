@@ -6,6 +6,7 @@ extern crate rustc_serialize;
 extern crate regex;
 extern crate semver;
 #[macro_use] extern crate itertools;
+extern crate rand;
 
 #[macro_export]
 macro_rules! s {
@@ -423,7 +424,6 @@ pub fn match_response(expected: models::Response, actual: models::Response) -> V
 #[cfg(test)]
 #[macro_use(expect)]
 extern crate expectest;
-
 #[cfg(test)]
 extern crate quickcheck;
 

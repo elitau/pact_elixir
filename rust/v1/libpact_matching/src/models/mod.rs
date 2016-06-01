@@ -6,11 +6,27 @@ use super::strip_whitespace;
 use regex::Regex;
 use semver::Version;
 use itertools::Itertools;
+use std::io;
+use std::io::prelude::*;
+use std::fs;
+use std::fs::File;
+use std::path::Path;
+
+const VERSION: Option<&'static str> = option_env!("CARGO_PKG_VERSION");
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum PactSpecification {
     Unknown,
     V1
+}
+
+impl PactSpecification {
+    pub fn version_str(&self) -> String {
+        match *self {
+            PactSpecification::V1 => s!("1.0.0"),
+            _ => s!("unknown")
+        }
+    }
 }
 
 #[derive(Debug, Clone)]
@@ -29,6 +45,10 @@ impl Consumer {
         };
         Consumer { name: val.clone() }
     }
+
+    pub fn to_json(&self) -> Json {
+        Json::Object(btreemap!{ s!("name") => Json::String(self.name.clone()) })
+    }
 }
 
 #[derive(Debug, Clone)]
@@ -46,6 +66,10 @@ impl Provider {
             None => "provider".to_string()
         };
         Provider { name: val.clone() }
+    }
+
+    pub fn to_json(&self) -> Json {
+        Json::Object(btreemap!{ s!("name") => Json::String(self.name.clone()) })
     }
 }
 
@@ -303,6 +327,34 @@ impl Response {
             matching_rules: None
         }
     }
+
+    pub fn to_json(&self) -> Json {
+        let mut json = btreemap!{
+            s!("status") => Json::U64(self.status as u64)
+        };
+        if self.headers.is_some() {
+            json.insert(s!("headers"), headers_to_json(&self.headers.clone().unwrap()));
+        }
+        match self.body {
+            OptionalBody::Present(ref body) => {
+                if self.mimetype() == "application/json" {
+                    match Json::from_str(body) {
+                        Ok(json_body) => { json.insert(s!("body"), json_body); },
+                        Err(err) => {
+                            warn!("Failed to parse json body: {}", err);
+                            json.insert(s!("body"), Json::String(body.clone()));
+                        }
+                    }
+                } else {
+                    json.insert(s!("body"), Json::String(body.clone()));
+                }
+            },
+            OptionalBody::Empty => { json.insert(s!("body"), Json::String(s!(""))); },
+            OptionalBody::Missing => (),
+            OptionalBody::Null => { json.insert(s!("body"), Json::Null); }
+        }
+        Json::Object(json)
+    }
 }
 
 impl HttpPart for Response {
@@ -363,6 +415,18 @@ impl Interaction {
              request: request,
              response: response
          }
+    }
+
+    pub fn to_json(&self) -> Json {
+        let mut map = btreemap!{
+            s!("description") => Json::String(self.description.clone()),
+            s!("request") => self.request.to_json(),
+            s!("response") => self.response.to_json()
+        };
+        if self.provider_state.is_some() {
+            map.insert(s!("providerState"), Json::String(self.provider_state.clone().unwrap()));
+        }
+        Json::Object(map)
     }
 
 }
@@ -428,6 +492,16 @@ impl Pact {
         }
     }
 
+    pub fn to_json(&self) -> Json {
+        let map = btreemap!{
+            s!("consumer") => self.consumer.to_json(),
+            s!("provider") => self.provider.to_json(),
+            s!("interactions") => Json::Array(self.interactions.iter().map(|i| i.to_json()).collect()),
+            s!("metadata") => Json::Object(self.metadata_to_json())
+        };
+        Json::Object(map)
+    }
+
     pub fn specification_version(&self) -> PactSpecification {
         match self.metadata.get("pact-specification") {
             Some(spec_ver) => match spec_ver.get("version") {
@@ -442,6 +516,28 @@ impl Pact {
             },
             None => PactSpecification::Unknown
         }
+    }
+
+    pub fn metadata_to_json(&self) -> BTreeMap<String, Json> {
+        let mut md_map: BTreeMap<String, Json> = self.metadata.iter()
+            .map(|(k, v)| {
+                (k.clone(), Json::Object(v.iter().map(|(k, v)| (k.clone(), Json::String(v.clone()))).collect()))
+            })
+            .collect();
+        md_map.insert(s!("pact-specification"), Json::Object(btreemap!{ s!("version") => Json::String(PactSpecification::V1.version_str()) }));
+        md_map.insert(s!("pact-rust"), Json::Object(btreemap!{ s!("version") => Json::String(s!(VERSION.unwrap_or("unknown"))) }));
+        md_map
+    }
+
+    pub fn default_file_name(&self) -> String {
+        format!("{}-{}.json", self.consumer.name, self.provider.name)
+    }
+
+    pub fn write_pact(&self, path: &Path) -> io::Result<()> {
+        try!{ fs::create_dir_all(path.parent().unwrap()) };
+        let mut file = try!{ File::create(path) };
+        try!{ file.write_all(format!("{}", self.to_json().pretty()).as_bytes()) };
+        Ok(())
     }
 }
 

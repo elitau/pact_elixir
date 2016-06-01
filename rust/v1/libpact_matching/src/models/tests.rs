@@ -1,7 +1,12 @@
 use super::*;
 use std::collections::HashMap;
+use std::fs::{self, File};
+use std::io;
+use std::io::prelude::*;
+use std::env;
 use rustc_serialize::json::Json;
 use expectest::prelude::*;
+use rand;
 
 #[test]
 fn request_from_json_defaults_to_get() {
@@ -580,4 +585,127 @@ fn request_to_json_with_null_body() {
     expect!(request.to_json().to_string()).to(
         be_equal_to(r#"{"body":null,"method":"GET","path":"/"}"#)
     );
+}
+
+#[test]
+fn response_to_json_with_defaults() {
+    let response = Response::default_response();
+    expect!(response.to_json().to_string()).to(be_equal_to("{\"status\":200}"));
+}
+
+#[test]
+fn response_to_json_with_headers() {
+    let response = Response { headers: Some(hashmap!{
+        s!("HEADERA") => s!("VALUEA"),
+        s!("HEADERB") => s!("VALUEB1, VALUEB2")
+    }), .. Response::default_response() };
+    expect!(response.to_json().to_string()).to(
+        be_equal_to(r#"{"headers":{"HEADERA":"VALUEA","HEADERB":"VALUEB1, VALUEB2"},"status":200}"#)
+    );
+}
+
+#[test]
+fn response_to_json_with_json_body() {
+    let response = Response { headers: Some(hashmap!{
+        s!("Content-Type") => s!("application/json")
+    }), body: OptionalBody::Present(s!(r#"{"key": "value"}"#)), .. Response::default_response() };
+    expect!(response.to_json().to_string()).to(
+        be_equal_to(r#"{"body":{"key":"value"},"headers":{"Content-Type":"application/json"},"status":200}"#)
+    );
+}
+
+#[test]
+fn response_to_json_with_non_json_body() {
+    let response = Response { headers: Some(hashmap!{ s!("Content-Type") => s!("text/plain") }),
+        body: OptionalBody::Present(s!("This is some text")), .. Response::default_response() };
+    expect!(response.to_json().to_string()).to(
+        be_equal_to(r#"{"body":"This is some text","headers":{"Content-Type":"text/plain"},"status":200}"#)
+    );
+}
+
+#[test]
+fn response_to_json_with_empty_body() {
+    let response = Response { body: OptionalBody::Empty, .. Response::default_response() };
+    expect!(response.to_json().to_string()).to(
+        be_equal_to(r#"{"body":"","status":200}"#)
+    );
+}
+
+#[test]
+fn response_to_json_with_null_body() {
+    let response = Response { body: OptionalBody::Null, .. Response::default_response() };
+    expect!(response.to_json().to_string()).to(
+        be_equal_to(r#"{"body":null,"status":200}"#)
+    );
+}
+
+#[test]
+fn default_file_name_is_based_in_the_consumer_and_provider() {
+    let pact = Pact { consumer: Consumer { name: s!("consumer") },
+        provider: Provider { name: s!("provider") },
+        interactions: vec![],
+        metadata: btreemap!{} };
+    expect!(pact.default_file_name()).to(be_equal_to("consumer-provider.json"));
+}
+
+fn read_pact_file(file: &str) -> io::Result<String> {
+    let mut f = try!(File::open(file));
+    let mut buffer = String::new();
+    try!(f.read_to_string(&mut buffer));
+    Ok(buffer)
+}
+
+#[test]
+fn write_pact_test() {
+    let pact = Pact { consumer: Consumer { name: s!("write_pact_test_consumer") },
+        provider: Provider { name: s!("write_pact_test_provider") },
+        interactions: vec![
+            Interaction {
+                description: s!("Test Interaction"),
+                provider_state: Some(s!("Good state to be in")),
+                request: Request::default_request(),
+                response: Response::default_response()
+            }
+        ],
+        metadata: btreemap!{} };
+    let mut dir = env::temp_dir();
+    let x = rand::random::<u16>();
+    dir.push(format!("pact_test_{}", x));
+    dir.push(pact.default_file_name());
+
+    let result = pact.write_pact(dir.as_path());
+
+    let pact_file = read_pact_file(dir.as_path().to_str().unwrap()).unwrap_or(s!(""));
+    fs::remove_dir_all(dir.parent().unwrap()).unwrap_or(());
+
+    expect!(result).to(be_ok());
+    expect(pact_file).to(be_equal_to(r#"{
+  "consumer": {
+    "name": "write_pact_test_consumer"
+  },
+  "interactions": [
+    {
+      "description": "Test Interaction",
+      "providerState": "Good state to be in",
+      "request": {
+        "method": "GET",
+        "path": "/"
+      },
+      "response": {
+        "status": 200
+      }
+    }
+  ],
+  "metadata": {
+    "pact-rust": {
+      "version": "0.0.0"
+    },
+    "pact-specification": {
+      "version": "1.0.0"
+    }
+  },
+  "provider": {
+    "name": "write_pact_test_provider"
+  }
+}"#));
 }
