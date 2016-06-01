@@ -2,11 +2,18 @@
 name = "pact_mock_server"
 version = "0.0.0"
 authors = ["Ronald Holshausen <uglyog@gmail.com>"]
+description = "Pact-Rust support library that implements in process mock server"
+documentation = "http://docs.pact.io"
+homepage = "http://www.pact.io"
+repository = "https://github.com/pact-foundation/pact-reference/blob/master/rust/v1/libpact_mock_server"
+readme = "README.md"
+keywords = ["testing", "pact", "cdc", "mockserver"]
+license = "MIT"
 
 [dependencies]
 libc = "^0.2.9"
 rustc-serialize = "^0.3"
-pact_matching = { path = "../libpact_matching" }
+pact_matching = "^0.0.0"
 p-macro = "^0.2.0"
 env_logger = "^0.3.2"
 log = "^0.3.5"

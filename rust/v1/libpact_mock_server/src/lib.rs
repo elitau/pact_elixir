@@ -1,3 +1,9 @@
+//! The `libpact_mock_server` crate provides the in-process mock server for mocking HTTP requests
+//! and generating responses based on a pact file. It implements the V1 Pact specification
+//! (https://github.com/pact-foundation/pact-specification/tree/version-1).
+
+#![warn(missing_docs)]
+
 #[macro_use] extern crate log;
 #[macro_use] extern crate p_macro;
 #[macro_use] extern crate maplit;
@@ -14,6 +20,7 @@ use libc::{c_char, int32_t};
 use std::ffi::CStr;
 use std::ffi::CString;
 use std::str;
+use std::panic::catch_unwind;
 use pact_matching::models::{Pact, Interaction, Request, OptionalBody};
 use pact_matching::models::parse_query_string;
 use pact_matching::Mismatch;
@@ -31,15 +38,21 @@ use hyper::uri::RequestUri;
 use uuid::Uuid;
 use itertools::Itertools;
 
+/// Enum to define a match result
 #[derive(Debug, Clone, PartialEq)]
 pub enum MatchResult {
+    /// Match result where the request was sucessfully matched
     RequestMatch(Interaction),
+    /// Match result where there were a number of mismatches
     RequestMismatch(Interaction, Vec<Mismatch>),
+    /// Match result where the request was not expected
     RequestNotFound(Request),
+    /// Match result where an expected request was not received
     MissingRequest(Interaction)
 }
 
 impl MatchResult {
+    /// Returns the match key for this mismatch
     pub fn match_key(&self) -> String {
         match self {
             &MatchResult::RequestMatch(_) => s!("Request-Matched"),
@@ -49,6 +62,7 @@ impl MatchResult {
         }
     }
 
+    /// Returns true if this match result is a `RequestMatch`
     pub fn matched(&self) -> bool {
         match self {
             &MatchResult::RequestMatch(_) => true,
@@ -56,6 +70,7 @@ impl MatchResult {
         }
     }
 
+    /// Converts this match result to a `Json` struct
     pub fn to_json(&self) -> Json {
         match self {
             &MatchResult::RequestMatch(_) => Json::Object(btreemap!{ s!("type") => s!("request-match").to_json() }),
@@ -85,30 +100,41 @@ fn mismatches_to_json(request: &Request, mismatches: &Vec<Mismatch>) -> Json {
     })
 }
 
+/// Struct to represent a mock server
 pub struct MockServer {
+    /// Mock server unique ID
     pub id: String,
+    /// Port the mock server is running on
     pub port: i32,
+    /// Address of the server implementing the `Listening` trait
     pub server: u64,
+    /// List of all match results for requests this mock server has received
     pub matches: Vec<MatchResult>,
+    /// List of resources that need to be cleaned up when the mock server completes
     pub resources: Vec<CString>,
+    /// Pact that this mock server is based on
     pub pact: Pact
 }
 
 impl MockServer {
+    /// Creates a new mock server with the given ID and pact
     pub fn new(id: String, pact: &Pact) -> MockServer {
         MockServer { id: id.clone(), port: -1, server: 0, matches: vec![], resources: vec![],
             pact : pact.clone() }
     }
 
+    /// Sets the port that the mock server is listening on
     pub fn port(&mut self, port: i32) {
         self.port = port;
     }
 
+    /// Sets the address of the server implementing the `Listening` trait
     pub fn server(&mut self, server: &Listening) {
         let p = server as *const Listening;
         self.server = p as u64;
     }
 
+    /// Converts this mock server to a `Json` struct
     pub fn to_json(&self) -> Json {
         Json::Object(btreemap!{
             s!("id") => Json::String(self.id.clone()),
@@ -123,6 +149,7 @@ impl MockServer {
         })
     }
 
+    /// Returns all the mismatches that have occured with this mock server
     pub fn mismatches(&self) -> Vec<MatchResult> {
         let mismatches = self.matches.iter()
             .filter(|m| !m.matched())
@@ -275,6 +302,14 @@ fn record_result(id: &String, match_result: &MatchResult) {
     });
 }
 
+/// Starts a mock server with the given ID and pact. The ID needs to be unique. Returns the port
+/// that the mock server is running on wrapped in a `Result`.
+///
+/// # Errors
+///
+/// An error with a message will be returned in the following conditions:
+///
+/// - If a mock server is not able to be started
 pub fn start_mock_server(id: String, pact: Pact) -> Result<i32, String> {
     insert_new_mock_server(&id, &pact);
     let (out_tx, out_rx) = channel();
@@ -344,6 +379,9 @@ pub fn start_mock_server(id: String, pact: Pact) -> Result<i32, String> {
     out_rx.recv().unwrap()
 }
 
+/// Looks up the mock server by ID, and passes it into the given closure. The result of the
+/// closure is returned wrapped in an `Option`. If no mock server is found with that ID, `None`
+/// is returned.
 pub fn lookup_mock_server<R>(id: String, f: &Fn(&MockServer) -> R) -> Option<R> {
     let map = MOCK_SERVERS.lock().unwrap();
     match map.get(&id) {
@@ -352,6 +390,9 @@ pub fn lookup_mock_server<R>(id: String, f: &Fn(&MockServer) -> R) -> Option<R> 
     }
 }
 
+/// Looks up the mock server by port number, and passes it into the given closure. The result of the
+/// closure is returned wrapped in an `Option`. If no mock server is found with that port number, `None`
+/// is returned.
 pub fn lookup_mock_server_by_port<R>(mock_server_port: i32, f: &Fn(&MockServer) -> R) -> Option<R> {
     let map = MOCK_SERVERS.lock().unwrap();
     match map.iter().find(|ms| ms.1.port == mock_server_port ) {
@@ -360,6 +401,7 @@ pub fn lookup_mock_server_by_port<R>(mock_server_port: i32, f: &Fn(&MockServer) 
     }
 }
 
+/// Iterates through all the mock servers, passing each one to the given closure.
 pub fn iterate_mock_servers(f: &mut FnMut(&String, &MockServer)) {
     let map = MOCK_SERVERS.lock().unwrap();
     for (key, value) in map.iter() {
@@ -367,81 +409,159 @@ pub fn iterate_mock_servers(f: &mut FnMut(&String, &MockServer)) {
     }
 }
 
+/// External interface to create a mock server. A pointer to the pact JSON as a C string is passed in,
+/// and the port of the mock server is returned.
+///
+/// # Errors
+///
+/// Errors are returned as negative values.
+///
+/// | Error | Description |
+/// |-------|-------------|
+/// | -1 | A null pointer was received |
+/// | -2 | The pact JSON could not be parsed |
+/// | -3 | The mock server could not be started |
+/// | -4 | The method paniced |
+///
 #[no_mangle]
 pub extern fn create_mock_server(pact_str: *const c_char) -> int32_t {
     env_logger::init().unwrap();
 
-    let c_str = unsafe {
-        if pact_str.is_null() {
-            error!("Got a null pointer instead of pact json");
-            return -1;
-        }
-        CStr::from_ptr(pact_str)
-    };
-
-    let pact_json = str::from_utf8(c_str.to_bytes()).unwrap();
-    let result = Json::from_str(pact_json);
-    match result {
-        Ok(pact_json) => {
-            let pact = Pact::from_json(&pact_json);
-            match start_mock_server(Uuid::new_v4().simple().to_string(), pact) {
-                Ok(mock_server) => mock_server as i32,
-                Err(msg) => {
-                    error!("Could not start mock server: {}", msg);
-                    -3
-                }
+    let result = catch_unwind(|| {
+        let c_str = unsafe {
+            if pact_str.is_null() {
+                error!("Got a null pointer instead of pact json");
+                return -1;
             }
-        },
-        Err(err) => {
-            error!("Could not parse pact json: {}", err);
-            -2
+            CStr::from_ptr(pact_str)
+        };
+
+        let pact_json = str::from_utf8(c_str.to_bytes()).unwrap();
+        let result = Json::from_str(pact_json);
+        match result {
+            Ok(pact_json) => {
+                let pact = Pact::from_json(&pact_json);
+                match start_mock_server(Uuid::new_v4().simple().to_string(), pact) {
+                    Ok(mock_server) => mock_server as i32,
+                    Err(msg) => {
+                        error!("Could not start mock server: {}", msg);
+                        -3
+                    }
+                }
+            },
+            Err(err) => {
+                error!("Could not parse pact json: {}", err);
+                -2
+            }
+        }
+    });
+
+    match result {
+        Ok(val) => val,
+        Err(cause) => {
+            error!("Caught a general panic: {:?}", cause);
+            -4
         }
     }
 }
 
+/// External interface to check if a mock server has matched all its requests. The port number is
+/// passed in, and if all requests have been matched, true is returned. False is returned if there
+/// is no mock server on the given port, or if any request has not been successfully matched, or
+/// the method panics.
 #[no_mangle]
 pub extern fn mock_server_matched(mock_server_port: int32_t) -> bool {
-    lookup_mock_server_by_port(mock_server_port, &|mock_server| {
-        mock_server.mismatches().is_empty()
-    }).unwrap_or(false)
-}
-
-#[no_mangle]
-pub extern fn mock_server_mismatches(mock_server_port: int32_t) -> *mut c_char {
-    let result = update_mock_server_by_port(mock_server_port, &|ref mut mock_server| {
-        let mismatches = mock_server.mismatches().iter()
-            .map(|mismatch| mismatch.to_json() )
-            .collect::<Vec<Json>>();
-        let json = Json::Array(mismatches);
-        let s = CString::new(json.to_string()).unwrap();
-        let p = s.as_ptr();
-        mock_server.resources.push(s);
-        p
+    let result = catch_unwind(|| {
+        lookup_mock_server_by_port(mock_server_port, &|mock_server| {
+            mock_server.mismatches().is_empty()
+        }).unwrap_or(false)
     });
+
     match result {
-        Some(p) => p as *mut _,
-        None => 0 as *mut _
+        Ok(val) => val,
+        Err(cause) => {
+            error!("Caught a general panic: {:?}", cause);
+            false
+        }
     }
 }
 
+/// External interface to get all the mismatches from a mock server. The port number of the mock
+/// server is passed in, and a pointer to a C string with the mismatches in JSON format is
+/// returned.
+///
+/// **NOTE:** The JSON string for the result is allocated on the heap, and will have to be freed
+/// once the code using the mock server is complete. The `cleanup_mock_server` function is
+/// provided for this purpose.
+///
+/// # Errors
+///
+/// If there is no mock server with the provided port number, or the function panics, a NULL
+/// pointer will be returned. Don't try to dereference it, it will not end well for you.
+///
 #[no_mangle]
-pub extern fn cleanup_mock_server(mock_server_port: int32_t) -> bool {
-    let id_result = update_mock_server_by_port(mock_server_port, &|mock_server| {
-        mock_server.resources.clear();
-        if mock_server.server > 0 {
-            let server_raw = mock_server.server as *mut Listening;
-            let mut server_ref = unsafe { &mut *server_raw };
-            server_ref.close().unwrap();
+pub extern fn mock_server_mismatches(mock_server_port: int32_t) -> *mut c_char {
+    let result = catch_unwind(|| {
+        let result = update_mock_server_by_port(mock_server_port, &|ref mut mock_server| {
+            let mismatches = mock_server.mismatches().iter()
+                .map(|mismatch| mismatch.to_json() )
+                .collect::<Vec<Json>>();
+            let json = Json::Array(mismatches);
+            let s = CString::new(json.to_string()).unwrap();
+            let p = s.as_ptr();
+            mock_server.resources.push(s);
+            p
+        });
+        match result {
+            Some(p) => p as *mut _,
+            None => 0 as *mut _
         }
-        mock_server.id.clone()
     });
 
-    match id_result {
-        Some(ref id) => {
-            MOCK_SERVERS.lock().unwrap().remove(id);
-            true
-        },
-        None => false
+    match result {
+        Ok(val) => val,
+        Err(cause) => {
+            error!("Caught a general panic: {:?}", cause);
+            0 as *mut _
+        }
+    }
+}
+
+/// External interface to cleanup a mock server. This function will try terminate the mock server
+/// with the given port number and cleanup any memory allocated for it. Returns true, unless a
+/// mock server with the given port number does not exist, or the function panics.
+///
+/// **NOTE:** Although `close()` on the listerner for the mock server is called, this does not
+/// currently work and the listerner will continue handling requests. In this
+/// case, it will always return a 404 once the mock server has been cleaned up.
+#[no_mangle]
+pub extern fn cleanup_mock_server(mock_server_port: int32_t) -> bool {
+    let result = catch_unwind(|| {
+        let id_result = update_mock_server_by_port(mock_server_port, &|mock_server| {
+            mock_server.resources.clear();
+            if mock_server.server > 0 {
+                let server_raw = mock_server.server as *mut Listening;
+                let mut server_ref = unsafe { &mut *server_raw };
+                server_ref.close().unwrap();
+            }
+            mock_server.id.clone()
+        });
+
+        match id_result {
+            Some(ref id) => {
+                MOCK_SERVERS.lock().unwrap().remove(id);
+                true
+            },
+            None => false
+        }
+    });
+
+    match result {
+        Ok(val) => val,
+        Err(cause) => {
+            error!("Caught a general panic: {:?}", cause);
+            false
+        }
     }
 }
 
