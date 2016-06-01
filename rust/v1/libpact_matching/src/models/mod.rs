@@ -14,7 +14,8 @@ use std::fs;
 use std::fs::File;
 use std::path::Path;
 
-const VERSION: Option<&'static str> = option_env!("CARGO_PKG_VERSION");
+/// Version of the library
+pub const VERSION: Option<&'static str> = option_env!("CARGO_PKG_VERSION");
 
 /// Enum defining the pact specification versions supported by the library
 #[derive(Debug, Clone, PartialEq)]

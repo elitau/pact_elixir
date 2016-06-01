@@ -679,33 +679,33 @@ fn write_pact_test() {
     fs::remove_dir_all(dir.parent().unwrap()).unwrap_or(());
 
     expect!(result).to(be_ok());
-    expect(pact_file).to(be_equal_to(r#"{
-  "consumer": {
+    expect(pact_file).to(be_equal_to(format!(r#"{{
+  "consumer": {{
     "name": "write_pact_test_consumer"
-  },
+  }},
   "interactions": [
-    {
+    {{
       "description": "Test Interaction",
       "providerState": "Good state to be in",
-      "request": {
+      "request": {{
         "method": "GET",
         "path": "/"
-      },
-      "response": {
+      }},
+      "response": {{
         "status": 200
-      }
-    }
+      }}
+    }}
   ],
-  "metadata": {
-    "pact-rust": {
-      "version": "0.0.1"
-    },
-    "pact-specification": {
+  "metadata": {{
+    "pact-rust": {{
+      "version": "{}"
+    }},
+    "pact-specification": {{
       "version": "1.0.0"
-    }
-  },
-  "provider": {
+    }}
+  }},
+  "provider": {{
     "name": "write_pact_test_provider"
-  }
-}"#));
+  }}
+}}"#, super::VERSION.unwrap())));
 }
