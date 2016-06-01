@@ -1,3 +1,4 @@
+#[allow(unused_imports)]
 use pact_matching::models::Response;
 use pact_matching::match_response;
 use rustc_serialize::json::Json;

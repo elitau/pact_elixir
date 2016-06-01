@@ -1,5 +1,5 @@
 use super::*;
-use super::match_header_value;
+use super::{match_header_value, strip_whitespace};
 use std::collections::HashMap;
 use expectest::prelude::*;
 use models::{Request, OptionalBody};

@@ -1,3 +1,5 @@
+//! The `models` module provides all the structures required to model a Pact.
+
 use std::collections::HashMap;
 use std::collections::BTreeMap;
 use rustc_serialize::json::Json;
@@ -14,13 +16,17 @@ use std::path::Path;
 
 const VERSION: Option<&'static str> = option_env!("CARGO_PKG_VERSION");
 
+/// Enum defining the pact specification versions supported by the library
 #[derive(Debug, Clone, PartialEq)]
 pub enum PactSpecification {
+    /// Unknown or unsupported specification version
     Unknown,
+    /// First version of the pact specification (https://github.com/pact-foundation/pact-specification/tree/version-1)
     V1
 }
 
 impl PactSpecification {
+    /// Returns the semantic version string of the specification version.
     pub fn version_str(&self) -> String {
         match *self {
             PactSpecification::V1 => s!("1.0.0"),
@@ -29,12 +35,15 @@ impl PactSpecification {
     }
 }
 
+/// Struct that defines the consumer of the pact.
 #[derive(Debug, Clone)]
 pub struct Consumer {
+    /// Each consumer should have a unique name to identify it.
     pub name: String
 }
 
 impl Consumer {
+    /// Builds a `Consumer` from the `Json` struct.
     pub fn from_json(pact_json: &Json) -> Consumer {
         let val = match pact_json.find("name") {
             Some(v) => match v.clone() {
@@ -46,17 +55,21 @@ impl Consumer {
         Consumer { name: val.clone() }
     }
 
+    /// Converts this `Consumer` to a `Json` struct.
     pub fn to_json(&self) -> Json {
         Json::Object(btreemap!{ s!("name") => Json::String(self.name.clone()) })
     }
 }
 
+/// Struct that defines a provider of a pact.
 #[derive(Debug, Clone)]
 pub struct Provider {
+    /// Each provider should have a unique name to identify it.
     pub name: String
 }
 
 impl Provider {
+    /// Builds a `Provider` from a `Json` struct.
     pub fn from_json(pact_json: &Json) -> Provider {
         let val = match pact_json.find("name") {
             Some(v) => match v.clone() {
@@ -68,21 +81,30 @@ impl Provider {
         Provider { name: val.clone() }
     }
 
+    /// Converts this `Provider` to a `Json` struct.
     pub fn to_json(&self) -> Json {
         Json::Object(btreemap!{ s!("name") => Json::String(self.name.clone()) })
     }
 }
 
+/// Enum that defines the four main states that a body of a request and response can be in a pact
+/// file.
 #[derive(RustcDecodable, RustcEncodable, Debug, Clone, PartialEq)]
 pub enum OptionalBody {
+    /// A body is missing if it is not present in the pact file
     Missing,
+    /// An empty body that is present in the pact file.
     Empty,
+    /// A JSON body that is the null value. This state is to protect other language implementations
+    /// from null values. It is treated as `Empty`.
     Null,
+    /// A non-empty body that is present in the pact file.
     Present(String)
 }
 
 impl OptionalBody {
 
+    /// If the body is present in the pact file and not empty or null.
     pub fn is_present(&self) -> bool {
         match *self {
             OptionalBody::Present(_) => true,
@@ -90,6 +112,7 @@ impl OptionalBody {
         }
     }
 
+    /// Returns the body if present, otherwise returns the empty string.
     pub fn value(&self) -> String {
         match *self {
             OptionalBody::Present(ref s) => s.clone(),
@@ -106,11 +129,18 @@ lazy_static! {
     static ref XMLREGEXP2: Regex = Regex::new(r#"^\s*<\w+\s*(:\w+=["”][^"”]+["”])?.*"#).unwrap();
 }
 
+/// Trait to specify an HTTP part of a message. It encapsulates the shared parts of a request and
+/// response.
 pub trait HttpPart {
+    /// Returns the headers of the HTTP part.
     fn headers(&self) -> &Option<HashMap<String, String>>;
+    /// Returns the body of the HTTP part.
     fn body(&self) -> &OptionalBody;
+    /// Returns the matching rules of the HTTP part.
     fn matching_rules(&self) -> &Option<HashMap<String, HashMap<String, String>>>;
 
+    /// Determins the content type of the HTTP part. If a `Content-Type` header is present, the
+    /// value of that header will be returned. Otherwise, the body will be inspected.
     fn mimetype(&self) -> String {
         match *self.headers() {
             Some(ref h) => match h.iter().find(|kv| kv.0.to_lowercase() == s!("content-type")) {
@@ -124,6 +154,8 @@ pub trait HttpPart {
         }
     }
 
+    /// Tries to detect the content type of the body by matching some regular exptressions against
+    /// the first 32 characters. Default to `text/plain` if no match is found.
     fn detect_content_type(&self) -> String {
         match *self.body() {
             OptionalBody::Present(ref body) => {
@@ -145,13 +177,20 @@ pub trait HttpPart {
     }
 }
 
+/// Struct that defines the request.
 #[derive(PartialEq, Debug, Clone)]
 pub struct Request {
+    /// Request method
     pub method: String,
+    /// Request path
     pub path: String,
+    /// Request query string
     pub query: Option<HashMap<String, Vec<String>>>,
+    /// Request headers
     pub headers: Option<HashMap<String, String>>,
+    /// Request body
     pub body: OptionalBody,
+    /// Request matching rules (currently not used)
     pub matching_rules: Option<HashMap<String, HashMap<String, String>>>
 }
 
@@ -221,6 +260,7 @@ fn build_query_string(query: HashMap<String, Vec<String>>) -> String {
 }
 
 impl Request {
+    /// Builds a `Request` from a `Json` struct.
     pub fn from_json(request: &Json) -> Request {
         let method_val = match request.find("method") {
             Some(v) => match *v {
@@ -253,6 +293,7 @@ impl Request {
         }
     }
 
+    /// Converts this `Request` to a `Json` struct.
     pub fn to_json(&self) -> Json {
         let mut json = btreemap!{
             s!("method") => Json::String(self.method.to_uppercase()),
@@ -285,6 +326,7 @@ impl Request {
         Json::Object(json)
     }
 
+    /// Returns the default request: a GET request to the root.
     pub fn default_request() -> Request {
         Request {
             method: s!("GET"),
@@ -297,15 +339,21 @@ impl Request {
     }
 }
 
+/// Struct that defines the response.
 #[derive(PartialEq, Debug, Clone)]
 pub struct Response {
+    /// Response status
     pub status: u16,
+    /// Response headers
     pub headers: Option<HashMap<String, String>>,
+    /// Response body
     pub body: OptionalBody,
+    /// Response matching rules (not currently used)
     pub matching_rules: Option<HashMap<String, HashMap<String, String>>>
 }
 
 impl Response {
+    /// Build a `Response` from a `Json` struct.
     pub fn from_json(response: &Json) -> Response {
         let status_val = match response.find("status") {
             Some(v) => v.as_u64().unwrap() as u16,
@@ -319,6 +367,7 @@ impl Response {
         }
     }
 
+    /// Returns a default response: Status 200
     pub fn default_response() -> Response {
         Response {
             status: 200,
@@ -328,6 +377,7 @@ impl Response {
         }
     }
 
+    /// Converts this response to a `Json` struct.
     pub fn to_json(&self) -> Json {
         let mut json = btreemap!{
             s!("status") => Json::U64(self.status as u64)
@@ -371,16 +421,22 @@ impl HttpPart for Response {
     }
 }
 
+/// Struct that defines an interaction (request and response pair)
 #[derive(Debug, Clone, PartialEq)]
 pub struct Interaction {
+    /// Description of this interaction. This needs to be unique in the pact file.
     pub description: String,
+    /// Optional provider state for the interaction.
+    /// See http://docs.pact.io/documentation/provider_states.html for more info on provider states.
     pub provider_state: Option<String>,
+    /// Request of the interaction
     pub request: Request,
+    /// Response of the interaction
     pub response: Response
 }
 
 impl Interaction {
-
+    /// Constructs an `Interaction` from the `Json` struct.
     pub fn from_json(index: usize, pact_json: &Json) -> Interaction {
         let description = match pact_json.find("description") {
             Some(v) => match *v {
@@ -417,6 +473,7 @@ impl Interaction {
          }
     }
 
+    /// Converts this interaction to a `Json` struct.
     pub fn to_json(&self) -> Json {
         let mut map = btreemap!{
             s!("description") => Json::String(self.description.clone()),
@@ -431,11 +488,16 @@ impl Interaction {
 
 }
 
+/// Struct that represents a pact between the consumer and provider of a service.
 #[derive(Debug, Clone)]
 pub struct Pact {
+    /// Consumer side of the pact
     pub consumer: Consumer,
+    /// Provider side of the pact
     pub provider: Provider,
+    /// List of interactions between the consumer and provider.
     pub interactions: Vec<Interaction>,
+    /// Metadata associated with this pact file.
     pub metadata: BTreeMap<String, BTreeMap<String, String>>
 }
 
@@ -474,6 +536,7 @@ fn parse_interactions(pact_json: &Json) -> Vec<Interaction> {
 
 impl Pact {
 
+    /// Creates a `Pact` from a `Json` struct.
     pub fn from_json(pact_json: &Json) -> Pact {
         let metadata = parse_meta_data(pact_json);
         let consumer = match pact_json.find("consumer") {
@@ -492,6 +555,7 @@ impl Pact {
         }
     }
 
+    /// Converts this pact to a `Json` struct.
     pub fn to_json(&self) -> Json {
         let map = btreemap!{
             s!("consumer") => self.consumer.to_json(),
@@ -502,6 +566,7 @@ impl Pact {
         Json::Object(map)
     }
 
+    /// Determins the specification version of this pact.
     pub fn specification_version(&self) -> PactSpecification {
         match self.metadata.get("pact-specification") {
             Some(spec_ver) => match spec_ver.get("version") {
@@ -518,6 +583,7 @@ impl Pact {
         }
     }
 
+    /// Creates a BTreeMap of the metadata of this pact.
     pub fn metadata_to_json(&self) -> BTreeMap<String, Json> {
         let mut md_map: BTreeMap<String, Json> = self.metadata.iter()
             .map(|(k, v)| {
@@ -529,10 +595,14 @@ impl Pact {
         md_map
     }
 
+    /// Determins the default file name for the pact. This is based on the consumer and
+    /// provider names.
     pub fn default_file_name(&self) -> String {
         format!("{}-{}.json", self.consumer.name, self.provider.name)
     }
 
+    /// Writes this pact out to the provided file path. All directories in the path will
+    /// automatically created.
     pub fn write_pact(&self, path: &Path) -> io::Result<()> {
         try!{ fs::create_dir_all(path.parent().unwrap()) };
         let mut file = try!{ File::create(path) };
@@ -605,6 +675,9 @@ fn encode_query(query: &str) -> String {
     }).collect()
 }
 
+/// Parses a query string into an optional map. The query parameter name will be mapped to
+/// a list of values. Where the query parameter is repeated, the order of the values will be
+/// preserved.
 pub fn parse_query_string(query: &String) -> Option<HashMap<String, Vec<String>>> {
     if !query.is_empty() {
         Some(query.split("&").map(|kv| {

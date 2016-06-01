@@ -11,6 +11,7 @@ specs.eachFileRecurse(FileType.DIRECTORIES) { dir ->
   def requestResponsePath = path.getNameCount() > 3 ? path.getName(3).toString() : ''
 
   testFile.withPrintWriter { pw ->
+    pw.println('#[allow(unused_imports)]')
     if (requestResponsePath == 'request') {
       pw.println('use pact_matching::models::Request;')
       pw.println('use pact_matching::match_request;')

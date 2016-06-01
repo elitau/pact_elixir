@@ -1,3 +1,8 @@
+//! The `libpact_matching` crate provides the core logic to performing matching on HTTP requests
+//! and responses. It implements the V1 Pact specification (https://github.com/pact-foundation/pact-specification/tree/version-1).
+
+#![warn(missing_docs)]
+
 extern crate rustc_serialize;
 #[macro_use] extern crate log;
 #[macro_use] extern crate p_macro;
@@ -8,6 +13,7 @@ extern crate semver;
 #[macro_use] extern crate itertools;
 extern crate rand;
 
+/// Simple macro to convert a string slice to a `String` struct.
 #[macro_export]
 macro_rules! s {
     ($e:expr) => ($e.to_string())
@@ -20,7 +26,7 @@ use rustc_serialize::json::{Json, ToJson};
 pub mod models;
 mod json;
 
-pub fn strip_whitespace<'a, T: FromIterator<&'a str>>(val: &'a String, split_by: &'a str) -> T {
+fn strip_whitespace<'a, T: FromIterator<&'a str>>(val: &'a String, split_by: &'a str) -> T {
     val.split(split_by).map(|v| v.trim().clone() ).collect()
 }
 
@@ -28,18 +34,74 @@ static BODY_MATCHERS: [(&'static str, fn(expected: &String, actual: &String, con
     ("application/json", json::match_json)
 ];
 
+/// Enum that defines the different types of mismatches that can occur.
 #[derive(Debug, Clone)]
 pub enum Mismatch {
-    MethodMismatch { expected: String, actual: String },
-    PathMismatch { expected: String, actual: String },
-    StatusMismatch { expected: u16, actual: u16 },
-    QueryMismatch { parameter: String, expected: String, actual: String, mismatch: String },
-    HeaderMismatch { key: String, expected: String, actual: String, mismatch: String },
-    BodyTypeMismatch { expected: String, actual: String },
-    BodyMismatch { path: String, expected: Option<String>, actual: Option<String>, mismatch: String }
+    /// Request Method mismatch
+    MethodMismatch {
+        /// Expected request method
+        expected: String,
+        /// Actual request method
+        actual: String
+    },
+    /// Request Path mismatch
+    PathMismatch {
+        /// expected request path
+        expected: String,
+        /// actual request path
+        actual: String
+    },
+    /// Response status mismatch
+    StatusMismatch {
+        /// expected response status
+        expected: u16,
+        /// actual response status
+        actual: u16
+    },
+    /// Request query mismatch
+    QueryMismatch {
+        /// query parameter name
+        parameter: String,
+        /// expected value
+        expected: String,
+        /// actual value
+        actual: String,
+        /// description of the mismatch
+        mismatch: String
+    },
+    /// Header mismatch
+    HeaderMismatch {
+        /// header key
+        key: String,
+        /// expected value
+        expected: String,
+        /// actual value
+        actual: String,
+        /// description of the mismatch
+        mismatch: String
+    },
+    /// Mismatch in the content type of the body
+    BodyTypeMismatch {
+        /// expected content type of the body
+        expected: String,
+        /// actual content type of the body
+        actual: String
+    },
+    /// Body element mismatch
+    BodyMismatch {
+        /// path expression to where the mismatch occured
+        path: String,
+        /// expected value
+        expected: Option<String>,
+        /// actual value
+        actual: Option<String>,
+        /// description of the mismatch
+        mismatch: String
+    }
 }
 
 impl Mismatch {
+    /// Converts the mismatch to a `Json` struct.
     pub fn to_json(&self) -> Json {
         match self {
             &Mismatch::MethodMismatch { expected: ref e, actual: ref a } => {
@@ -113,6 +175,7 @@ impl Mismatch {
         }
     }
 
+    /// Returns the type of the mismatch as a string
     pub fn mismatch_type(&self) -> String {
         match *self {
             Mismatch::MethodMismatch { .. } => s!("MethodMismatch"),
@@ -162,11 +225,15 @@ impl PartialEq for Mismatch {
     }
 }
 
+/// Enum that defines the configuration options for performing a match.
 pub enum DiffConfig {
+    /// If unexpected keys are allowed and ignored during matching.
     AllowUnexpectedKeys,
+    /// If unexpected keys cause a mismatch.
     NoUnexpectedKeys
 }
 
+/// Matches the actual text body to the expected one.
 pub fn match_text(expected: &String, actual: &String, mismatches: &mut Vec<Mismatch>) {
     if expected != actual {
         mismatches.push(Mismatch::BodyMismatch { path: s!("/"), expected: Some(expected.clone()),
@@ -175,12 +242,14 @@ pub fn match_text(expected: &String, actual: &String, mismatches: &mut Vec<Misma
     }
 }
 
+/// Matches the actual request method to the expected one.
 pub fn match_method(expected: String, actual: String, mismatches: &mut Vec<Mismatch>) {
     if expected.to_lowercase() != actual.to_lowercase() {
         mismatches.push(Mismatch::MethodMismatch { expected: expected, actual: actual });
     }
 }
 
+/// Matches the actual request path to the expected one.
 pub fn match_path(expected: String, actual: String, mismatches: &mut Vec<Mismatch>) {
     if expected != actual {
         mismatches.push(Mismatch::PathMismatch { expected: expected, actual: actual });
@@ -254,6 +323,7 @@ fn match_query_maps(expected: HashMap<String, Vec<String>>, actual: HashMap<Stri
     }
 }
 
+/// Matches the actual query parameters to the expected ones.
 pub fn match_query(expected: Option<HashMap<String, Vec<String>>>,
     actual: Option<HashMap<String, Vec<String>>>, mismatches: &mut Vec<Mismatch>) {
     match (actual, expected) {
@@ -341,6 +411,7 @@ fn match_header_maps(expected: HashMap<String, String>, actual: HashMap<String, 
     }
 }
 
+/// Matches the actual headers to the expected ones.
 pub fn match_headers(expected: Option<HashMap<String, String>>,
     actual: Option<HashMap<String, String>>, mismatches: &mut Vec<Mismatch>) {
     match (actual, expected) {
@@ -364,6 +435,7 @@ fn compare_bodies(mimetype: String, expected: &String, actual: &String, config: 
     }
 }
 
+/// Matches the actual body to the expected one. This takes into account the content type of each.
 pub fn match_body(expected: &models::HttpPart, actual: &models::HttpPart, config: DiffConfig,
     mismatches: &mut Vec<Mismatch>) {
     if expected.mimetype() == actual.mimetype() {
@@ -391,6 +463,7 @@ pub fn match_body(expected: &models::HttpPart, actual: &models::HttpPart, config
     }
 }
 
+/// Matches the expected and actual requests.
 pub fn match_request(expected: models::Request, actual: models::Request) -> Vec<Mismatch> {
     let mut mismatches = vec![];
 
@@ -404,12 +477,14 @@ pub fn match_request(expected: models::Request, actual: models::Request) -> Vec<
     mismatches
 }
 
+/// Matches the actual response status to the expected one.
 pub fn match_status(expected: u16, actual: u16, mismatches: &mut Vec<Mismatch>) {
     if expected != actual {
         mismatches.push(Mismatch::StatusMismatch { expected: expected, actual: actual });
     }
 }
 
+/// Matches the actual and expected responses.
 pub fn match_response(expected: models::Response, actual: models::Response) -> Vec<Mismatch> {
     let mut mismatches = vec![];
 
