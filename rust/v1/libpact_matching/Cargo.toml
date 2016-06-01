@@ -1,13 +1,13 @@
 [package]
 name = "pact_matching"
-version = "0.0.0"
+version = "0.0.1"
 authors = ["Ronald Holshausen <uglyog@gmail.com>"]
 description = "Pact-Rust support library that implements request and response matching logic"
 documentation = "http://docs.pact.io"
 homepage = "http://www.pact.io"
 repository = "https://github.com/pact-foundation/pact-reference/blob/master/rust/v1/libpact_matching"
 readme = "README.md"
-keywords = ["testing", "pact", "consumer driven contracts"]
+keywords = ["testing", "pact", "cdc"]
 license = "MIT"
 
 [dependencies]
