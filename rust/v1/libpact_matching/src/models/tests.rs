@@ -698,7 +698,7 @@ fn write_pact_test() {
   ],
   "metadata": {
     "pact-rust": {
-      "version": "0.0.0"
+      "version": "0.0.1"
     },
     "pact-specification": {
       "version": "1.0.0"
