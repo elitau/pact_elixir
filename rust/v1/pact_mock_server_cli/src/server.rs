@@ -154,7 +154,7 @@ pub fn verify_mock_server_request(context: Context, mut response: Response, outp
                     Ok(_) => response.set_status(StatusCode::Ok),
                     Err(err) => {
                         response.set_status(StatusCode::UnprocessableEntity);
-                        map.insert(s!("error"), Json::String(s!(err.description())));
+                        map.insert(s!("error"), Json::String(format!("Failed to write pact to file - {}", err)));
                     }
                 }
             }

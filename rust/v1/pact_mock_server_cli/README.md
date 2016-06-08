@@ -227,3 +227,169 @@ and for a mock server that has matched all requests:
 $ ./pact_mock_server_cli verify -m 52943
 Mock server 7d1bf906d0ff42528f2d7d794dd19c5b/52943 verified ok
 ```
+
+## Restful JSON API
+
+The master mock server provides a restful JSON API, and this API is what the command line sub-commands use to
+communicate and control the master server.
+
+### End points
+
+#### GET /
+
+This returns a list of all running mock servers managed by this master server.
+
+example request:
+
+```
+GET http://localhost:8080/ HTTP/1.1
+```
+
+example response:
+
+```json
+{
+  "mockServers": [
+    {
+      "id": "7d1bf906d0ff42528f2d7d794dd19c5b",
+      "port": 52943,
+      "provider": "Alice Service",
+      "status": "ok"
+    }
+  ]
+}
+```
+
+#### POST /
+
+This creates a new mock server from a pact file that must be present as JSON in the body. Returns the details of the mock server
+in the response.
+
+example request:
+
+```
+POST http://localhost:8080/ HTTP/1.1
+Content-Type: application/json
+```
+
+payload:
+
+```json
+{
+  "provider": {
+    "name": "Alice Service"
+  },
+  "consumer": {
+    "name": "Consumer"
+  },
+  "interactions": [
+    {
+      "description": "a retrieve Mallory request",
+      "request": {
+        "method": "GET",
+        "path": "/mallory",
+        "query": "name=ron&status=good"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "Content-Type": "text/html"
+        },
+        "body": "\"That is some good Mallory.\""
+      }
+    }
+  ]
+}
+```
+
+example response:
+
+```json
+{
+  "mockServer": {
+    "id": "81c3483901e647ba8f545f2842d09cba",
+    "port": 58276
+  }
+}
+```
+
+#### Response codes
+
+##### 200 OK
+
+This is returned when if the mock server was created successfully.
+
+##### 400 Bad Request
+
+This is returned if the pact JSON could not be parsed or the mock server could not be started.
+
+#### POST /mockserver/:id/verify
+
+This checks that the mock server, specified by ID or port number, has met all the expectations of the pact file. If all
+expectations have been met, the pact file will be written out to the output directory that was specified with the start
+sub-command. If any mismatched requests where received by the mock server, they will be returned.
+
+example request:
+
+```
+POST http://localhost:8080/mockserver/52943/verify HTTP/1.1
+```
+
+example successful response:
+
+```json
+{
+  "mockServer": {
+    "id": "7d1bf906d0ff42528f2d7d794dd19c5b",
+    "port": 52943,
+    "provider": "Alice Service",
+    "status": "ok"
+  }
+}
+```
+
+example unsuccessful response:
+
+```json
+{
+  "mismatches": [
+    {
+      "method": "GET",
+      "path": "/mallory",
+      "request": {
+        "method": "GET",
+        "path": "/mallory",
+        "query": "name=ron&status=good"
+      },
+      "type": "missing-request"
+    }
+  ],
+  "mockServer": {
+    "id": "81c3483901e647ba8f545f2842d09cba",
+    "port": 58276,
+    "provider": "Alice Service",
+    "status": "error"
+  }
+}
+```
+
+#### Response codes
+
+##### 200 OK
+
+This is returned when all expectations have been successfully met.
+
+##### 400 Bad Request
+
+This is returned if any expectations have not been met, or any unrecognised requests where received.
+
+##### 422 Unprocessable Entity
+
+This is returned if the ID or post number did not correspond to a running mock server or the pact file could not be
+wriiten.
+
+example response:
+
+```json
+"No mock server running with port '58277'"
+```
