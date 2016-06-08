@@ -4,7 +4,7 @@ This library implements the in-process mock server for matching HTTP requests an
 
 [Online rust docs](http://www.pact.io/reference/rust/libpact_mock_server-docs-latest/pact_mock_server/)
 
-For an example of calling these functions, have a [look at the JavaScript reference](/javascript/v1/README.md).
+For an example of calling these functions, have a [look at the JavaScript reference](javascript/v1/README.md).
 
 There are a number of exported functions using C bindings for controlling the mock server. These can be used in any
 language that supports C bindings.
