@@ -385,8 +385,8 @@ This is returned if any expectations have not been met, or any unrecognised requ
 
 ##### 422 Unprocessable Entity
 
-This is returned if the ID or post number did not correspond to a running mock server or the pact file could not be
-wriiten.
+This is returned if the ID or port number did not correspond to a running mock server or the pact file could not be
+written.
 
 example response:
 
