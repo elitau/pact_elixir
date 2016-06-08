@@ -1,6 +1,7 @@
 # Pact Mock Server library
 
-This library implements the in-process mock server for matching HTTP requests and generating responses off a pact file.
+This library implements the in-process mock server for matching HTTP requests and generating responses from a pact file.
+It implements the [V1 Pact specification](https://github.com/pact-foundation/pact-specification/tree/version-1).
 
 [Online rust docs](http://www.pact.io/reference/rust/libpact_mock_server-docs-latest/pact_mock_server/)
 
