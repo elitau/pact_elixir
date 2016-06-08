@@ -1,3 +1,9 @@
+//! The `pact_mock_server` crate provides the CLI for the pact mock server for mocking HTTP requests
+//! and generating responses based on a pact file. It implements the V1 Pact specification
+//! (https://github.com/pact-foundation/pact-specification/tree/version-1).
+
+#![warn(missing_docs)]
+
 #[macro_use] extern crate clap;
 #[macro_use] extern crate pact_matching;
 extern crate pact_mock_server;
@@ -94,6 +100,7 @@ fn lookup_global_option<'a>(option: &str, matches: &'a ArgMatches<'a>) -> Option
         (None, None) => None
     }
 }
+
 
 fn integer_value(v: String) -> Result<(), String> {
     v.parse::<u16>().map(|_| ()).map_err(|e| format!("'{}' is not a valid port value: {}", v, e) )
