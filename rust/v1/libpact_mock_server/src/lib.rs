@@ -29,7 +29,8 @@ use std::collections::{BTreeMap, HashMap};
 use std::thread;
 use std::sync::Mutex;
 use std::sync::mpsc::channel;
-use std::io::{Read, Write};
+use std::io::{self, Read, Write};
+use std::path::PathBuf;
 use hyper::server::{Server, Listening};
 use hyper::status::StatusCode;
 use hyper::header::{Headers, ContentType, AccessControlAllowOrigin, ContentLength};
@@ -166,6 +167,27 @@ impl MockServer {
             .filter(|i| !interactions.contains(i))
             .map(|i| MatchResult::MissingRequest(i.clone()));
         mismatches.chain(missing).collect()
+    }
+
+    /// Mock server writes it pact out to the provided directory
+    pub fn write_pact(&self, output_path: &Option<String>) -> io::Result<()> {
+        let pact_file_name = self.pact.default_file_name();
+        let filename = match *output_path {
+            Some(ref path) => {
+                let mut path = PathBuf::from(path);
+                path.push(pact_file_name);
+                path
+            },
+            None => PathBuf::from(pact_file_name)
+        };
+        info!("Writing pact out to '{}'", filename.display());
+        match self.pact.write_pact(filename.as_path()) {
+            Ok(_) => Ok(()),
+            Err(err) => {
+                warn!("Failed to write pact to file - {}", err);
+                Err(err)
+            }
+        }
     }
 }
 
@@ -561,6 +583,60 @@ pub extern fn cleanup_mock_server(mock_server_port: int32_t) -> bool {
         Err(cause) => {
             error!("Caught a general panic: {:?}", cause);
             false
+        }
+    }
+}
+
+/// External interface to trigger a mock server to write out its pact file. This function should
+/// be called if all the consumer tests have passed. The directory to write the file to is passed
+/// as the second parameter. If a NULL pointer is passed, the current working directory is used.
+///
+/// Returns 0 if the pact file was successfully written. Returns a positive code if the file can
+/// not be written, or there is no mock server running on that port or the function panics.
+///
+/// # Errors
+///
+/// Errors are returned as positive values.
+///
+/// | Error | Description |
+/// |-------|-------------|
+/// | 1 | A general panic was caught |
+/// | 2 | The pact file was not able to be written |
+/// | 3 | A mock server with the provided port was not found |
+#[no_mangle]
+pub extern fn write_pact_file(mock_server_port: int32_t, directory: *const c_char) -> int32_t {
+    let result = catch_unwind(|| {
+        let dir = unsafe {
+            if directory.is_null() {
+                warn!("Directory to write to is NULL, defaulting to the current working directory");
+                None
+            } else {
+                let c_str = CStr::from_ptr(directory);
+                let dir_str = str::from_utf8(c_str.to_bytes()).unwrap();
+                if dir_str.is_empty() {
+                    None
+                } else {
+                    Some(s!(dir_str))
+                }
+            }
+        };
+
+        lookup_mock_server_by_port(mock_server_port, &|mock_server| {
+            match mock_server.write_pact(&dir) {
+                Ok(_) => 0,
+                Err(err) => {
+                    error!("Failed to write pact to file - {}", err);
+                    2
+                }
+            }
+        }).unwrap_or(3)
+    });
+
+    match result {
+        Ok(val) => val,
+        Err(cause) => {
+            error!("Caught a general panic: {:?}", cause);
+            1
         }
     }
 }

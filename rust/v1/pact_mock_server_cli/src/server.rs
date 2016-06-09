@@ -27,9 +27,7 @@ use std::error::Error;
 use rustc_serialize::json::Json;
 use std::borrow::Borrow;
 use std::iter::FromIterator;
-use std::io;
 use verify;
-use std::path::PathBuf;
 use clap::ArgMatches;
 
 fn add_cors_headers(response: &mut Response) {
@@ -112,26 +110,6 @@ fn list_servers(mut response: Response) {
     response.send(json_response.to_string());
 }
 
-fn write_pact(pact: &Pact, output_path: &Option<String>) -> io::Result<()> {
-    let pact_file_name = pact.default_file_name();
-    let filename = match *output_path {
-        Some(ref path) => {
-            let mut path = PathBuf::from(path);
-            path.push(pact_file_name);
-            path
-        },
-        None => PathBuf::from(pact_file_name)
-    };
-    info!("Writing pact out to '{}'", filename.display());
-    match pact.write_pact(filename.as_path()) {
-        Ok(_) => Ok(()),
-        Err(err) => {
-            warn!("Failed to write pact to file - {}", err);
-            Err(err)
-        }
-    }
-}
-
 pub fn verify_mock_server_request(context: Context, mut response: Response, output_path: &Option<String>) {
     add_cors_headers(&mut response);
     response.headers_mut().set(
@@ -150,7 +128,7 @@ pub fn verify_mock_server_request(context: Context, mut response: Response, outp
                     Vec::from_iter(mismatches.iter()
                         .map(|m| m.to_json()))));
             } else {
-                match write_pact(&ms.pact, output_path) {
+                match ms.write_pact(output_path) {
                     Ok(_) => response.set_status(StatusCode::Ok),
                     Err(err) => {
                         response.set_status(StatusCode::UnprocessableEntity);
