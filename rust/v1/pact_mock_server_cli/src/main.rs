@@ -101,7 +101,6 @@ fn lookup_global_option<'a>(option: &str, matches: &'a ArgMatches<'a>) -> Option
     }
 }
 
-
 fn integer_value(v: String) -> Result<(), String> {
     v.parse::<u16>().map(|_| ()).map_err(|e| format!("'{}' is not a valid port value: {}", v, e) )
 }
@@ -222,12 +221,19 @@ fn handle_command_args() -> Result<(), i32> {
         },
         Err(ref err) => {
             match err.kind {
-                ErrorKind::HelpDisplayed => Ok(()),
-                ErrorKind::VersionDisplayed => {
-                    print_version();
+                ErrorKind::HelpDisplayed => {
+                    println!("");
                     Ok(())
                 },
-                _ => err.exit()
+                ErrorKind::VersionDisplayed => {
+                    print_version();
+                    println!("");
+                    Ok(())
+                },
+                _ => {
+                    println!("");
+                    err.exit()
+                }
             }
         }
     }
