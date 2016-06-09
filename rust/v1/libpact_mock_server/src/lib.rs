@@ -234,7 +234,7 @@ fn method_or_path_mismatch(mismatches: &Vec<Mismatch>) -> bool {
 fn extract_path(uri: &RequestUri) -> String {
     match uri {
         &RequestUri::AbsolutePath(ref s) => s!(s.splitn(2, "?").next().unwrap_or("/")),
-        &RequestUri::AbsoluteUri(ref url) => url.path().unwrap_or(&[s!("")]).join("/"),
+        &RequestUri::AbsoluteUri(ref url) => s!(url.path()),
         _ => uri.to_string()
     }
 }
@@ -251,8 +251,8 @@ fn extract_query_string(uri: &RequestUri) -> Option<HashMap<String, Vec<String>>
                 None
             }
         },
-        &RequestUri::AbsoluteUri(ref url) => match url.query {
-            Some(ref q) => parse_query_string(q),
+        &RequestUri::AbsoluteUri(ref url) => match url.query() {
+            Some(q) => parse_query_string(&s!(q)),
             None => None
         },
         _ => None
