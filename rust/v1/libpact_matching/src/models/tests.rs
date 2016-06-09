@@ -7,6 +7,7 @@ use std::env;
 use rustc_serialize::json::Json;
 use expectest::prelude::*;
 use rand;
+use std::hash::{Hash, Hasher, SipHasher};
 
 #[test]
 fn request_from_json_defaults_to_get() {
@@ -708,4 +709,362 @@ fn write_pact_test() {
     "name": "write_pact_test_provider"
   }}
 }}"#, super::VERSION.unwrap())));
+}
+
+#[test]
+fn write_pact_test_should_merge_pacts() {
+    let pact = Pact { consumer: Consumer { name: s!("merge_consumer") },
+        provider: Provider { name: s!("merge_provider") },
+        interactions: vec![
+            Interaction {
+                description: s!("Test Interaction 2"),
+                provider_state: Some(s!("Good state to be in")),
+                request: Request::default_request(),
+                response: Response::default_response()
+            }
+        ],
+        metadata: btreemap!{} };
+    let pact2 = Pact { consumer: Consumer { name: s!("merge_consumer") },
+        provider: Provider { name: s!("merge_provider") },
+        interactions: vec![
+            Interaction {
+                description: s!("Test Interaction"),
+                provider_state: Some(s!("Good state to be in")),
+                request: Request::default_request(),
+                response: Response::default_response()
+            }
+        ],
+        metadata: btreemap!{} };
+    let mut dir = env::temp_dir();
+    let x = rand::random::<u16>();
+    dir.push(format!("pact_test_{}", x));
+    dir.push(pact.default_file_name());
+
+    let result = pact.write_pact(dir.as_path());
+    let result2 = pact2.write_pact(dir.as_path());
+
+    let pact_file = read_pact_file(dir.as_path().to_str().unwrap()).unwrap_or(s!(""));
+    fs::remove_dir_all(dir.parent().unwrap()).unwrap_or(());
+
+    expect!(result).to(be_ok());
+    expect!(result2).to(be_ok());
+    expect(pact_file).to(be_equal_to(format!(r#"{{
+  "consumer": {{
+    "name": "merge_consumer"
+  }},
+  "interactions": [
+    {{
+      "description": "Test Interaction",
+      "providerState": "Good state to be in",
+      "request": {{
+        "method": "GET",
+        "path": "/"
+      }},
+      "response": {{
+        "status": 200
+      }}
+    }},
+    {{
+      "description": "Test Interaction 2",
+      "providerState": "Good state to be in",
+      "request": {{
+        "method": "GET",
+        "path": "/"
+      }},
+      "response": {{
+        "status": 200
+      }}
+    }}
+  ],
+  "metadata": {{
+    "pact-rust": {{
+      "version": "{}"
+    }},
+    "pact-specification": {{
+      "version": "1.0.0"
+    }}
+  }},
+  "provider": {{
+    "name": "merge_provider"
+  }}
+}}"#, super::VERSION.unwrap())));
+}
+
+#[test]
+fn write_pact_test_should_not_merge_pacts_with_conflicts() {
+    let pact = Pact { consumer: Consumer { name: s!("write_pact_test_consumer") },
+        provider: Provider { name: s!("write_pact_test_provider") },
+        interactions: vec![
+            Interaction {
+                description: s!("Test Interaction"),
+                provider_state: Some(s!("Good state to be in")),
+                request: Request::default_request(),
+                response: Response::default_response()
+            }
+        ],
+        metadata: btreemap!{} };
+    let pact2 = Pact { consumer: Consumer { name: s!("write_pact_test_consumer") },
+        provider: Provider { name: s!("write_pact_test_provider") },
+        interactions: vec![
+            Interaction {
+                description: s!("Test Interaction"),
+                provider_state: Some(s!("Good state to be in")),
+                request: Request::default_request(),
+                response: Response { status: 400, .. Response::default_response() }
+            }
+        ],
+        metadata: btreemap!{} };
+    let mut dir = env::temp_dir();
+    let x = rand::random::<u16>();
+    dir.push(format!("pact_test_{}", x));
+    dir.push(pact.default_file_name());
+
+    let result = pact.write_pact(dir.as_path());
+    let result2 = pact2.write_pact(dir.as_path());
+
+    let pact_file = read_pact_file(dir.as_path().to_str().unwrap()).unwrap_or(s!(""));
+    fs::remove_dir_all(dir.parent().unwrap()).unwrap_or(());
+
+    expect!(result).to(be_ok());
+    expect!(result2).to(be_err());
+    expect(pact_file).to(be_equal_to(format!(r#"{{
+  "consumer": {{
+    "name": "write_pact_test_consumer"
+  }},
+  "interactions": [
+    {{
+      "description": "Test Interaction",
+      "providerState": "Good state to be in",
+      "request": {{
+        "method": "GET",
+        "path": "/"
+      }},
+      "response": {{
+        "status": 200
+      }}
+    }}
+  ],
+  "metadata": {{
+    "pact-rust": {{
+      "version": "{}"
+    }},
+    "pact-specification": {{
+      "version": "1.0.0"
+    }}
+  }},
+  "provider": {{
+    "name": "write_pact_test_provider"
+  }}
+}}"#, super::VERSION.unwrap())));
+}
+
+#[test]
+fn pact_merge_does_not_merge_different_consumers() {
+    let pact = Pact { consumer: Consumer { name: s!("test_consumer") },
+        provider: Provider { name: s!("test_provider") },
+        interactions: vec![],
+        metadata: btreemap!{} };
+    let pact2 = Pact { consumer: Consumer { name: s!("test_consumer2") },
+        provider: Provider { name: s!("test_provider") },
+        interactions: vec![],
+        metadata: btreemap!{} };
+    expect!(pact.merge(&pact2)).to(be_err());
+}
+
+#[test]
+fn pact_merge_does_not_merge_different_providers() {
+    let pact = Pact { consumer: Consumer { name: s!("test_consumer") },
+        provider: Provider { name: s!("test_provider") },
+        interactions: vec![],
+        metadata: btreemap!{} };
+    let pact2 = Pact { consumer: Consumer { name: s!("test_consumer") },
+        provider: Provider { name: s!("test_provider2") },
+        interactions: vec![],
+        metadata: btreemap!{} };
+    expect!(pact.merge(&pact2)).to(be_err());
+}
+
+#[test]
+fn pact_merge_does_not_merge_where_there_are_conflicting_interactions() {
+    let pact = Pact { consumer: Consumer { name: s!("test_consumer") },
+        provider: Provider { name: s!("test_provider") },
+        interactions: vec![
+            Interaction {
+                description: s!("Test Interaction"),
+                provider_state: Some(s!("Good state to be in")),
+                request: Request::default_request(),
+                response: Response::default_response()
+            }
+        ],
+        metadata: btreemap!{} };
+    let pact2 = Pact { consumer: Consumer { name: s!("test_consumer") },
+        provider: Provider { name: s!("test_provider") },
+        interactions: vec![
+            Interaction {
+                description: s!("Test Interaction"),
+                provider_state: Some(s!("Good state to be in")),
+                request: Request { path: s!("/other"), .. Request::default_request() },
+                response: Response::default_response()
+            }
+        ],
+        metadata: btreemap!{} };
+    expect!(pact.merge(&pact2)).to(be_err());
+}
+
+#[test]
+fn pact_merge_removes_duplicates() {
+    let pact = Pact { consumer: Consumer { name: s!("test_consumer") },
+        provider: Provider { name: s!("test_provider") },
+        interactions: vec![
+            Interaction {
+                description: s!("Test Interaction"),
+                provider_state: Some(s!("Good state to be in")),
+                request: Request::default_request(),
+                response: Response::default_response()
+            }
+        ],
+        metadata: btreemap!{} };
+    let pact2 = Pact { consumer: Consumer { name: s!("test_consumer") },
+        provider: Provider { name: s!("test_provider") },
+        interactions: vec![
+            Interaction {
+                description: s!("Test Interaction"),
+                provider_state: Some(s!("Good state to be in")),
+                request: Request::default_request(),
+                response: Response::default_response()
+            },
+            Interaction {
+                description: s!("Test Interaction 2"),
+                provider_state: Some(s!("Good state to be in")),
+                request: Request::default_request(),
+                response: Response::default_response()
+            }
+        ],
+        metadata: btreemap!{} };
+    let merged_pact = pact.merge(&pact2);
+    expect!(merged_pact.clone()).to(be_ok());
+    expect!(merged_pact.clone().unwrap().interactions.len()).to(be_equal_to(2));
+}
+
+#[test]
+fn interactions_do_not_conflict_if_they_have_different_descriptions() {
+    let interaction1 = Interaction {
+        description: s!("Test Interaction"),
+        provider_state: Some(s!("Good state to be in")),
+        request: Request::default_request(),
+        response: Response::default_response()
+    };
+    let interaction2 =Interaction {
+        description: s!("Test Interaction 2"),
+        provider_state: Some(s!("Good state to be in")),
+        request: Request::default_request(),
+        response: Response::default_response()
+    };
+    expect(interaction1.conflicts_with(&interaction2)).to(be_false());
+}
+
+#[test]
+fn interactions_do_not_conflict_if_they_have_different_provider_states() {
+    let interaction1 = Interaction {
+        description: s!("Test Interaction"),
+        provider_state: Some(s!("Good state to be in")),
+        request: Request::default_request(),
+        response: Response::default_response()
+    };
+    let interaction2 =Interaction {
+        description: s!("Test Interaction"),
+        provider_state: Some(s!("Bad state to be in")),
+        request: Request::default_request(),
+        response: Response::default_response()
+    };
+    expect(interaction1.conflicts_with(&interaction2)).to(be_false());
+}
+
+#[test]
+fn interactions_do_not_conflict_if_they_have_the_same_requests_and_responses() {
+    let interaction1 = Interaction {
+        description: s!("Test Interaction"),
+        provider_state: Some(s!("Good state to be in")),
+        request: Request::default_request(),
+        response: Response::default_response()
+    };
+    let interaction2 =Interaction {
+        description: s!("Test Interaction"),
+        provider_state: Some(s!("Good state to be in")),
+        request: Request::default_request(),
+        response: Response::default_response()
+    };
+    expect(interaction1.conflicts_with(&interaction2)).to(be_false());
+}
+
+#[test]
+fn interactions_conflict_if_they_have_different_requests() {
+    let interaction1 = Interaction {
+        description: s!("Test Interaction"),
+        provider_state: Some(s!("Good state to be in")),
+        request: Request::default_request(),
+        response: Response::default_response()
+    };
+    let interaction2 =Interaction {
+        description: s!("Test Interaction"),
+        provider_state: Some(s!("Good state to be in")),
+        request: Request { method: s!("POST"), .. Request::default_request() },
+        response: Response::default_response()
+    };
+    expect(interaction1.conflicts_with(&interaction2)).to(be_true());
+}
+
+#[test]
+fn interactions_conflict_if_they_have_different_responses() {
+    let interaction1 = Interaction {
+        description: s!("Test Interaction"),
+        provider_state: Some(s!("Good state to be in")),
+        request: Request::default_request(),
+        response: Response::default_response()
+    };
+    let interaction2 =Interaction {
+        description: s!("Test Interaction"),
+        provider_state: Some(s!("Good state to be in")),
+        request: Request::default_request(),
+        response: Response { status: 400, .. Response::default_response() }
+    };
+    expect(interaction1.conflicts_with(&interaction2)).to(be_true());
+}
+
+fn hash<T: Hash>(t: &T) -> u64 {
+    let mut s = SipHasher::new();
+    t.hash(&mut s);
+    s.finish()
+}
+
+#[test]
+fn hash_for_request() {
+    let request1 = Request::default_request();
+    let request2 = Request { method: s!("POST"), .. Request::default_request() };
+    let request3 = Request { headers: Some(hashmap!{
+        s!("H1") => s!("A")
+    }), .. Request::default_request() };
+    let request4 = Request { headers: Some(hashmap!{
+        s!("H1") => s!("B")
+    }), .. Request::default_request() };
+    expect!(hash(&request1)).to(be_equal_to(hash(&request1)));
+    expect!(hash(&request3)).to(be_equal_to(hash(&request3)));
+    expect!(hash(&request1)).to_not(be_equal_to(hash(&request2)));
+    expect!(hash(&request3)).to_not(be_equal_to(hash(&request4)));
+}
+
+#[test]
+fn hash_for_response() {
+    let response1 = Response::default_response();
+    let response2 = Response { status: 400, .. Response::default_response() };
+    let response3 = Response { headers: Some(hashmap!{
+        s!("H1") => s!("A")
+    }), .. Response::default_response() };
+    let response4 = Response { headers: Some(hashmap!{
+        s!("H1") => s!("B")
+    }), .. Response::default_response() };
+    expect!(hash(&response1)).to(be_equal_to(hash(&response1)));
+    expect!(hash(&response3)).to(be_equal_to(hash(&response3)));
+    expect!(hash(&response1)).to_not(be_equal_to(hash(&response2)));
+    expect!(hash(&response3)).to_not(be_equal_to(hash(&response4)));
 }

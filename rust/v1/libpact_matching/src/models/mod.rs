@@ -8,11 +8,13 @@ use super::strip_whitespace;
 use regex::Regex;
 use semver::Version;
 use itertools::Itertools;
-use std::io;
+use std::io::{self, Error, ErrorKind};
 use std::io::prelude::*;
 use std::fs;
 use std::fs::File;
 use std::path::Path;
+use std::cmp::Ordering;
+use std::hash::{Hash, Hasher};
 
 /// Version of the library
 pub const VERSION: Option<&'static str> = option_env!("CARGO_PKG_VERSION");
@@ -90,7 +92,7 @@ impl Provider {
 
 /// Enum that defines the four main states that a body of a request and response can be in a pact
 /// file.
-#[derive(RustcDecodable, RustcEncodable, Debug, Clone, PartialEq)]
+#[derive(RustcDecodable, RustcEncodable, Debug, Clone, PartialEq, Eq, Hash)]
 pub enum OptionalBody {
     /// A body is missing if it is not present in the pact file
     Missing,
@@ -179,7 +181,7 @@ pub trait HttpPart {
 }
 
 /// Struct that defines the request.
-#[derive(PartialEq, Debug, Clone)]
+#[derive(PartialEq, Debug, Clone, Eq)]
 pub struct Request {
     /// Request method
     pub method: String,
@@ -206,6 +208,26 @@ impl HttpPart for Request {
 
     fn matching_rules(&self) -> &Option<HashMap<String, HashMap<String, String>>> {
         &self.matching_rules
+    }
+}
+
+impl Hash for Request {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        self.method.hash(state);
+        self.path.hash(state);
+        if self.query.is_some() {
+            for (k, v) in self.query.clone().unwrap() {
+                k.hash(state);
+                v.hash(state);
+            }
+        }
+        if self.headers.is_some() {
+            for (k, v) in self.headers.clone().unwrap() {
+                k.hash(state);
+                v.hash(state);
+            }
+        }
+        self.body.hash(state);
     }
 }
 
@@ -341,7 +363,7 @@ impl Request {
 }
 
 /// Struct that defines the response.
-#[derive(PartialEq, Debug, Clone)]
+#[derive(PartialEq, Debug, Clone, Eq)]
 pub struct Response {
     /// Response status
     pub status: u16,
@@ -422,8 +444,21 @@ impl HttpPart for Response {
     }
 }
 
+impl Hash for Response {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        self.status.hash(state);
+        if self.headers.is_some() {
+            for (k, v) in self.headers.clone().unwrap() {
+                k.hash(state);
+                v.hash(state);
+            }
+        }
+        self.body.hash(state);
+    }
+}
+
 /// Struct that defines an interaction (request and response pair)
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct Interaction {
     /// Description of this interaction. This needs to be unique in the pact file.
     pub description: String,
@@ -485,6 +520,15 @@ impl Interaction {
             map.insert(s!("providerState"), Json::String(self.provider_state.clone().unwrap()));
         }
         Json::Object(map)
+    }
+
+    /// Returns true if this interaction conflicts with the other interaction.
+    ///
+    /// Two interactions conflict if they have the same description and provider state, but they request and
+    /// responses are not equal
+    pub fn conflicts_with(&self, other: &Interaction) -> bool {
+        self.description == other.description && self.provider_state == other.provider_state &&
+            (self.request != other.request || self.response != other.response)
     }
 
 }
@@ -596,19 +640,77 @@ impl Pact {
         md_map
     }
 
+    /// Merges this pact with the other pact, and returns a new Pact with the interactions sorted.
+    /// Returns an error if there is a merge conflict, which will occur if any interaction has the
+    /// same description and provider state and the requests and responses are different.
+    pub fn merge(&self, pact: &Pact) -> Result<Pact, String> {
+        if self.consumer.name == pact.consumer.name && self.provider.name == pact.provider.name {
+            let conflicts = iproduct!(self.interactions.clone(), pact.interactions.clone())
+                .filter(|i| i.0.conflicts_with(&i.1))
+                .count();
+            if conflicts > 0 {
+                Err(format!("Unable to merge pacts, as there were {} conflicts between the interactions", conflicts))
+            } else {
+                Ok(Pact {
+                    provider: self.provider.clone(),
+                    consumer: self.consumer.clone(),
+                    interactions: self.interactions.iter()
+                        .chain(pact.interactions.iter())
+                        .cloned()
+                        .sorted_by(|a, b| {
+                            let cmp = Ord::cmp(&a.provider_state, &b.provider_state);
+                            if cmp == Ordering::Equal {
+                                Ord::cmp(&a.description, &b.description)
+                            } else {
+                                cmp
+                            }
+                        }).into_iter()
+                        .unique()
+                        .collect(),
+                    metadata: self.metadata.clone()
+                })
+            }
+        } else {
+            Err(s!("Unable to merge pacts, as they have different consumers or providers"))
+        }
+    }
+
     /// Determins the default file name for the pact. This is based on the consumer and
     /// provider names.
     pub fn default_file_name(&self) -> String {
         format!("{}-{}.json", self.consumer.name, self.provider.name)
     }
 
+    /// Reads the pact file and parses the resulting JSON into a `Pact` struct
+    pub fn read_pact(file: &Path) -> io::Result<Pact> {
+        let mut f = try!(File::open(file));
+        let pact_json = Json::from_reader(&mut f);
+        match pact_json {
+            Ok(ref json) => Ok(Pact::from_json(json)),
+            Err(err) => Err(Error::new(ErrorKind::Other, format!("Failed to parse Pact JSON - {}", err)))
+        }
+    }
+
     /// Writes this pact out to the provided file path. All directories in the path will
-    /// automatically created.
+    /// automatically created. If an existing pact is found at the path, this pact will be
+    /// merged into the pact file.
     pub fn write_pact(&self, path: &Path) -> io::Result<()> {
-        try!{ fs::create_dir_all(path.parent().unwrap()) };
-        let mut file = try!{ File::create(path) };
-        try!{ file.write_all(format!("{}", self.to_json().pretty()).as_bytes()) };
-        Ok(())
+        try!(fs::create_dir_all(path.parent().unwrap()));
+        if path.exists() {
+            let existing_pact = try!(Pact::read_pact(path));
+            match existing_pact.merge(self) {
+                Ok(ref merged_pact) => {
+                    let mut file = try!(File::create(path));
+                    try!(file.write_all(format!("{}", merged_pact.to_json().pretty()).as_bytes()));
+                    Ok(())
+                },
+                Err(ref message) => Err(Error::new(ErrorKind::Other, message.clone()))
+            }
+        } else {
+            let mut file = try!{ File::create(path) };
+            try!{ file.write_all(format!("{}", self.to_json().pretty()).as_bytes()) };
+            Ok(())
+        }
     }
 }
 

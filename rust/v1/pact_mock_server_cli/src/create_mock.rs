@@ -3,28 +3,21 @@ use hyper::Client;
 use hyper::Url;
 use hyper::header::ContentType;
 use hyper::mime::{Mime, TopLevel, SubLevel, Attr, Value};
-use std::io;
 use std::io::prelude::*;
-use std::fs::File;
+use std::path::Path;
 use rustc_serialize::json::Json;
-
-fn read_pact_file(file: &str) -> io::Result<String> {
-    let mut f = try!(File::open(file));
-    let mut buffer = String::new();
-    try!(f.read_to_string(&mut buffer));
-    Ok(buffer)
-}
+use pact_matching::models::Pact;
 
 pub fn create_mock_server(host: &str, port: u16, matches: &ArgMatches) -> Result<(), i32> {
     let file = matches.value_of("file").unwrap();
     info!("Creating mock server from file {}", file);
 
-    match read_pact_file(file) {
+    match Pact::read_pact(&Path::new(file)) {
         Ok(ref pact) => {
             let client = Client::new();
             let url = Url::parse(format!("http://{}:{}/", host, port).as_str()).unwrap();
             let res = client.post(url.clone())
-                .body(pact)
+                .body(&pact.to_json().to_string())
                 .header(ContentType(Mime(TopLevel::Application, SubLevel::Json,
                              vec![(Attr::Charset, Value::Utf8)])))
                 .send();
