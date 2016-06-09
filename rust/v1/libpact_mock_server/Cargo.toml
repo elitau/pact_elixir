@@ -27,7 +27,7 @@ version = "^0.8.0"
 default-features = false
 
 [lib]
-crate-type = ["dylib", "rlib"]
+crate-type = ["dylib", "rlib", "staticlib"]
 
 [dev-dependencies]
 quickcheck = "^0.2"
