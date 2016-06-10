@@ -447,7 +447,7 @@ pub fn iterate_mock_servers(f: &mut FnMut(&String, &MockServer)) {
 ///
 #[no_mangle]
 pub extern fn create_mock_server(pact_str: *const c_char) -> int32_t {
-    env_logger::init().unwrap();
+    env_logger::init().unwrap_or(());
 
     let result = catch_unwind(|| {
         let c_str = unsafe {
