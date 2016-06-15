@@ -324,7 +324,8 @@ fn record_result(id: &String, match_result: &MatchResult) {
     });
 }
 
-/// Starts a mock server with the given ID and pact. The ID needs to be unique. Returns the port
+/// Starts a mock server with the given ID, pact and port number. The ID needs to be unique. A port
+/// number of 0 will result in an auto-allocated port by the operating system. Returns the port
 /// that the mock server is running on wrapped in a `Result`.
 ///
 /// # Errors
@@ -332,14 +333,14 @@ fn record_result(id: &String, match_result: &MatchResult) {
 /// An error with a message will be returned in the following conditions:
 ///
 /// - If a mock server is not able to be started
-pub fn start_mock_server(id: String, pact: Pact) -> Result<i32, String> {
+pub fn start_mock_server(id: String, pact: Pact, port: i32) -> Result<i32, String> {
     insert_new_mock_server(&id, &pact);
     let (out_tx, out_rx) = channel();
     let (in_tx, in_rx) = channel();
-    in_tx.send((id.clone(), pact)).unwrap();
+    in_tx.send((id.clone(), pact, port)).unwrap();
     thread::spawn(move || {
-        let (mock_server_id, pact) = in_rx.recv().unwrap();
-        let server = Server::http("0.0.0.0:0").unwrap();
+        let (mock_server_id, pact, port) = in_rx.recv().unwrap();
+        let server = Server::http(format!("0.0.0.0:{}", port).as_str()).unwrap();
         let server_result = server.handle(move |mut req: hyper::server::Request, mut res: hyper::server::Response| {
             let req = hyper_request_to_pact_request(&mut req);
             info!("Received request {:?}", req);
@@ -432,7 +433,8 @@ pub fn iterate_mock_servers(f: &mut FnMut(&String, &MockServer)) {
 }
 
 /// External interface to create a mock server. A pointer to the pact JSON as a C string is passed in,
-/// and the port of the mock server is returned.
+/// as well as the port for the mock server to run on. A value of 0 for the port will result in a
+/// port being allocated by the operating system. The port of the mock server is returned.
 ///
 /// # Errors
 ///
@@ -446,7 +448,7 @@ pub fn iterate_mock_servers(f: &mut FnMut(&String, &MockServer)) {
 /// | -4 | The method paniced |
 ///
 #[no_mangle]
-pub extern fn create_mock_server(pact_str: *const c_char) -> int32_t {
+pub extern fn create_mock_server(pact_str: *const c_char, port: int32_t) -> int32_t {
     env_logger::init().unwrap_or(());
 
     let result = catch_unwind(|| {
@@ -463,7 +465,7 @@ pub extern fn create_mock_server(pact_str: *const c_char) -> int32_t {
         match result {
             Ok(pact_json) => {
                 let pact = Pact::from_json(&pact_json);
-                match start_mock_server(Uuid::new_v4().simple().to_string(), pact) {
+                match start_mock_server(Uuid::new_v4().simple().to_string(), pact, port) {
                     Ok(mock_server) => mock_server as i32,
                     Err(msg) => {
                         error!("Could not start mock server: {}", msg);

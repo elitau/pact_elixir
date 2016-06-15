@@ -64,7 +64,7 @@ fn start_provider(mut context: Context, mut response: Response) {
         Ok(pact_json) => {
             let pact = Pact::from_json(&pact_json);
             let mock_server_id = Uuid::new_v4().simple().to_string();
-            match start_mock_server(mock_server_id.clone(), pact) {
+            match start_mock_server(mock_server_id.clone(), pact, 0) {
                 Ok(mock_server) => {
                     response.set_status(StatusCode::Ok);
                     response.headers_mut().set(
