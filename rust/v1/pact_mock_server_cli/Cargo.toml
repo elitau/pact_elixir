@@ -22,15 +22,12 @@ log = "^0.3.5"
 uuid = "^0.2.2"
 maplit = "^0.1.3"
 rand = "^0.3"
-webmachine-rust = { git = "https://github.com/uglyog/webmachine-rust.git" }
-
-[dependencies.rustful]
-version = "^0.8.0"
-default-features = false
-features = ["rustc_json_body"]
+# webmachine-rust = { git = "https://github.com/uglyog/webmachine-rust.git" }
+webmachine-rust = { path = "/home/ronald/Development/Projects/Pact/webmachine-rust" }
+regex = "^0.1"
 
 [dependencies.hyper]
-version = "^0.8.0"
+version = "^0.9.7"
 default-features = false
 
 [dev-dependencies]

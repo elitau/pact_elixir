@@ -7,7 +7,6 @@
 #[macro_use] extern crate clap;
 #[macro_use] extern crate pact_matching;
 extern crate pact_mock_server;
-#[macro_use] extern crate rustful;
 #[macro_use] extern crate p_macro;
 #[macro_use] extern crate log;
 #[macro_use] extern crate maplit;
@@ -16,6 +15,8 @@ extern crate uuid;
 extern crate rustc_serialize;
 #[macro_use] extern crate hyper;
 extern crate rand;
+extern crate webmachine_rust;
+extern crate regex;
 
 #[cfg(test)]
 extern crate quickcheck;
@@ -35,6 +36,7 @@ use std::path::PathBuf;
 use std::fs::OpenOptions;
 use uuid::Uuid;
 use pact_matching::models::PactSpecification;
+use regex::Regex;
 
 fn display_error(error: String, matches: &ArgMatches) -> ! {
     println!("ERROR: {}", error);
