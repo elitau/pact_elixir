@@ -36,7 +36,6 @@ use std::path::PathBuf;
 use std::fs::OpenOptions;
 use uuid::Uuid;
 use pact_matching::models::PactSpecification;
-use regex::Regex;
 
 fn display_error(error: String, matches: &ArgMatches) -> ! {
     println!("ERROR: {}", error);

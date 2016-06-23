@@ -17,10 +17,6 @@ use clap::ArgMatches;
 use webmachine_rust::{WebmachineDispatcher, WebmachineResource};
 use regex::Regex;
 
-struct MasterServerHandler {
-    output_path: Option<String>
-}
-
 // impl Handler for MasterServerHandler {
 //     fn handle_request(&self, context: Context, response: Response) {
 //         match context.method {
@@ -81,11 +77,7 @@ struct MasterServerHandler {
 //                          vec![(Attr::Charset, Value::Utf8)]))
 //     );
 //
-//     let mut mock_servers = vec![];
-//     iterate_mock_servers(&mut |_: &String, ms: &MockServer| {
-//         let mock_server_json = ms.to_json();
-//         mock_servers.push(mock_server_json);
-//     });
+
 //
 //     let json_response = Json::Object(btreemap!{ s!("mockServers") => Json::Array(mock_servers) });
 //     response.send(json_response.to_string());
@@ -132,41 +124,53 @@ pub fn start_server(port: u16, matches: &ArgMatches) -> Result<(), i32> {
     let output_path = matches.value_of("output").map(|o| s!(o));
 
     match Server::http(format!("0.0.0.0:{}", port).as_str()) {
-        Ok(server) => match server.handle(move |req: Request, res: Response| {
-            let main_resource = WebmachineResource {
-                allowed_methods: vec![s!("OPTIONS"), s!("GET"), s!("HEAD"), s!("POST")],
-                resource_exists: Box::new(|context| {
-                    p!(context.request);
-                    context.request.request_path == "/"
-                }),
-                .. WebmachineResource::default()
-            };
-            let mock_server_resource = WebmachineResource {
-                allowed_methods: vec![s!("OPTIONS"), s!("GET"), s!("HEAD"), s!("POST")],
-                resource_exists: Box::new(|context| {
-                    p!(context.request);
-                    let re = Regex::new(r"^/\d+").unwrap();
-                    re.is_match(&context.request.request_path)
-                }),
-                .. WebmachineResource::default()
-            };
+        Ok(mut server) => {
+            server.keep_alive(None);
+            match server.handle(move |req: Request, res: Response| {
+                let main_resource = WebmachineResource {
+                    allowed_methods: vec![s!("OPTIONS"), s!("GET"), s!("HEAD"), s!("POST")],
+                    resource_exists: Box::new(|context| context.request.request_path == "/"),
+                    render_response: Box::new(|_| {
+                        let mut mock_servers = vec![];
+                        iterate_mock_servers(&mut |_: &String, ms: &MockServer| {
+                            let mock_server_json = ms.to_json();
+                            mock_servers.push(mock_server_json);
+                        });
+                        let json_response = Json::Object(btreemap!{ s!("mockServers") => Json::Array(mock_servers) });
+                        Some(json_response.to_string())
+                    }),
+                    .. WebmachineResource::default()
+                };
+                let mock_server_resource = WebmachineResource {
+                    allowed_methods: vec![s!("OPTIONS"), s!("GET"), s!("HEAD"), s!("POST")],
+                    resource_exists: Box::new(|context| {
+                        p!(context.request);
+                        let re = Regex::new(r"^/\d+").unwrap();
+                        re.is_match(&context.request.request_path)
+                    }),
+                    .. WebmachineResource::default()
+                };
 
-            let dispatcher = WebmachineDispatcher {
-                routes: btreemap!{
-                    s!("/") => main_resource,
-                    s!("/mockserver") => mock_server_resource
+                let dispatcher = WebmachineDispatcher {
+                    routes: btreemap!{
+                        s!("/") => main_resource,
+                        s!("/mockserver") => mock_server_resource
+                    }
+                };
+
+                match dispatcher.dispatch(req, res) {
+                    Ok(_) => (),
+                    Err(err) => warn!("Error generating response - {}", err)
+                };
+            }) {
+                Ok(listener) => {
+                    info!("Server started on port {}", listener.socket.port());
+                    Ok(())
+                },
+                Err(err) => {
+                    error!("could not bind listener to port: {}", err);
+                    Err(2)
                 }
-            };
-
-            dispatcher.dispatch(req, res);
-        }) {
-            Ok(listener) => {
-                info!("Server started on port {}", listener.socket.port());
-                Ok(())
-            },
-            Err(err) => {
-                error!("could not bind listener to port: {}", err);
-                Err(2)
             }
         },
         Err(err) => {
