@@ -22,7 +22,7 @@ log = "^0.3.5"
 uuid = "^0.2.2"
 maplit = "^0.1.3"
 rand = "^0.3"
-webmachine-rust = { git = "https://github.com/uglyog/webmachine-rust.git", rev = "f536e09f4489e4674bc04f39bbe4b2bae73307a7" }
+webmachine-rust = { git = "https://github.com/uglyog/webmachine-rust.git", rev = "22549e3754206ae18b3135d9508c16f4ace83c33" }
 # webmachine-rust = { path = "/home/ronald/Development/Projects/Pact/webmachine-rust" }
 regex = "^0.1"
 

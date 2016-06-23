@@ -1,6 +1,4 @@
 use hyper::server::{Server, Request, Response};
-use hyper::method::Method;
-use hyper::mime::{Mime, TopLevel, SubLevel, Attr, Value};
 use pact_matching::models::Pact;
 use pact_mock_server::{
     start_mock_server,
@@ -14,7 +12,9 @@ use std::borrow::Borrow;
 use std::iter::FromIterator;
 use verify;
 use clap::ArgMatches;
-use webmachine_rust::{WebmachineDispatcher, WebmachineResource};
+use webmachine_rust::*;
+use webmachine_rust::context::*;
+use webmachine_rust::headers::*;
 use regex::Regex;
 
 // impl Handler for MasterServerHandler {
@@ -34,55 +34,51 @@ use regex::Regex;
 //     }
 // }
 
-// fn start_provider(mut context: Context, mut response: Response) {
-//     add_cors_headers(&mut response);
-//     let json_result = context.body.read_json_body();
-//     match json_result {
-//         Ok(pact_json) => {
-//             let pact = Pact::from_json(&pact_json);
-//             let mock_server_id = Uuid::new_v4().simple().to_string();
-//             match start_mock_server(mock_server_id.clone(), pact, 0) {
-//                 Ok(mock_server) => {
-//                     response.set_status(StatusCode::Ok);
-//                     response.headers_mut().set(
-//                         ContentType(Mime(TopLevel::Application, SubLevel::Json,
-//                                          vec![(Attr::Charset, Value::Utf8)]))
-//                     );
-//                     let mock_server_json = Json::Object(btreemap!{
-//                         s!("id") => Json::String(mock_server_id),
-//                         s!("port") => Json::I64(mock_server as i64),
-//                     });
-//                     let json_response = Json::Object(btreemap!{ s!("mockServer") => mock_server_json });
-//                     response.send(json_response.to_string());
-//                 },
-//                 Err(msg) => {
-//                     response.set_status(StatusCode::BadRequest);
-//                     response.send(msg);
-//                 }
-//             }
-//         },
-//         Err(err) => {
-//             error!("Could not parse pact json: {}", err);
-//             response.set_status(StatusCode::BadRequest);
-//             response.send(err.description());
-//         }
-//     }
-// }
-//
-// fn list_servers(mut response: Response) {
-//     add_cors_headers(&mut response);
-//     response.set_status(StatusCode::Ok);
-//     response.headers_mut().set(
-//         ContentType(Mime(TopLevel::Application, SubLevel::Json,
-//                          vec![(Attr::Charset, Value::Utf8)]))
-//     );
-//
+fn json_error(error: String) -> String {
+    let json_response = Json::Object(btreemap!{ s!("error") => Json::String(error) });
+    json_response.to_string()
+}
 
-//
-//     let json_response = Json::Object(btreemap!{ s!("mockServers") => Json::Array(mock_servers) });
-//     response.send(json_response.to_string());
-// }
-//
+fn start_provider(context: &mut WebmachineContext) -> Result<bool, u16> {
+    match context.request.body {
+        Some(ref body) if !body.is_empty() => {
+            match Json::from_str(body) {
+                Ok(ref json) => {
+                    let pact = Pact::from_json(json);
+                    let mock_server_id = Uuid::new_v4().simple().to_string();
+                    match start_mock_server(mock_server_id.clone(), pact, 0) {
+                        Ok(mock_server) => {
+                            let mock_server_json = Json::Object(btreemap!{
+                                s!("id") => Json::String(mock_server_id.clone()),
+                                s!("port") => Json::I64(mock_server as i64),
+                            });
+                            let json_response = Json::Object(btreemap!{ s!("mockServer") => mock_server_json });
+                            context.response.body = Some(json_response.to_string());
+                            context.response.add_header(s!("Location"),
+                                vec![HeaderValue::basic(&format!("/mockserver/{}", mock_server_id))]);
+                            Ok(true)
+                        },
+                        Err(msg) => {
+                            context.response.body = Some(json_error(format!("Failed to start mock server - {}", msg)));
+                            Err(422)
+                        }
+                    }
+                },
+                Err(err) => {
+                    error!("Failed to parse json body - {}", err);
+                    context.response.body = Some(json_error(format!("Failed to parse json body - {}", err)));
+                    Err(422)
+                }
+            }
+        },
+        _ => {
+            error!("No pact json was supplied");
+            context.response.body = Some(json_error(s!("No pact json was supplied")));
+            Err(422)
+        }
+    }
+}
+
 // pub fn verify_mock_server_request(context: Context, mut response: Response, output_path: &Option<String>) {
 //     add_cors_headers(&mut response);
 //     response.headers_mut().set(
@@ -139,6 +135,7 @@ pub fn start_server(port: u16, matches: &ArgMatches) -> Result<(), i32> {
                         let json_response = Json::Object(btreemap!{ s!("mockServers") => Json::Array(mock_servers) });
                         Some(json_response.to_string())
                     }),
+                    process_post: Box::new(|context| start_provider(context)),
                     .. WebmachineResource::default()
                 };
                 let mock_server_resource = WebmachineResource {
