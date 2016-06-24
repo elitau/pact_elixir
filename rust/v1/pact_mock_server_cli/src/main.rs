@@ -17,6 +17,7 @@ extern crate rustc_serialize;
 extern crate rand;
 extern crate webmachine_rust;
 extern crate regex;
+#[macro_use] extern crate lazy_static;
 
 #[cfg(test)]
 extern crate quickcheck;
@@ -210,7 +211,9 @@ fn handle_command_args() -> Result<(), i32> {
             match port.parse::<u16>() {
                 Ok(p) => {
                     match matches.subcommand() {
-                        ("start", Some(sub_matches)) => server::start_server(p, sub_matches),
+                        ("start", Some(sub_matches)) => {
+                            server::start_server(p, sub_matches.value_of("output").map(|s| s.to_owned()))
+                        },
                         ("list", Some(sub_matches)) => list::list_mock_servers(host, p, sub_matches),
                         ("create", Some(sub_matches)) => create_mock::create_mock_server(host, p, sub_matches),
                         ("verify", Some(sub_matches)) => verify::verify_mock_server(host, p, sub_matches),

@@ -1,38 +1,20 @@
-use hyper::server::{Server, Request, Response};
+use hyper::server::{Handler, Server, Request, Response};
 use pact_matching::models::Pact;
 use pact_mock_server::{
     start_mock_server,
     iterate_mock_servers,
+    lookup_mock_server,
     MockServer
 };
 use uuid::Uuid;
-use std::error::Error;
 use rustc_serialize::json::Json;
-use std::borrow::Borrow;
+use std::sync::Arc;
 use std::iter::FromIterator;
+use std::ops::Deref;
 use verify;
-use clap::ArgMatches;
 use webmachine_rust::*;
 use webmachine_rust::context::*;
 use webmachine_rust::headers::*;
-use regex::Regex;
-
-// impl Handler for MasterServerHandler {
-//     fn handle_request(&self, context: Context, response: Response) {
-//         match context.method {
-//             Get => list_servers(response),
-//             Post => {
-//                 let path = context.uri.clone();
-//                 if path.as_utf8_path().unwrap() == "/" {
-//                     start_provider(context, response)
-//                 } else {
-//                     verify_mock_server_request(context, response, &self.output_path)
-//                 }
-//             },
-//             _ => ()
-//         }
-//     }
-// }
 
 fn json_error(error: String) -> String {
     let json_response = Json::Object(btreemap!{ s!("error") => Json::String(error) });
@@ -79,87 +61,126 @@ fn start_provider(context: &mut WebmachineContext) -> Result<bool, u16> {
     }
 }
 
-// pub fn verify_mock_server_request(context: Context, mut response: Response, output_path: &Option<String>) {
-//     add_cors_headers(&mut response);
-//     response.headers_mut().set(
-//         ContentType(Mime(TopLevel::Application, SubLevel::Json,
-//                          vec![(Attr::Charset, Value::Utf8)]))
-//     );
-//
-//     let id = context.variables.get("id").unwrap();
-//     match verify::validate_id(id.borrow()) {
-//         Ok(ms) => {
-//             let mut map = btreemap!{ s!("mockServer") => ms.to_json() };
-//             let mismatches = ms.mismatches();
-//             if !mismatches.is_empty() {
-//                 response.set_status(StatusCode::BadRequest);
-//                 map.insert(s!("mismatches"), Json::Array(
-//                     Vec::from_iter(mismatches.iter()
-//                         .map(|m| m.to_json()))));
-//             } else {
-//                 match ms.write_pact(output_path) {
-//                     Ok(_) => response.set_status(StatusCode::Ok),
-//                     Err(err) => {
-//                         response.set_status(StatusCode::UnprocessableEntity);
-//                         map.insert(s!("error"), Json::String(format!("Failed to write pact to file - {}", err)));
-//                     }
-//                 }
-//             }
-//
-//             let json_response = Json::Object(map);
-//             response.send(json_response.to_string());
-//         },
-//         Err(err) => {
-//             response.set_status(StatusCode::UnprocessableEntity);
-//             response.send(Json::String(err).to_string());
-//         }
-//     }
-// }
+pub fn verify_mock_server_request(context: &mut WebmachineContext, output_path: &Option<String>) -> Result<bool, u16> {
+    let id = context.metadata.get(&s!("id")).unwrap_or(&s!("")).clone();
+    match verify::validate_id(&id) {
+        Ok(ms) => {
+            let mut map = btreemap!{ s!("mockServer") => ms.to_json() };
+            let mismatches = ms.mismatches();
+            if !mismatches.is_empty() {
+                map.insert(s!("mismatches"), Json::Array(
+                    Vec::from_iter(mismatches.iter()
+                        .map(|m| m.to_json()))));
+                context.response.body = Some(Json::Object(map).to_string());
+                Err(422)
+            } else {
+                match ms.write_pact(&output_path) {
+                    Ok(_) => Ok(true),
+                    Err(err) => {
+                        map.insert(s!("error"), Json::String(format!("Failed to write pact to file - {}", err)));
+                        context.response.body = Some(Json::Object(map).to_string());
+                        Err(422)
+                    }
+                }
+            }
+        },
+        Err(_) => Err(422)
+    }
+}
 
-pub fn start_server(port: u16, matches: &ArgMatches) -> Result<(), i32> {
-    let output_path = matches.value_of("output").map(|o| s!(o));
+fn main_resource() -> WebmachineResource {
+    WebmachineResource {
+        allowed_methods: vec![s!("OPTIONS"), s!("GET"), s!("HEAD"), s!("POST")],
+        resource_exists: Box::new(|context| context.request.request_path == "/"),
+        render_response: Box::new(|_| {
+            let mut mock_servers = vec![];
+            iterate_mock_servers(&mut |_: &String, ms: &MockServer| {
+                let mock_server_json = ms.to_json();
+                mock_servers.push(mock_server_json);
+            });
+            let json_response = Json::Object(btreemap!{ s!("mockServers") => Json::Array(mock_servers) });
+            Some(json_response.to_string())
+        }),
+        process_post: Box::new(|context| start_provider(context)),
+        .. WebmachineResource::default()
+    }
+}
 
+fn mock_server_resource(output_path: Arc<Option<String>>) -> WebmachineResource {
+    WebmachineResource {
+        allowed_methods: vec![s!("OPTIONS"), s!("GET"), s!("HEAD"), s!("POST"), s!("DELETE")],
+        resource_exists: Box::new(|context| {
+            let paths: Vec<String> = context.request.request_path
+                .split("/")
+                .filter(|p| !p.is_empty())
+                .map(|p| p.to_string())
+                .collect();
+            if paths.len() >= 1 && paths.len() <= 2 {
+                context.metadata.insert(s!("id"), paths[0].clone());
+                match lookup_mock_server(paths[0].clone(), &|_| ()) {
+                    Some(_) => {
+                        if paths.len() > 1 {
+                            context.metadata.insert(s!("subpath"), paths[1].clone());
+                            paths[1] == s!("verify")
+                        } else {
+                            true
+                        }
+                    },
+                    None => false
+                }
+            } else {
+                false
+            }
+        }),
+        render_response: Box::new(|context| {
+            let id = context.metadata.get(&s!("id")).unwrap_or(&s!("")).clone();
+            lookup_mock_server(id, &|ms| ms.to_json()).map(|json| json.to_string())
+        }),
+        process_post: Box::new(move |context| {
+            let subpath = context.metadata.get(&s!("subpath")).unwrap_or(&s!("")).clone();
+            if subpath == "verify" {
+                verify_mock_server_request(context, output_path.deref())
+            } else {
+                Err(422)
+            }
+        }),
+        .. WebmachineResource::default()
+    }
+}
+
+struct ServerHandler {
+    output_path: Arc<Option<String>>
+}
+
+impl ServerHandler {
+    fn new(output_path: Option<String>) -> ServerHandler {
+        ServerHandler {
+            output_path: Arc::new(output_path)
+        }
+    }
+}
+
+impl Handler for ServerHandler {
+
+    fn handle(&self, req: Request, res: Response) {
+        let dispatcher = WebmachineDispatcher::new(
+            btreemap!{
+                s!("/") => Arc::new(main_resource()),
+                s!("/mockserver") => Arc::new(mock_server_resource(self.output_path.clone()))
+            }
+        );
+        match dispatcher.dispatch(req, res) {
+            Ok(_) => (),
+            Err(err) => warn!("Error generating response - {}", err)
+        };
+    }
+}
+
+pub fn start_server(port: u16, output_path: Option<String>) -> Result<(), i32> {
     match Server::http(format!("0.0.0.0:{}", port).as_str()) {
         Ok(mut server) => {
             server.keep_alive(None);
-            match server.handle(move |req: Request, res: Response| {
-                let main_resource = WebmachineResource {
-                    allowed_methods: vec![s!("OPTIONS"), s!("GET"), s!("HEAD"), s!("POST")],
-                    resource_exists: Box::new(|context| context.request.request_path == "/"),
-                    render_response: Box::new(|_| {
-                        let mut mock_servers = vec![];
-                        iterate_mock_servers(&mut |_: &String, ms: &MockServer| {
-                            let mock_server_json = ms.to_json();
-                            mock_servers.push(mock_server_json);
-                        });
-                        let json_response = Json::Object(btreemap!{ s!("mockServers") => Json::Array(mock_servers) });
-                        Some(json_response.to_string())
-                    }),
-                    process_post: Box::new(|context| start_provider(context)),
-                    .. WebmachineResource::default()
-                };
-                let mock_server_resource = WebmachineResource {
-                    allowed_methods: vec![s!("OPTIONS"), s!("GET"), s!("HEAD"), s!("POST")],
-                    resource_exists: Box::new(|context| {
-                        p!(context.request);
-                        let re = Regex::new(r"^/\d+").unwrap();
-                        re.is_match(&context.request.request_path)
-                    }),
-                    .. WebmachineResource::default()
-                };
-
-                let dispatcher = WebmachineDispatcher {
-                    routes: btreemap!{
-                        s!("/") => main_resource,
-                        s!("/mockserver") => mock_server_resource
-                    }
-                };
-
-                match dispatcher.dispatch(req, res) {
-                    Ok(_) => (),
-                    Err(err) => warn!("Error generating response - {}", err)
-                };
-            }) {
+            match server.handle(ServerHandler::new(output_path)) {
                 Ok(listener) => {
                     info!("Server started on port {}", listener.socket.port());
                     Ok(())
