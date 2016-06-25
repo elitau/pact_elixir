@@ -432,6 +432,52 @@ pub fn iterate_mock_servers(f: &mut FnMut(&String, &MockServer)) {
     }
 }
 
+fn cleanup_mock_server_impl(mock_server: &mut MockServer) -> String {
+    mock_server.resources.clear();
+    if mock_server.server > 0 {
+        let server_raw = mock_server.server as *mut Listening;
+        let mut server_ref = unsafe { &mut *server_raw };
+        server_ref.close().unwrap();
+    }
+    mock_server.id.clone()
+}
+
+/// Shuts and cleans up the mock server with the given id. Returns true if a mock server was
+/// found, false otherwise.
+///
+/// **NOTE:** Although `close()` on the listerner for the mock server is called, this does not
+/// currently work and the listerner will continue handling requests. In this
+/// case, it will always return a 404 once the mock server has been cleaned up.
+pub fn shutdown_mock_server(id: &String) -> bool {
+    let id_result = update_mock_server(id, &cleanup_mock_server_impl);
+
+    match id_result {
+        Some(ref id) => {
+            MOCK_SERVERS.lock().unwrap().remove(id);
+            true
+        },
+        None => false
+    }
+}
+
+/// Shuts and cleans up the mock server with the given port. Returns true if a mock server was
+/// found, false otherwise.
+///
+/// **NOTE:** Although `close()` on the listerner for the mock server is called, this does not
+/// currently work and the listerner will continue handling requests. In this
+/// case, it will always return a 404 once the mock server has been cleaned up.
+pub fn shutdown_mock_server_by_port(port: i32) -> bool {
+    let id_result = update_mock_server_by_port(port, &cleanup_mock_server_impl);
+
+    match id_result {
+        Some(ref id) => {
+            MOCK_SERVERS.lock().unwrap().remove(id);
+            true
+        },
+        None => false
+    }
+}
+
 /// External interface to create a mock server. A pointer to the pact JSON as a C string is passed in,
 /// as well as the port for the mock server to run on. A value of 0 for the port will result in a
 /// port being allocated by the operating system. The port of the mock server is returned.
@@ -561,23 +607,7 @@ pub extern fn mock_server_mismatches(mock_server_port: int32_t) -> *mut c_char {
 #[no_mangle]
 pub extern fn cleanup_mock_server(mock_server_port: int32_t) -> bool {
     let result = catch_unwind(|| {
-        let id_result = update_mock_server_by_port(mock_server_port, &|mock_server| {
-            mock_server.resources.clear();
-            if mock_server.server > 0 {
-                let server_raw = mock_server.server as *mut Listening;
-                let mut server_ref = unsafe { &mut *server_raw };
-                server_ref.close().unwrap();
-            }
-            mock_server.id.clone()
-        });
-
-        match id_result {
-            Some(ref id) => {
-                MOCK_SERVERS.lock().unwrap().remove(id);
-                true
-            },
-            None => false
-        }
+        shutdown_mock_server_by_port(mock_server_port)
     });
 
     match result {

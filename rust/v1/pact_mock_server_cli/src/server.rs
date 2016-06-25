@@ -4,6 +4,7 @@ use pact_mock_server::{
     start_mock_server,
     iterate_mock_servers,
     lookup_mock_server,
+    shutdown_mock_server,
     MockServer
 };
 use uuid::Uuid;
@@ -116,9 +117,10 @@ fn mock_server_resource(output_path: Arc<Option<String>>) -> WebmachineResource 
                 .map(|p| p.to_string())
                 .collect();
             if paths.len() >= 1 && paths.len() <= 2 {
-                context.metadata.insert(s!("id"), paths[0].clone());
-                match lookup_mock_server(paths[0].clone(), &|_| ()) {
-                    Some(_) => {
+                match verify::validate_id(&paths[0].clone()) {
+                    Ok(ms) => {
+                        context.metadata.insert(s!("id"), ms.id.clone());
+                        context.metadata.insert(s!("port"), ms.port.to_string());
                         if paths.len() > 1 {
                             context.metadata.insert(s!("subpath"), paths[1].clone());
                             paths[1] == s!("verify")
@@ -126,22 +128,40 @@ fn mock_server_resource(output_path: Arc<Option<String>>) -> WebmachineResource 
                             true
                         }
                     },
-                    None => false
+                    Err(_) => false
                 }
             } else {
                 false
             }
         }),
         render_response: Box::new(|context| {
-            let id = context.metadata.get(&s!("id")).unwrap_or(&s!("")).clone();
-            lookup_mock_server(id, &|ms| ms.to_json()).map(|json| json.to_string())
+            match context.metadata.get(&s!("subpath")) {
+                None => {
+                    let id = context.metadata.get(&s!("id")).unwrap().clone();
+                    lookup_mock_server(id, &|ms| ms.to_json()).map(|json| json.to_string())
+                },
+                Some(_) => {
+                    context.response.status = 405;
+                    None
+                }
+            }
         }),
         process_post: Box::new(move |context| {
-            let subpath = context.metadata.get(&s!("subpath")).unwrap_or(&s!("")).clone();
+            let subpath = context.metadata.get(&s!("subpath")).unwrap().clone();
             if subpath == "verify" {
                 verify_mock_server_request(context, output_path.deref())
             } else {
                 Err(422)
+            }
+        }),
+        delete_resource: Box::new(|context| {
+            match context.metadata.get(&s!("subpath")) {
+                None => {
+                    let id = context.metadata.get(&s!("id")).unwrap().clone();
+                    shutdown_mock_server(&id);
+                    Ok(true)
+                },
+                Some(_) => Err(405)
             }
         }),
         .. WebmachineResource::default()
