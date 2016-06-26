@@ -342,42 +342,50 @@ pub fn start_mock_server(id: String, pact: Pact, port: i32) -> Result<i32, Strin
         let (mock_server_id, pact, port) = in_rx.recv().unwrap();
         let server = Server::http(format!("0.0.0.0:{}", port).as_str()).unwrap();
         let server_result = server.handle(move |mut req: hyper::server::Request, mut res: hyper::server::Response| {
-            let req = hyper_request_to_pact_request(&mut req);
-            info!("Received request {:?}", req);
-            let match_result = match_request(&req, &pact.interactions);
-            record_result(&mock_server_id, &match_result);
-            match match_result {
-                MatchResult::RequestMatch(ref interaction) => {
-                    info!("Request matched, sending response {:?}", interaction.response);
-                    *res.status_mut() = StatusCode::from_u16(interaction.response.status);
-                    res.headers_mut().set(AccessControlAllowOrigin::Any);
-                    match interaction.response.headers {
-                        Some(ref headers) => {
-                            for (k, v) in headers.clone() {
-                                res.headers_mut().set_raw(k, vec![v.into_bytes()]);
+            match lookup_mock_server(mock_server_id.clone(), &|_| ()) {
+                None => {
+                    *res.status_mut() = StatusCode::NotImplemented;
+                    res.headers_mut().set_raw("X-Pact", vec!["Mock server has been shut down".as_bytes().to_vec()]);
+                },
+                Some(_) => {
+                    let req = hyper_request_to_pact_request(&mut req);
+                    info!("Received request {:?}", req);
+                    let match_result = match_request(&req, &pact.interactions);
+                    record_result(&mock_server_id, &match_result);
+                    match match_result {
+                        MatchResult::RequestMatch(ref interaction) => {
+                            info!("Request matched, sending response {:?}", interaction.response);
+                            *res.status_mut() = StatusCode::from_u16(interaction.response.status);
+                            res.headers_mut().set(AccessControlAllowOrigin::Any);
+                            match interaction.response.headers {
+                                Some(ref headers) => {
+                                    for (k, v) in headers.clone() {
+                                        res.headers_mut().set_raw(k, vec![v.into_bytes()]);
+                                    }
+                                },
+                                None => ()
+                            }
+                            match interaction.response.body {
+                                OptionalBody::Present(ref body) => {
+                                    res.send(body.as_bytes()).unwrap();
+                                },
+                                _ => ()
                             }
                         },
-                        None => ()
+                        _ => {
+                            *res.status_mut() = StatusCode::InternalServerError;
+                            res.headers_mut().set(
+                                ContentType(Mime(TopLevel::Application, SubLevel::Json,
+                                                 vec![(Attr::Charset, Value::Utf8)]))
+                            );
+                            res.headers_mut().set(AccessControlAllowOrigin::Any);
+                            res.headers_mut().set_raw("X-Pact", vec![match_result.match_key().as_bytes().to_vec()]);
+                            let body = error_body(&req, &match_result.match_key());
+                            res.headers_mut().set(ContentLength(body.as_bytes().len() as u64));
+                            let mut res = res.start().unwrap();
+                            res.write_all(body.as_bytes()).unwrap();
+                        }
                     }
-                    match interaction.response.body {
-                        OptionalBody::Present(ref body) => {
-                            res.send(body.as_bytes()).unwrap();
-                        },
-                        _ => ()
-                    }
-                },
-                _ => {
-                    *res.status_mut() = StatusCode::InternalServerError;
-                    res.headers_mut().set(
-                        ContentType(Mime(TopLevel::Application, SubLevel::Json,
-                                         vec![(Attr::Charset, Value::Utf8)]))
-                    );
-                    res.headers_mut().set(AccessControlAllowOrigin::Any);
-                    res.headers_mut().set_raw("X-Pact", vec![match_result.match_key().as_bytes().to_vec()]);
-                    let body = error_body(&req, &match_result.match_key());
-                    res.headers_mut().set(ContentLength(body.as_bytes().len() as u64));
-                    let mut res = res.start().unwrap();
-                    res.write_all(body.as_bytes()).unwrap();
                 }
             }
         });
