@@ -2,8 +2,6 @@ To generate the log, `run git log --pretty='* %h - %s (%an, %ad)' TAGNAME..HEAD 
 
 # 0.0.1 - Second Feature Release
 
-* 9847421 - small typo in readme (Ronald Holshausen, Sun Jun 26 16:48:30 2016 +1000)
-* ef709e5 - added a release script for libpact_matching (Ronald Holshausen, Sun Jun 26 16:44:52 2016 +1000)
 * 25bf4d0 - added changelog (Ronald Holshausen, Sun Jun 26 15:20:23 2016 +1000)
 * 4c60f07 - replace rustful with webmachine (Ronald Holshausen, Thu Jun 16 17:31:11 2016 +1000)
 * 7dc4b52 - implemented merging of pact files when writing (Ronald Holshausen, Thu Jun 9 17:34:02 2016 +1000)
