@@ -1,7 +1,9 @@
 language: rust
+rust:
+  - stable
+  - beta
 os:
   - linux
   - osx
 script:
   - cd rust/v1 && make -B
-  
