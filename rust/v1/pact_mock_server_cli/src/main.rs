@@ -49,6 +49,7 @@ mod server;
 mod create_mock;
 mod list;
 mod verify;
+mod shutdown;
 
 fn print_version() {
     println!("\npact mock server version  : v{}", crate_version!());
@@ -195,6 +196,26 @@ fn handle_command_args() -> Result<(), i32> {
                     .required_unless("mock-server-host")
                     .help("the port number of the mock server")
                     .validator(integer_value))
+                .setting(AppSettings::ColoredHelp))
+        .subcommand(SubCommand::with_name("shutdown")
+                .about("Shutdown the mock server by id or port number, releasing all its resources")
+                .arg(Arg::with_name("mock-server-id")
+                    .short("i")
+                    .long("mock-server-id")
+                    .takes_value(true)
+                    .use_delimiter(false)
+                    .required_unless("mock-server-port")
+                    .conflicts_with("mock-server-port")
+                    .help("the ID of the mock server")
+                    .validator(uuid_value))
+                .arg(Arg::with_name("mock-server-port")
+                    .short("m")
+                    .long("mock-server-port")
+                    .takes_value(true)
+                    .use_delimiter(false)
+                    .required_unless("mock-server-host")
+                    .help("the port number of the mock server")
+                    .validator(integer_value))
                 .setting(AppSettings::ColoredHelp));
 
     let matches = app.get_matches_safe();
@@ -217,6 +238,7 @@ fn handle_command_args() -> Result<(), i32> {
                         ("list", Some(sub_matches)) => list::list_mock_servers(host, p, sub_matches),
                         ("create", Some(sub_matches)) => create_mock::create_mock_server(host, p, sub_matches),
                         ("verify", Some(sub_matches)) => verify::verify_mock_server(host, p, sub_matches),
+                        ("shutdown", Some(sub_matches)) => shutdown::shutdown_mock_server(host, p, sub_matches),
                         _ => Err(3)
                     }
                 },
