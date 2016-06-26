@@ -1,6 +1,7 @@
 use clap::ArgMatches;
 use hyper::Client;
 use hyper::Url;
+use hyper::status::*;
 use std::io::prelude::*;
 use rustc_serialize::json::Json;
 use pact_mock_server::{
@@ -12,36 +13,49 @@ use pact_mock_server::{
 pub fn verify_mock_server(host: &str, port: u16, matches: &ArgMatches) -> Result<(), i32> {
     let mock_server_id = matches.value_of("mock-server-id");
     let mock_server_port = matches.value_of("mock-server-port");
+    let id = if mock_server_id.is_some() {
+        (mock_server_id.unwrap(), "id")
+    } else {
+        (mock_server_port.unwrap(), "port")
+    };
 
     let client = Client::new();
-    let url = Url::parse(format!("http://{}:{}/mockserver/{}/verify", host, port,
-        if mock_server_id.is_some() { mock_server_id.unwrap() } else { mock_server_port.unwrap() })
+    let url = Url::parse(format!("http://{}:{}/mockserver/{}/verify", host, port, id.0)
         .as_str()).unwrap();
     let res = client.post(url.clone()).send();
 
     match res {
         Ok(mut result) => {
-            let mut body = String::new();
-            result.read_to_string(&mut body).unwrap();
-            let json_result = Json::from_str(body.as_str());
-            match json_result {
-                Ok(json) => {
-                    let mock_server = json.find("mockServer").unwrap();
-                    let id = mock_server.find("id").unwrap().as_string().unwrap();
-                    let port = mock_server.find("port").unwrap().as_u64().unwrap();
-                    let status = mock_server.find("status").unwrap().as_string().unwrap();
-                    if status == "ok" {
-                        println!("Mock server {}/{} verified ok", id, port);
-                        Ok(())
-                    } else {
-                        display_verification_errors(id, port, &json);
-                        Err(2)
-                    }
-                },
-                Err(err) => {
-                    error!("Failed to parse JSON: {}\n{}", err, body);
-                    ::display_error(format!("Failed to parse JSON: {}\n{}", err, body), matches);
+            if !result.status.is_success() {
+                match result.status {
+                    StatusCode::NotFound => {
+                        println!("No mock server found with {} '{}', use the 'list' command to get a list of available mock servers.",
+                            id.1, id.0);
+                        Err(3)
+                    },
+                    StatusCode::UnprocessableEntity => {
+                        let mut body = String::new();
+                        result.read_to_string(&mut body).unwrap();
+                        let json_result = Json::from_str(body.as_str());
+                        match json_result {
+                            Ok(json) => {
+                                let mock_server = json.find("mockServer").unwrap();
+                                let id = mock_server.find("id").unwrap().as_string().unwrap();
+                                let port = mock_server.find("port").unwrap().as_u64().unwrap();
+                                display_verification_errors(id, port, &json);
+                                Err(2)
+                            },
+                            Err(err) => {
+                                error!("Failed to parse JSON: {}\n{}", err, body);
+                                ::display_error(format!("Failed to parse JSON: {}\n{}", err, body), matches);
+                            }
+                        }
+                    },
+                    _ => ::display_error(format!("Unexpected response from master mock server '{}': {}", url, result.status), matches)
                 }
+            } else {
+                println!("Mock server with {} '{}' verified ok", id.1, id.0);
+                Ok(())
             }
         },
         Err(err) => {
