@@ -98,17 +98,6 @@ ask('Publish library to crates.io?: [Y]') {
   executeOnShell 'cargo publish'
 }
 
-ask('Copy docs to pact foundation github pages project?: [Y]') {
-  def docDir = System.console().readLine('Copy the library docs to: [../../../../pact-foundation.github.io/reference/rust/]').trim()
-  if (docDir.empty) {
-    docDir = '../../../../pact-foundation.github.io/reference/rust/'
-  }
-
-  executeOnShell "mkdir -p $docDir/pact_mock_server_cli-docs-$releaseVer"
-  executeOnShell "cp -r target/doc/* $docDir/pact_mock_server_cli-docs-$releaseVer/"
-  executeOnShell "rm -r $docDir/pact_mock_server_cli-docs-latest/*"
-  executeOnShell "cp -r target/doc/* $docDir/pact_mock_server_cli-docs-latest/"
-}
 executeOnShell "tar cvfz libpact_mock_server-docs-${releaseVer}.tgz *", new File("./target/doc")
 executeOnShell "cargo build --release"
 executeOnShell "gzip -c target/release/pact_mock_server_cli > target/release/pact_mock_server_cli-linux-x86_64-${releaseVer}.gz"
