@@ -12,16 +12,7 @@ The mock server is bundles as a single binary executable `pact_mock_server_cli`.
 the standard help.
 
 ```console
-$ ./pact_mock_server_cli
-error: 'pact_mock_server_cli' requires a subcommand, but one was not provided
-
-USAGE:
-    pact_mock_server_cli [FLAGS] [OPTIONS] <SUBCOMMAND>
-
-For more information try --help
-
-$ ./pact_mock_server_cli --help
-./pact_mock_server_cli v0.0.0
+./pact_mock_server_cli v0.0.1
 Standalone Pact mock server
 
 USAGE:
@@ -38,11 +29,12 @@ OPTIONS:
     -p, --port <port>            port the master mock server runs on (defaults to 8080)
 
 SUBCOMMANDS:
-    create    Creates a new mock server from a pact file
-    help      Prints this message or the help of the given subcommand(s)
-    list      Lists all the running mock servers
-    start     Starts the master mock server
-    verify    Verify the mock server by id or port number, and generate a pact file if all ok
+    create      Creates a new mock server from a pact file
+    help        Prints this message or the help of the given subcommand(s)
+    list        Lists all the running mock servers
+    shutdown    Shutdown the mock server by id or port number, releasing all its resources
+    start       Starts the master mock server
+    verify      Verify the mock server by id or port number, and generate a pact file if all ok
 ```
 
 ### Options
@@ -75,7 +67,7 @@ This starts the master mock server. This server needs to be running for the othe
 
 ```console
 $ ./pact_mock_server_cli help start
-start v0.0.0
+start v0.0.1
 Starts the master mock server
 
 USAGE:
@@ -113,7 +105,7 @@ will be displayed.
 
 ```console
 $ ./pact_mock_server_cli help create
-create v0.0.0
+create v0.0.1
 Creates a new mock server from a pact file
 
 USAGE:
@@ -150,7 +142,7 @@ Lists out all running mock servers with their ID, port, provider name and status
 
 ```console
 $ ./pact_mock_server_cli list --help
-pact_mock_server_cli-list v0.0.0
+pact_mock_server_cli-list v0.0.1
 Lists all the running mock servers
 
 USAGE:
@@ -182,7 +174,7 @@ sub-command. If there is any errors, no pact file will be written and the errors
 
 ```console
 $ ./pact_mock_server_cli verify --help
-pact_mock_server_cli-verify v0.0.0
+pact_mock_server_cli-verify v0.0.1
 Verify the mock server by id or port number, and generate a pact file if all ok
 
 USAGE:
@@ -226,6 +218,47 @@ and for a mock server that has matched all requests:
 ```console
 $ ./pact_mock_server_cli verify -m 52943
 Mock server 7d1bf906d0ff42528f2d7d794dd19c5b/52943 verified ok
+```
+
+#### shutdown
+
+Shutdown the mock server by id or port number, releasing all its resources.
+
+```console
+$ ./pact_mock_server_cli help shutdown
+shutdown v0.0.1
+Shutdown the mock server by id or port number, releasing all its resources
+
+USAGE:
+    shutdown [FLAGS] [OPTIONS] --mock-server-id <mock-server-id> --mock-server-port <mock-server-port>
+
+FLAGS:
+        --help    Prints help information
+
+OPTIONS:
+    -h, --host <host>                            hostname the master mock server runs on (defaults to localhost)
+    -l, --loglevel <loglevel>                    Log level for mock servers to write to the log file (defaults to info) [values: error,
+                                                 warn, info, debug, trace, none]
+    -i, --mock-server-id <mock-server-id>        the ID of the mock server
+    -m, --mock-server-port <mock-server-port>    the port number of the mock server
+    -p, --port <port>                            port the master mock server runs on (defaults to 8080)
+```
+
+##### Options
+
+###### Mock server ID: -i, --mock-server-id <mock-server-id>
+
+The ID of the mock server to shutdown. Either this option or the mock server port option must be provided.
+
+###### Mock server Port: -m, --mock-server-port <mock-server-port>
+
+The port number of the mock server to shutdown. Either this option or the mock server ID option must be provided.
+
+##### Example
+
+```console
+$ ./pact_mock_server_cli shutdown -i 3a94a472d04849048b78109e288702d0
+Mock server with id '3a94a472d04849048b78109e288702d0' shutdown ok
 ```
 
 ## Restful JSON API
@@ -319,9 +352,40 @@ example response:
 
 This is returned when if the mock server was created successfully.
 
-##### 400 Bad Request
+##### 422 Unprocessable Entity
 
 This is returned if the pact JSON could not be parsed or the mock server could not be started.
+
+#### GET /mockserver/:id
+
+Returns details of the mock server with `:id`, which can be either a mockserver ID or port number.
+
+example request:
+
+```
+GET http://localhost:8080/mockserver/33218 HTTP/1.1
+```
+
+example response:
+
+```json
+{
+  "id": "3201b3e2f04f402c83b374a077f8f8dd",
+  "port": 33218,
+  "provider": "Alice Service",
+  "status": "error"
+}
+```
+
+#### Response codes
+
+##### 200 OK
+
+This is returned with a valid mockserver.
+
+##### 404 Not Found
+
+This is returned if no mock server was found with the given ID or port number.
 
 #### POST /mockserver/:id/verify
 
@@ -332,23 +396,21 @@ sub-command. If any mismatched requests where received by the mock server, they 
 example request:
 
 ```
-POST http://localhost:8080/mockserver/52943/verify HTTP/1.1
+POST http://localhost:8080/mockserver/33218/verify HTTP/1.1
 ```
 
-example successful response:
+#### Response codes
 
-```json
-{
-  "mockServer": {
-    "id": "7d1bf906d0ff42528f2d7d794dd19c5b",
-    "port": 52943,
-    "provider": "Alice Service",
-    "status": "ok"
-  }
-}
-```
+##### 204 No Content
 
-example unsuccessful response:
+This is returned when all expectations have been successfully met and the pact file has been written out to the output directory.
+
+##### 422 Unprocessable Entity
+
+This is returned if any expectations have not been met, or any unrecognised requests where received. The details are
+returned in the body.
+
+example response:
 
 ```json
 {
@@ -365,31 +427,35 @@ example unsuccessful response:
     }
   ],
   "mockServer": {
-    "id": "81c3483901e647ba8f545f2842d09cba",
-    "port": 58276,
+    "id": "3201b3e2f04f402c83b374a077f8f8dd",
+    "port": 33218,
     "provider": "Alice Service",
     "status": "error"
   }
 }
 ```
 
-#### Response codes
-
-##### 200 OK
-
-This is returned when all expectations have been successfully met.
-
-##### 400 Bad Request
-
-This is returned if any expectations have not been met, or any unrecognised requests where received.
-
-##### 422 Unprocessable Entity
+##### 404 Not Found
 
 This is returned if the ID or port number did not correspond to a running mock server or the pact file could not be
 written.
 
-example response:
+#### DELETE /mockserver/:id
 
-```json
-"No mock server running with port '58277'"
+Shuts down the mock server with `:id`, which can be either a mockserver ID or port number.
+
+example request:
+
 ```
+DELETE http://localhost:8080/mockserver/33218 HTTP/1.1
+```
+
+#### Response codes
+
+##### 204 No Content
+
+This is returned when the mock server has been shutdown.
+
+##### 404 Not Found
+
+This is returned if no mock server was found with the given ID or port number.
