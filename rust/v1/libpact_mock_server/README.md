@@ -12,8 +12,9 @@ language that supports C bindings.
 
 ## [create_mock_server](http://www.pact.io/reference/rust/libpact_mock_server-docs-latest/pact_mock_server/fn.create_mock_server.html)
 
-This function will create a new mock server given a Pact in JSON. The port that the mock server is allocated is returned
-and can be provided to the test code as the address of the provider.
+External interface to create a mock server. A pointer to the pact JSON as a C string is passed in,
+as well as the port for the mock server to run on. A value of 0 for the port will result in a
+port being allocated by the operating system. The port of the mock server is returned.
 
 ## [mock_server_matched](http://www.pact.io/reference/rust/libpact_mock_server-docs-latest/pact_mock_server/fn.mock_server_matched.html)
 
@@ -39,3 +40,12 @@ or the function fails in some way.
 **NOTE:** Although `close()` on the listerner for the mock server is called, this does not currently work and the
 listerner will continue handling requests. In this case, it will always return a 404 once the mock server has been
 cleaned up.
+
+## [write_pact_file](http://www.pact.io/reference/rust/libpact_mock_server-docs-latest/pact_mock_server/fn.write_pact_file.html)
+
+External interface to trigger a mock server to write out its pact file. This function should
+be called if all the consumer tests have passed. The directory to write the file to is passed
+as the second parameter. If a NULL pointer is passed, the current working directory is used.
+
+Returns 0 if the pact file was successfully written. Returns a positive code if the file can
+not be written, or there is no mock server running on that port or the function panics.
