@@ -105,7 +105,6 @@ executeOnShell "gzip -c target/release/pact_mock_server_cli > target/release/pac
 def nextVer = Version.valueOf(releaseVer).incrementPatchVersion()
 ask("Bump version to $nextVer?: [Y]") {
   executeOnShell "sed -i -e 's/version = \"${releaseVer}\"/version = \"${nextVer}\"/' Cargo.toml"
-  executeOnShell "sed -i -e 's/documentation = \"http:\\/\\/www.pact.io\\/reference\\/rust\\/pact_mock_server_cli-docs-${releaseVer}\\/pact_mock_server_cli\\/\"/documentation = \"http:\\/\\/www.pact.io\\/reference\\/rust\\/pact_mock_server_cli-docs-${nextVer}\\/pact_mock_server_cli\\/\"/' Cargo.toml"
   executeOnShell("git add Cargo.toml")
   executeOnShell("git diff --cached")
   ask("Commit and push this change?: [Y]") {
