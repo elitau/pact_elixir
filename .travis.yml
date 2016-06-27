@@ -6,4 +6,4 @@ os:
   - linux
   - osx
 script:
-  - cd rust/v1 && make -B
+  - cd rust && make -B
