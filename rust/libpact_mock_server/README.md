@@ -38,7 +38,7 @@ the `mock_server_mismatches` function. Returns `true`, unless a mock server with
 or the function fails in some way.
 
 **NOTE:** Although `close()` on the listerner for the mock server is called, this does not currently work and the
-listerner will continue handling requests. In this case, it will always return a 404 once the mock server has been
+listerner will continue handling requests. In this case, it will always return a 501 once the mock server has been
 cleaned up.
 
 ## [write_pact_file](http://www.pact.io/reference/rust/libpact_mock_server-docs-latest/pact_mock_server/fn.write_pact_file.html)
