@@ -9,6 +9,7 @@ specs.eachFileRecurse(FileType.DIRECTORIES) { dir ->
   def path = dir.toPath()
   def testFile = new File(dir, 'mod.rs')
   def requestResponsePath = path.getNameCount() > 3 ? path.getName(3).toString() : ''
+  def specVersion = path.getName(2).toString().toUpperCase()
 
   testFile.withPrintWriter { pw ->
     pw.println('#[allow(unused_imports)]')
@@ -46,9 +47,9 @@ specs.eachFileRecurse(FileType.DIRECTORIES) { dir ->
       testBody += '|    "#).unwrap();' + '\n'
       if (requestResponsePath == 'request') {
         testBody += """
-        |    let expected = Request::from_json(&pact.find("expected").unwrap(), &PactSpecification::V1);
+        |    let expected = Request::from_json(&pact.find("expected").unwrap(), &PactSpecification::$specVersion);
         |    println!("{:?}", expected);
-        |    let actual = Request::from_json(&pact.find("actual").unwrap(), &PactSpecification::V1);
+        |    let actual = Request::from_json(&pact.find("actual").unwrap(), &PactSpecification::$specVersion);
         |    println!("{:?}", actual);
         |    let pact_match = pact.find("match").unwrap();
         |    if pact_match.as_boolean().unwrap() {
@@ -59,9 +60,9 @@ specs.eachFileRecurse(FileType.DIRECTORIES) { dir ->
         """
       } else if (requestResponsePath == 'response') {
         testBody += """
-        |    let expected = Response::from_json(&pact.find("expected").unwrap(), &PactSpecification::V1);
+        |    let expected = Response::from_json(&pact.find("expected").unwrap(), &PactSpecification::$specVersion);
         |    println!("{:?}", expected);
-        |    let actual = Response::from_json(&pact.find("actual").unwrap(), &PactSpecification::V1);
+        |    let actual = Response::from_json(&pact.find("actual").unwrap(), &PactSpecification::$specVersion);
         |    println!("{:?}", actual);
         |    let pact_match = pact.find("match").unwrap();
         |    if pact_match.as_boolean().unwrap() {

@@ -29,7 +29,7 @@ fn test_load_pact() {
             let metadata = pact_json.find("metadata").unwrap().as_object().unwrap();
             let expected_keys : Vec<String> = vec![s!("pact-rust"), s!("pact-specification")];
             expect(metadata.keys().cloned().collect::<Vec<String>>()).to(be_equal_to(expected_keys));
-            expect(metadata.get("pact-specification").unwrap().to_string()).to(be_equal_to(s!("{\"version\":\"1.0.0\"}")));
+            expect(metadata.get("pact-specification").unwrap().to_string()).to(be_equal_to(s!("{\"version\":\"1.1.0\"}")));
         },
         Err(err) => panic!("Failed to load pact from '{:?}' - {}", pact_file, err)
     }
@@ -53,7 +53,7 @@ fn test_load_test_pact() {
             let metadata = pact_json.find("metadata").unwrap().as_object().unwrap();
             let expected_keys : Vec<String> = vec![s!("pact-jvm"), s!("pact-rust"), s!("pact-specification")];
             expect(metadata.keys().cloned().collect::<Vec<String>>()).to(be_equal_to(expected_keys));
-            expect(metadata.get("pact-specification").unwrap().to_string()).to(be_equal_to(s!("{\"version\":\"1.0.0\"}")));
+            expect(metadata.get("pact-specification").unwrap().to_string()).to(be_equal_to(s!("{\"version\":\"1.1.0\"}")));
         },
         Err(err) => panic!("Failed to load pact from '{:?}' - {}", pact_file, err)
     }
@@ -95,7 +95,7 @@ fn test_load_pact_encoded_query() {
             let metadata = pact_json.find("metadata").unwrap().as_object().unwrap();
             let expected_keys : Vec<String> = vec![s!("pact-jvm"), s!("pact-rust"), s!("pact-specification")];
             expect(metadata.keys().cloned().collect::<Vec<String>>()).to(be_equal_to(expected_keys));
-            expect(metadata.get("pact-specification").unwrap().to_string()).to(be_equal_to(s!("{\"version\":\"1.0.0\"}")));
+            expect(metadata.get("pact-specification").unwrap().to_string()).to(be_equal_to(s!("{\"version\":\"1.1.0\"}")));
         },
         Err(err) => panic!("Failed to load pact from '{:?}' - {}", pact_file, err)
     }
@@ -137,7 +137,7 @@ fn test_load_test_pact_lowercase_method() {
             let metadata = pact_json.find("metadata").unwrap().as_object().unwrap();
             let expected_keys : Vec<String> = vec![s!("pact-jvm"), s!("pact-rust"), s!("pact-specification")];
             expect(metadata.keys().cloned().collect::<Vec<String>>()).to(be_equal_to(expected_keys));
-            expect(metadata.get("pact-specification").unwrap().to_string()).to(be_equal_to(s!("{\"version\":\"1.0.0\"}")));
+            expect(metadata.get("pact-specification").unwrap().to_string()).to(be_equal_to(s!("{\"version\":\"1.1.0\"}")));
         },
         Err(err) => panic!("Failed to load pact from '{:?}' - {}", pact_file, err)
     }
@@ -166,7 +166,7 @@ fn test_load_test_pact_no_bodies() {
             let metadata = pact_json.find("metadata").unwrap().as_object().unwrap();
             let expected_keys : Vec<String> = vec![s!("pact-jvm"), s!("pact-rust"), s!("pact-specification")];
             expect(metadata.keys().cloned().collect::<Vec<String>>()).to(be_equal_to(expected_keys));
-            expect(metadata.get("pact-specification").unwrap().to_string()).to(be_equal_to(s!("{\"version\":\"1.0.0\"}")));
+            expect(metadata.get("pact-specification").unwrap().to_string()).to(be_equal_to(s!("{\"version\":\"1.1.0\"}")));
         },
         Err(err) => panic!("Failed to load pact from '{:?}' - {}", pact_file, err)
     }
@@ -190,7 +190,7 @@ fn test_load_test_pact_no_metadata() {
             let metadata = pact_json.find("metadata").unwrap().as_object().unwrap();
             let expected_keys : Vec<String> = vec![s!("pact-rust"), s!("pact-specification")];
             expect(metadata.keys().cloned().collect::<Vec<String>>()).to(be_equal_to(expected_keys));
-            expect(metadata.get("pact-specification").unwrap().to_string()).to(be_equal_to(s!("{\"version\":\"1.0.0\"}")));
+            expect(metadata.get("pact-specification").unwrap().to_string()).to(be_equal_to(s!("{\"version\":\"1.1.0\"}")));
         },
         Err(err) => panic!("Failed to load pact from '{:?}' - {}", pact_file, err)
     }
@@ -214,7 +214,7 @@ fn test_load_test_pact_no_spec_version() {
             let metadata = pact_json.find("metadata").unwrap().as_object().unwrap();
             let expected_keys : Vec<String> = vec![s!("pact-jvm"), s!("pact-rust"), s!("pact-specification")];
             expect(metadata.keys().cloned().collect::<Vec<String>>()).to(be_equal_to(expected_keys));
-            expect(metadata.get("pact-specification").unwrap().to_string()).to(be_equal_to(s!("{\"version\":\"1.0.0\"}")));
+            expect(metadata.get("pact-specification").unwrap().to_string()).to(be_equal_to(s!("{\"version\":\"1.1.0\"}")));
         },
         Err(err) => panic!("Failed to load pact from '{:?}' - {}", pact_file, err)
     }
@@ -238,7 +238,7 @@ fn test_load_test_pact_no_version() {
             let metadata = pact_json.find("metadata").unwrap().as_object().unwrap();
             let expected_keys : Vec<String> = vec![s!("pact-jvm"), s!("pact-rust"), s!("pact-specification")];
             expect(metadata.keys().cloned().collect::<Vec<String>>()).to(be_equal_to(expected_keys));
-            expect(metadata.get("pact-specification").unwrap().to_string()).to(be_equal_to(s!("{\"version\":\"1.0.0\"}")));
+            expect(metadata.get("pact-specification").unwrap().to_string()).to(be_equal_to(s!("{\"version\":\"1.1.0\"}")));
             expect(pact.specification_version.clone()).to(be_equal_to(PactSpecification::Unknown));
         },
         Err(err) => panic!("Failed to load pact from '{:?}' - {}", pact_file, err)
@@ -263,7 +263,7 @@ fn test_load_test_pact_query_old_format() {
             let metadata = pact_json.find("metadata").unwrap().as_object().unwrap();
             let expected_keys : Vec<String> = vec![s!("pact-jvm"), s!("pact-rust"), s!("pact-specification")];
             expect(metadata.keys().cloned().collect::<Vec<String>>()).to(be_equal_to(expected_keys));
-            expect(metadata.get("pact-specification").unwrap().to_string()).to(be_equal_to(s!("{\"version\":\"1.0.0\"}")));
+            expect(metadata.get("pact-specification").unwrap().to_string()).to(be_equal_to(s!("{\"version\":\"1.1.0\"}")));
         },
         Err(err) => panic!("Failed to load pact from '{:?}' - {}", pact_file, err)
     }
@@ -287,13 +287,12 @@ fn test_load_test_pact_with_bodies() {
             let metadata = pact_json.find("metadata").unwrap().as_object().unwrap();
             let expected_keys : Vec<String> = vec![s!("pact-jvm"), s!("pact-rust"), s!("pact-specification")];
             expect(metadata.keys().cloned().collect::<Vec<String>>()).to(be_equal_to(expected_keys));
-            expect(metadata.get("pact-specification").unwrap().to_string()).to(be_equal_to(s!("{\"version\":\"1.0.0\"}")));
+            expect(metadata.get("pact-specification").unwrap().to_string()).to(be_equal_to(s!("{\"version\":\"1.1.0\"}")));
         },
         Err(err) => panic!("Failed to load pact from '{:?}' - {}", pact_file, err)
     }
 }
 
-// v1-pact.json
 // v2-pact.json
 // v2_pact_query.json
 // v3-message-pact.json

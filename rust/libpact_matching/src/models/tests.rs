@@ -76,6 +76,16 @@ fn parse_query_string_handles_missing_values() {
 }
 
 #[test]
+fn parse_query_string_handles_equals_in_values() {
+    let query = "a=b&c=d=e=f".to_string();
+    let mut expected = HashMap::new();
+    expected.insert("a".to_string(), vec!["b".to_string()]);
+    expected.insert("c".to_string(), vec!["d=e=f".to_string()]);
+    let result = parse_query_string(&query);
+    assert_eq!(result, Some(expected));
+}
+
+#[test]
 fn parse_query_string_decodes_values() {
     let query = "a=a%20b%20c".to_string();
     let mut expected = HashMap::new();
@@ -221,7 +231,7 @@ fn load_empty_pact() {
 fn missing_metadata() {
     let pact_json = r#"{}"#;
     let pact = Pact::from_json(&Json::from_str(pact_json).unwrap());
-    expect!(pact.specification_version).to(be_equal_to(PactSpecification::V1));
+    expect!(pact.specification_version).to(be_equal_to(PactSpecification::V1_1));
 }
 
 #[test]
@@ -231,7 +241,7 @@ fn missing_spec_version() {
         }
     }"#;
     let pact = Pact::from_json(&Json::from_str(pact_json).unwrap());
-    expect!(pact.specification_version).to(be_equal_to(PactSpecification::V1));
+    expect!(pact.specification_version).to(be_equal_to(PactSpecification::V1_1));
 }
 
 #[test]
@@ -244,7 +254,7 @@ fn missing_version_in_spec_version() {
         }
     }"#;
     let pact = Pact::from_json(&Json::from_str(pact_json).unwrap());
-    expect!(pact.specification_version).to(be_equal_to(PactSpecification::V1));
+    expect!(pact.specification_version).to(be_equal_to(PactSpecification::V1_1));
 }
 
 #[test]
@@ -337,7 +347,7 @@ fn load_basic_pact() {
         body: OptionalBody::Present(s!("\"That is some good Mallory.\"")),
         matching_rules: None
     }));
-    expect!(pact.specification_version).to(be_equal_to(PactSpecification::V1));
+    expect!(pact.specification_version).to(be_equal_to(PactSpecification::V1_1));
     expect!(pact.metadata.iter()).to(have_count(0));
 }
 
@@ -704,7 +714,7 @@ fn write_pact_test() {
       "version": "{}"
     }},
     "pact-specification": {{
-      "version": "1.0.0"
+      "version": "1.1.0"
     }}
   }},
   "provider": {{
@@ -726,7 +736,7 @@ fn write_pact_test_should_merge_pacts() {
             }
         ],
         metadata: btreemap!{},
-        specification_version: PactSpecification::V1
+        specification_version: PactSpecification::V1_1
     };
     let pact2 = Pact { consumer: Consumer { name: s!("merge_consumer") },
         provider: Provider { name: s!("merge_provider") },
@@ -787,7 +797,7 @@ fn write_pact_test_should_merge_pacts() {
       "version": "{}"
     }},
     "pact-specification": {{
-      "version": "1.0.0"
+      "version": "1.1.0"
     }}
   }},
   "provider": {{
@@ -809,7 +819,7 @@ fn write_pact_test_should_not_merge_pacts_with_conflicts() {
             }
         ],
         metadata: btreemap!{},
-        specification_version: PactSpecification::V1
+        specification_version: PactSpecification::V1_1
     };
     let pact2 = Pact { consumer: Consumer { name: s!("write_pact_test_consumer") },
         provider: Provider { name: s!("write_pact_test_provider") },
@@ -859,7 +869,7 @@ fn write_pact_test_should_not_merge_pacts_with_conflicts() {
       "version": "{}"
     }},
     "pact-specification": {{
-      "version": "1.0.0"
+      "version": "1.1.0"
     }}
   }},
   "provider": {{

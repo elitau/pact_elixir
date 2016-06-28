@@ -21,11 +21,14 @@ pub const VERSION: Option<&'static str> = option_env!("CARGO_PKG_VERSION");
 
 /// Enum defining the pact specification versions supported by the library
 #[derive(Debug, Clone, PartialEq)]
+#[allow(non_camel_case_types)]
 pub enum PactSpecification {
     /// Unknown or unsupported specification version
     Unknown,
     /// First version of the pact specification (https://github.com/pact-foundation/pact-specification/tree/version-1)
-    V1
+    V1,
+    /// Second version of the pact specification (https://github.com/pact-foundation/pact-specification/tree/version-1.1)
+    V1_1
 }
 
 impl PactSpecification {
@@ -33,6 +36,7 @@ impl PactSpecification {
     pub fn version_str(&self) -> String {
         match *self {
             PactSpecification::V1 => s!("1.0.0"),
+            PactSpecification::V1_1 => s!("1.1.0"),
             _ => s!("unknown")
         }
     }
@@ -41,6 +45,7 @@ impl PactSpecification {
     pub fn to_string(&self) -> String {
         match *self {
             PactSpecification::V1 => s!("V1"),
+            PactSpecification::V1_1 => s!("V1.1"),
             _ => s!("unknown")
         }
     }
@@ -600,26 +605,33 @@ fn determin_spec_version(metadata: &BTreeMap<String, BTreeMap<String, String>>) 
             match spec.get("version") {
                 Some(ver) => match Version::parse(ver) {
                     Ok(ver) => match ver.major {
-                        1 => PactSpecification::V1,
+                        1 => match ver.minor {
+                            0 => PactSpecification::V1,
+                            1 => PactSpecification::V1_1,
+                            _ => {
+                                warn!("Unsupported specification version '{}' found in the metadata in the pact file, will try load it as a V1.1 specification", ver);
+                                PactSpecification::Unknown
+                            }
+                        },
                         _ => {
-                            warn!("Unsupported specification version '{}' found in the metadata in the pact file, will try load it as a V1 specification", ver);
+                            warn!("Unsupported specification version '{}' found in the metadata in the pact file, will try load it as a V1.1 specification", ver);
                             PactSpecification::Unknown
                         }
                     },
                     Err(err) => {
-                        warn!("Could not parse specification version '{}' found in the metadata in the pact file, assuming V1 specification - {}", ver, err);
+                        warn!("Could not parse specification version '{}' found in the metadata in the pact file, assuming V1.1 specification - {}", ver, err);
                         PactSpecification::Unknown
                     }
                 },
                 None => {
-                    warn!("No specification version found in the metadata in the pact file, assuming V1 specification");
-                    PactSpecification::V1
+                    warn!("No specification version found in the metadata in the pact file, assuming V1.1 specification");
+                    PactSpecification::V1_1
                 }
             }
         },
         None => {
-            warn!("No metadata found in pact file, assuming V1 specification");
-            PactSpecification::V1
+            warn!("No metadata found in pact file, assuming V1.1 specification");
+            PactSpecification::V1_1
         }
     }
 }
@@ -666,7 +678,7 @@ impl Pact {
                 (k.clone(), Json::Object(v.iter().map(|(k, v)| (k.clone(), Json::String(v.clone()))).collect()))
             })
             .collect();
-        md_map.insert(s!("pact-specification"), Json::Object(btreemap!{ s!("version") => Json::String(PactSpecification::V1.version_str()) }));
+        md_map.insert(s!("pact-specification"), Json::Object(btreemap!{ s!("version") => Json::String(PactSpecification::V1_1.version_str()) }));
         md_map.insert(s!("pact-rust"), Json::Object(btreemap!{ s!("version") => Json::String(s!(VERSION.unwrap_or("unknown"))) }));
         md_map
     }
@@ -752,10 +764,10 @@ impl Pact {
             provider: Provider { name: s!("default_provider") },
             interactions: Vec::new(),
             metadata: btreemap!{
-                s!("pact-specification") => btreemap!{ s!("version") => PactSpecification::V1.version_str() },
+                s!("pact-specification") => btreemap!{ s!("version") => PactSpecification::V1_1.version_str() },
                 s!("pact-rust") => btreemap!{ s!("version") => s!(VERSION.unwrap_or("unknown")) }
             },
-            specification_version: PactSpecification::V1
+            specification_version: PactSpecification::V1_1
         }
     }
 }
@@ -833,7 +845,7 @@ pub fn parse_query_string(query: &String) -> Option<HashMap<String, Vec<String>>
             if kv.is_empty() {
                 vec![]
             } else if kv.contains("=") {
-                kv.split("=").collect::<Vec<&str>>()
+                kv.splitn(2, "=").collect::<Vec<&str>>()
             } else {
                 vec![kv]
             }
