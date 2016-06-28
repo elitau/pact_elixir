@@ -18,7 +18,7 @@ fn request_from_json_defaults_to_get() {
           "headers": {}
       }
     "#).unwrap();
-    let request = Request::from_json(&request_json);
+    let request = Request::from_json(&request_json, &PactSpecification::V1);
     assert_eq!(request.method, "GET".to_string());
 }
 
@@ -32,7 +32,7 @@ fn request_from_json_defaults_to_root_for_path() {
       }
     "#).unwrap();
     println!("request_json: {}", request_json);
-    let request = Request::from_json(&request_json);
+    let request = Request::from_json(&request_json, &PactSpecification::V1);
     assert_eq!(request.path, "/".to_string());
 }
 
@@ -43,7 +43,7 @@ fn response_from_json_defaults_to_status_200() {
           "headers": {}
       }
     "#).unwrap();
-    let response = Response::from_json(&response_json);
+    let response = Response::from_json(&response_json, &PactSpecification::V1);
     assert_eq!(response.status, 200);
 }
 
@@ -175,7 +175,7 @@ fn loading_interaction_from_json() {
         "description": "String",
         "providerState": "provider state"
     }"#;
-    let interaction = Interaction::from_json(0, &Json::from_str(interaction_json).unwrap());
+    let interaction = Interaction::from_json(0, &Json::from_str(interaction_json).unwrap(), &PactSpecification::V1);
     expect!(interaction.description).to(be_equal_to("String"));
     expect!(interaction.provider_state).to(be_some().value("provider state"));
 }
@@ -185,7 +185,7 @@ fn defaults_to_number_if_no_description() {
     let interaction_json = r#"{
         "providerState": "provider state"
     }"#;
-    let interaction = Interaction::from_json(0, &Json::from_str(interaction_json).unwrap());
+    let interaction = Interaction::from_json(0, &Json::from_str(interaction_json).unwrap(), &PactSpecification::V1);
     expect!(interaction.description).to(be_equal_to("Interaction 0"));
     expect!(interaction.provider_state).to(be_some().value("provider state"));
 }
@@ -194,7 +194,7 @@ fn defaults_to_number_if_no_description() {
 fn defaults_to_none_if_no_provider_state() {
     let interaction_json = r#"{
     }"#;
-    let interaction = Interaction::from_json(0, &Json::from_str(interaction_json).unwrap());
+    let interaction = Interaction::from_json(0, &Json::from_str(interaction_json).unwrap(), &PactSpecification::V1);
     expect!(interaction.provider_state).to(be_none());
 }
 
@@ -203,7 +203,7 @@ fn defaults_to_none_if_provider_state_null() {
     let interaction_json = r#"{
         "providerState": null
     }"#;
-    let interaction = Interaction::from_json(0, &Json::from_str(interaction_json).unwrap());
+    let interaction = Interaction::from_json(0, &Json::from_str(interaction_json).unwrap(), &PactSpecification::V1);
     expect!(interaction.provider_state).to(be_none());
 }
 
@@ -221,7 +221,7 @@ fn load_empty_pact() {
 fn missing_metadata() {
     let pact_json = r#"{}"#;
     let pact = Pact::from_json(&Json::from_str(pact_json).unwrap());
-    expect!(pact.specification_version()).to(be_equal_to(PactSpecification::Unknown));
+    expect!(pact.specification_version).to(be_equal_to(PactSpecification::V1));
 }
 
 #[test]
@@ -231,7 +231,7 @@ fn missing_spec_version() {
         }
     }"#;
     let pact = Pact::from_json(&Json::from_str(pact_json).unwrap());
-    expect!(pact.specification_version()).to(be_equal_to(PactSpecification::Unknown));
+    expect!(pact.specification_version).to(be_equal_to(PactSpecification::V1));
 }
 
 #[test]
@@ -244,7 +244,7 @@ fn missing_version_in_spec_version() {
         }
     }"#;
     let pact = Pact::from_json(&Json::from_str(pact_json).unwrap());
-    expect!(pact.specification_version()).to(be_equal_to(PactSpecification::Unknown));
+    expect!(pact.specification_version).to(be_equal_to(PactSpecification::V1));
 }
 
 #[test]
@@ -257,7 +257,7 @@ fn empty_version_in_spec_version() {
         }
     }"#;
     let pact = Pact::from_json(&Json::from_str(pact_json).unwrap());
-    expect!(pact.specification_version()).to(be_equal_to(PactSpecification::Unknown));
+    expect!(pact.specification_version).to(be_equal_to(PactSpecification::Unknown));
 }
 
 #[test]
@@ -270,7 +270,7 @@ fn correct_version_in_spec_version() {
         }
     }"#;
     let pact = Pact::from_json(&Json::from_str(pact_json).unwrap());
-    expect!(pact.specification_version()).to(be_equal_to(PactSpecification::V1));
+    expect!(pact.specification_version).to(be_equal_to(PactSpecification::V1));
 }
 
 #[test]
@@ -283,7 +283,7 @@ fn invalid_version_in_spec_version() {
         }
     }"#;
     let pact = Pact::from_json(&Json::from_str(pact_json).unwrap());
-    expect!(pact.specification_version()).to(be_equal_to(PactSpecification::Unknown));
+    expect!(pact.specification_version).to(be_equal_to(PactSpecification::Unknown));
 }
 
 
@@ -337,7 +337,7 @@ fn load_basic_pact() {
         body: OptionalBody::Present(s!("\"That is some good Mallory.\"")),
         matching_rules: None
     }));
-    expect!(pact.specification_version()).to(be_equal_to(PactSpecification::Unknown));
+    expect!(pact.specification_version).to(be_equal_to(PactSpecification::V1));
     expect!(pact.metadata.iter()).to(have_count(0));
 }
 
@@ -390,7 +390,7 @@ fn load_pact() {
     expect!(&pact.consumer.name).to(be_equal_to("test_consumer"));
     expect!(pact.metadata.iter()).to(have_count(2));
     expect!(&pact.metadata["pact-specification"]["version"]).to(be_equal_to("1.0.0"));
-    expect!(pact.specification_version()).to(be_equal_to(PactSpecification::V1));
+    expect!(pact.specification_version).to(be_equal_to(PactSpecification::V1));
     expect!(pact.interactions.iter()).to(have_count(1));
     let interaction = pact.interactions[0].clone();
     expect!(interaction.description).to(be_equal_to("test interaction"));
@@ -645,7 +645,9 @@ fn default_file_name_is_based_in_the_consumer_and_provider() {
     let pact = Pact { consumer: Consumer { name: s!("consumer") },
         provider: Provider { name: s!("provider") },
         interactions: vec![],
-        metadata: btreemap!{} };
+        metadata: btreemap!{},
+        specification_version: PactSpecification::V1
+    };
     expect!(pact.default_file_name()).to(be_equal_to("consumer-provider.json"));
 }
 
@@ -668,7 +670,7 @@ fn write_pact_test() {
                 response: Response::default_response()
             }
         ],
-        metadata: btreemap!{} };
+        .. Pact::default() };
     let mut dir = env::temp_dir();
     let x = rand::random::<u16>();
     dir.push(format!("pact_test_{}", x));
@@ -723,7 +725,9 @@ fn write_pact_test_should_merge_pacts() {
                 response: Response::default_response()
             }
         ],
-        metadata: btreemap!{} };
+        metadata: btreemap!{},
+        specification_version: PactSpecification::V1
+    };
     let pact2 = Pact { consumer: Consumer { name: s!("merge_consumer") },
         provider: Provider { name: s!("merge_provider") },
         interactions: vec![
@@ -734,7 +738,9 @@ fn write_pact_test_should_merge_pacts() {
                 response: Response::default_response()
             }
         ],
-        metadata: btreemap!{} };
+        metadata: btreemap!{},
+        specification_version: PactSpecification::V1
+    };
     let mut dir = env::temp_dir();
     let x = rand::random::<u16>();
     dir.push(format!("pact_test_{}", x));
@@ -802,7 +808,9 @@ fn write_pact_test_should_not_merge_pacts_with_conflicts() {
                 response: Response::default_response()
             }
         ],
-        metadata: btreemap!{} };
+        metadata: btreemap!{},
+        specification_version: PactSpecification::V1
+    };
     let pact2 = Pact { consumer: Consumer { name: s!("write_pact_test_consumer") },
         provider: Provider { name: s!("write_pact_test_provider") },
         interactions: vec![
@@ -813,7 +821,9 @@ fn write_pact_test_should_not_merge_pacts_with_conflicts() {
                 response: Response { status: 400, .. Response::default_response() }
             }
         ],
-        metadata: btreemap!{} };
+        metadata: btreemap!{},
+        specification_version: PactSpecification::V1
+    };
     let mut dir = env::temp_dir();
     let x = rand::random::<u16>();
     dir.push(format!("pact_test_{}", x));
@@ -863,11 +873,15 @@ fn pact_merge_does_not_merge_different_consumers() {
     let pact = Pact { consumer: Consumer { name: s!("test_consumer") },
         provider: Provider { name: s!("test_provider") },
         interactions: vec![],
-        metadata: btreemap!{} };
+        metadata: btreemap!{},
+        specification_version: PactSpecification::V1
+    };
     let pact2 = Pact { consumer: Consumer { name: s!("test_consumer2") },
         provider: Provider { name: s!("test_provider") },
         interactions: vec![],
-        metadata: btreemap!{} };
+        metadata: btreemap!{},
+        specification_version: PactSpecification::V1
+    };
     expect!(pact.merge(&pact2)).to(be_err());
 }
 
@@ -876,11 +890,15 @@ fn pact_merge_does_not_merge_different_providers() {
     let pact = Pact { consumer: Consumer { name: s!("test_consumer") },
         provider: Provider { name: s!("test_provider") },
         interactions: vec![],
-        metadata: btreemap!{} };
+        metadata: btreemap!{},
+        specification_version: PactSpecification::V1
+    };
     let pact2 = Pact { consumer: Consumer { name: s!("test_consumer") },
         provider: Provider { name: s!("test_provider2") },
         interactions: vec![],
-        metadata: btreemap!{} };
+        metadata: btreemap!{},
+        specification_version: PactSpecification::V1
+    };
     expect!(pact.merge(&pact2)).to(be_err());
 }
 
@@ -896,7 +914,9 @@ fn pact_merge_does_not_merge_where_there_are_conflicting_interactions() {
                 response: Response::default_response()
             }
         ],
-        metadata: btreemap!{} };
+        metadata: btreemap!{},
+        specification_version: PactSpecification::V1
+    };
     let pact2 = Pact { consumer: Consumer { name: s!("test_consumer") },
         provider: Provider { name: s!("test_provider") },
         interactions: vec![
@@ -907,7 +927,9 @@ fn pact_merge_does_not_merge_where_there_are_conflicting_interactions() {
                 response: Response::default_response()
             }
         ],
-        metadata: btreemap!{} };
+        metadata: btreemap!{},
+        specification_version: PactSpecification::V1
+    };
     expect!(pact.merge(&pact2)).to(be_err());
 }
 
@@ -923,7 +945,8 @@ fn pact_merge_removes_duplicates() {
                 response: Response::default_response()
             }
         ],
-        metadata: btreemap!{} };
+        .. Pact::default()
+    };
     let pact2 = Pact { consumer: Consumer { name: s!("test_consumer") },
         provider: Provider { name: s!("test_provider") },
         interactions: vec![
@@ -940,7 +963,8 @@ fn pact_merge_removes_duplicates() {
                 response: Response::default_response()
             }
         ],
-        metadata: btreemap!{} };
+        .. Pact::default()
+    };
     let merged_pact = pact.merge(&pact2);
     expect!(merged_pact.clone()).to(be_ok());
     expect!(merged_pact.clone().unwrap().interactions.len()).to(be_equal_to(2));

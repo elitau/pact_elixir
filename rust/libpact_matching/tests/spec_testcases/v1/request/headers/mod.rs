@@ -1,7 +1,10 @@
 #[allow(unused_imports)]
-use pact_matching::models::Request;
+use pact_matching::models::*;
+#[allow(unused_imports)]
 use pact_matching::match_request;
+#[allow(unused_imports)]
 use rustc_serialize::json::Json;
+#[allow(unused_imports)]
 use expectest::prelude::*;
 
 #[test]
@@ -26,9 +29,9 @@ fn empty_headers() {
       }
     "#).unwrap();
 
-    let expected = Request::from_json(&pact.find("expected").unwrap());
+    let expected = Request::from_json(&pact.find("expected").unwrap(), &PactSpecification::V1);
     println!("{:?}", expected);
-    let actual = Request::from_json(&pact.find("actual").unwrap());
+    let actual = Request::from_json(&pact.find("actual").unwrap(), &PactSpecification::V1);
     println!("{:?}", actual);
     let pact_match = pact.find("match").unwrap();
     if pact_match.as_boolean().unwrap() {
@@ -63,9 +66,9 @@ fn header_name_is_different_case() {
       }
     "#).unwrap();
 
-    let expected = Request::from_json(&pact.find("expected").unwrap());
+    let expected = Request::from_json(&pact.find("expected").unwrap(), &PactSpecification::V1);
     println!("{:?}", expected);
-    let actual = Request::from_json(&pact.find("actual").unwrap());
+    let actual = Request::from_json(&pact.find("actual").unwrap(), &PactSpecification::V1);
     println!("{:?}", actual);
     let pact_match = pact.find("match").unwrap();
     if pact_match.as_boolean().unwrap() {
@@ -100,9 +103,9 @@ fn header_value_is_different_case() {
       }
     "#).unwrap();
 
-    let expected = Request::from_json(&pact.find("expected").unwrap());
+    let expected = Request::from_json(&pact.find("expected").unwrap(), &PactSpecification::V1);
     println!("{:?}", expected);
-    let actual = Request::from_json(&pact.find("actual").unwrap());
+    let actual = Request::from_json(&pact.find("actual").unwrap(), &PactSpecification::V1);
     println!("{:?}", actual);
     let pact_match = pact.find("match").unwrap();
     if pact_match.as_boolean().unwrap() {
@@ -139,9 +142,9 @@ fn matches() {
       }
     "#).unwrap();
 
-    let expected = Request::from_json(&pact.find("expected").unwrap());
+    let expected = Request::from_json(&pact.find("expected").unwrap(), &PactSpecification::V1);
     println!("{:?}", expected);
-    let actual = Request::from_json(&pact.find("actual").unwrap());
+    let actual = Request::from_json(&pact.find("actual").unwrap(), &PactSpecification::V1);
     println!("{:?}", actual);
     let pact_match = pact.find("match").unwrap();
     if pact_match.as_boolean().unwrap() {
@@ -176,9 +179,9 @@ fn order_of_comma_separated_header_values_different() {
       }
     "#).unwrap();
 
-    let expected = Request::from_json(&pact.find("expected").unwrap());
+    let expected = Request::from_json(&pact.find("expected").unwrap(), &PactSpecification::V1);
     println!("{:?}", expected);
-    let actual = Request::from_json(&pact.find("actual").unwrap());
+    let actual = Request::from_json(&pact.find("actual").unwrap(), &PactSpecification::V1);
     println!("{:?}", actual);
     let pact_match = pact.find("match").unwrap();
     if pact_match.as_boolean().unwrap() {
@@ -211,9 +214,9 @@ fn unexpected_header_found() {
       }
     "#).unwrap();
 
-    let expected = Request::from_json(&pact.find("expected").unwrap());
+    let expected = Request::from_json(&pact.find("expected").unwrap(), &PactSpecification::V1);
     println!("{:?}", expected);
-    let actual = Request::from_json(&pact.find("actual").unwrap());
+    let actual = Request::from_json(&pact.find("actual").unwrap(), &PactSpecification::V1);
     println!("{:?}", actual);
     let pact_match = pact.find("match").unwrap();
     if pact_match.as_boolean().unwrap() {
@@ -248,9 +251,9 @@ fn whitespace_after_comma_different() {
       }
     "#).unwrap();
 
-    let expected = Request::from_json(&pact.find("expected").unwrap());
+    let expected = Request::from_json(&pact.find("expected").unwrap(), &PactSpecification::V1);
     println!("{:?}", expected);
-    let actual = Request::from_json(&pact.find("actual").unwrap());
+    let actual = Request::from_json(&pact.find("actual").unwrap(), &PactSpecification::V1);
     println!("{:?}", actual);
     let pact_match = pact.find("match").unwrap();
     if pact_match.as_boolean().unwrap() {

@@ -36,6 +36,14 @@ impl PactSpecification {
             _ => s!("unknown")
         }
     }
+
+    /// Returns a descriptive string of the specification version.
+    pub fn to_string(&self) -> String {
+        match *self {
+            PactSpecification::V1 => s!("V1"),
+            _ => s!("unknown")
+        }
+    }
 }
 
 /// Struct that defines the consumer of the pact.
@@ -284,7 +292,7 @@ fn build_query_string(query: HashMap<String, Vec<String>>) -> String {
 
 impl Request {
     /// Builds a `Request` from a `Json` struct.
-    pub fn from_json(request: &Json) -> Request {
+    pub fn from_json(request: &Json, spec_version: &PactSpecification) -> Request {
         let method_val = match request.find("method") {
             Some(v) => match *v {
                 Json::String(ref s) => s.to_uppercase(),
@@ -302,7 +310,11 @@ impl Request {
         let query_val = match request.find("query") {
             Some(v) => match *v {
                 Json::String(ref s) => parse_query_string(s),
-                _ => parse_query_string(&v.to_string())
+                _ => {
+                    warn!("Only string versions of request query strings are supported with specification version {}, ignoring.",
+                        spec_version.to_string());
+                    None
+                }
             },
             None => None
         };
@@ -377,7 +389,8 @@ pub struct Response {
 
 impl Response {
     /// Build a `Response` from a `Json` struct.
-    pub fn from_json(response: &Json) -> Response {
+    #[allow(unused_variables)]
+    pub fn from_json(response: &Json, spec_version: &PactSpecification) -> Response {
         let status_val = match response.find("status") {
             Some(v) => v.as_u64().unwrap() as u16,
             None => 200
@@ -473,7 +486,7 @@ pub struct Interaction {
 
 impl Interaction {
     /// Constructs an `Interaction` from the `Json` struct.
-    pub fn from_json(index: usize, pact_json: &Json) -> Interaction {
+    pub fn from_json(index: usize, pact_json: &Json, spec_version: &PactSpecification) -> Interaction {
         let description = match pact_json.find("description") {
             Some(v) => match *v {
                 Json::String(ref s) => s.clone(),
@@ -494,11 +507,11 @@ impl Interaction {
             None => None
         };
         let request = match pact_json.find("request") {
-            Some(v) => Request::from_json(v),
+            Some(v) => Request::from_json(v, spec_version),
             None => Request::default_request()
         };
         let response = match pact_json.find("response") {
-            Some(v) => Response::from_json(v),
+            Some(v) => Response::from_json(v, spec_version),
             None => Response::default_response()
         };
         Interaction {
@@ -543,7 +556,9 @@ pub struct Pact {
     /// List of interactions between the consumer and provider.
     pub interactions: Vec<Interaction>,
     /// Metadata associated with this pact file.
-    pub metadata: BTreeMap<String, BTreeMap<String, String>>
+    pub metadata: BTreeMap<String, BTreeMap<String, String>>,
+    /// Specification version of this pact
+    pub specification_version: PactSpecification
 }
 
 fn parse_meta_data(pact_json: &Json) -> BTreeMap<String, BTreeMap<String, String>> {
@@ -567,15 +582,45 @@ fn parse_meta_data(pact_json: &Json) -> BTreeMap<String, BTreeMap<String, String
     }
 }
 
-fn parse_interactions(pact_json: &Json) -> Vec<Interaction> {
+fn parse_interactions(pact_json: &Json, spec_version: PactSpecification) -> Vec<Interaction> {
     match pact_json.find("interactions") {
         Some(v) => match *v {
             Json::Array(ref array) => array.iter().enumerate().map(|(index, ijson)| {
-                Interaction::from_json(index, ijson)
+                Interaction::from_json(index, ijson, &spec_version)
             }).collect(),
             _ => vec![]
         },
         None => vec![]
+    }
+}
+
+fn determin_spec_version(metadata: &BTreeMap<String, BTreeMap<String, String>>) -> PactSpecification {
+    match metadata.get("pact-specification") {
+        Some(spec) => {
+            match spec.get("version") {
+                Some(ver) => match Version::parse(ver) {
+                    Ok(ver) => match ver.major {
+                        1 => PactSpecification::V1,
+                        _ => {
+                            warn!("Unsupported specification version '{}' found in the metadata in the pact file, will try load it as a V1 specification", ver);
+                            PactSpecification::Unknown
+                        }
+                    },
+                    Err(err) => {
+                        warn!("Could not parse specification version '{}' found in the metadata in the pact file, assuming V1 specification - {}", ver, err);
+                        PactSpecification::Unknown
+                    }
+                },
+                None => {
+                    warn!("No specification version found in the metadata in the pact file, assuming V1 specification");
+                    PactSpecification::V1
+                }
+            }
+        },
+        None => {
+            warn!("No metadata found in pact file, assuming V1 specification");
+            PactSpecification::V1
+        }
     }
 }
 
@@ -584,6 +629,8 @@ impl Pact {
     /// Creates a `Pact` from a `Json` struct.
     pub fn from_json(pact_json: &Json) -> Pact {
         let metadata = parse_meta_data(pact_json);
+        let spec_version = determin_spec_version(&metadata);
+
         let consumer = match pact_json.find("consumer") {
             Some(v) => Consumer::from_json(v),
             None => Consumer { name: s!("consumer") }
@@ -595,8 +642,9 @@ impl Pact {
         Pact {
             consumer: consumer,
             provider: provider,
-            interactions: parse_interactions(pact_json),
-            metadata: metadata
+            interactions: parse_interactions(pact_json, spec_version.clone()),
+            metadata: metadata,
+            specification_version: spec_version.clone()
         }
     }
 
@@ -609,23 +657,6 @@ impl Pact {
             s!("metadata") => Json::Object(self.metadata_to_json())
         };
         Json::Object(map)
-    }
-
-    /// Determins the specification version of this pact.
-    pub fn specification_version(&self) -> PactSpecification {
-        match self.metadata.get("pact-specification") {
-            Some(spec_ver) => match spec_ver.get("version") {
-                Some(ver) => match Version::parse(ver) {
-                    Ok(ver) => match ver.major {
-                        1 => PactSpecification::V1,
-                        _ => PactSpecification::Unknown
-                    },
-                    _ => PactSpecification::Unknown
-                },
-                None => PactSpecification::Unknown
-            },
-            None => PactSpecification::Unknown
-        }
     }
 
     /// Creates a BTreeMap of the metadata of this pact.
@@ -667,7 +698,8 @@ impl Pact {
                         }).into_iter()
                         .unique()
                         .collect(),
-                    metadata: self.metadata.clone()
+                    metadata: self.metadata.clone(),
+                    specification_version: self.specification_version.clone()
                 })
             }
         } else {
@@ -710,6 +742,20 @@ impl Pact {
             let mut file = try!{ File::create(path) };
             try!{ file.write_all(format!("{}", self.to_json().pretty()).as_bytes()) };
             Ok(())
+        }
+    }
+
+    /// Returns a default Pact struct
+    pub fn default() -> Pact {
+        Pact {
+            consumer: Consumer { name: s!("default_consumer") },
+            provider: Provider { name: s!("default_provider") },
+            interactions: Vec::new(),
+            metadata: btreemap!{
+                s!("pact-specification") => btreemap!{ s!("version") => PactSpecification::V1.version_str() },
+                s!("pact-rust") => btreemap!{ s!("version") => s!(VERSION.unwrap_or("unknown")) }
+            },
+            specification_version: PactSpecification::V1
         }
     }
 }

@@ -1,7 +1,10 @@
 #[allow(unused_imports)]
-use pact_matching::models::Request;
+use pact_matching::models::*;
+#[allow(unused_imports)]
 use pact_matching::match_request;
+#[allow(unused_imports)]
 use rustc_serialize::json::Json;
+#[allow(unused_imports)]
 use expectest::prelude::*;
 
 #[test]
@@ -35,9 +38,9 @@ fn array_in_different_order() {
       }
     "#).unwrap();
 
-    let expected = Request::from_json(&pact.find("expected").unwrap());
+    let expected = Request::from_json(&pact.find("expected").unwrap(), &PactSpecification::V1);
     println!("{:?}", expected);
-    let actual = Request::from_json(&pact.find("actual").unwrap());
+    let actual = Request::from_json(&pact.find("actual").unwrap(), &PactSpecification::V1);
     println!("{:?}", actual);
     let pact_match = pact.find("match").unwrap();
     if pact_match.as_boolean().unwrap() {
@@ -78,9 +81,9 @@ fn different_value_found_at_index() {
       }
     "#).unwrap();
 
-    let expected = Request::from_json(&pact.find("expected").unwrap());
+    let expected = Request::from_json(&pact.find("expected").unwrap(), &PactSpecification::V1);
     println!("{:?}", expected);
-    let actual = Request::from_json(&pact.find("actual").unwrap());
+    let actual = Request::from_json(&pact.find("actual").unwrap(), &PactSpecification::V1);
     println!("{:?}", actual);
     let pact_match = pact.find("match").unwrap();
     if pact_match.as_boolean().unwrap() {
@@ -121,9 +124,9 @@ fn different_value_found_at_key() {
       }
     "#).unwrap();
 
-    let expected = Request::from_json(&pact.find("expected").unwrap());
+    let expected = Request::from_json(&pact.find("expected").unwrap(), &PactSpecification::V1);
     println!("{:?}", expected);
-    let actual = Request::from_json(&pact.find("actual").unwrap());
+    let actual = Request::from_json(&pact.find("actual").unwrap(), &PactSpecification::V1);
     println!("{:?}", actual);
     let pact_match = pact.find("match").unwrap();
     if pact_match.as_boolean().unwrap() {
@@ -168,9 +171,9 @@ fn matches() {
       }
     "#).unwrap();
 
-    let expected = Request::from_json(&pact.find("expected").unwrap());
+    let expected = Request::from_json(&pact.find("expected").unwrap(), &PactSpecification::V1);
     println!("{:?}", expected);
-    let actual = Request::from_json(&pact.find("actual").unwrap());
+    let actual = Request::from_json(&pact.find("actual").unwrap(), &PactSpecification::V1);
     println!("{:?}", actual);
     let pact_match = pact.find("match").unwrap();
     if pact_match.as_boolean().unwrap() {
@@ -211,9 +214,9 @@ fn missing_index() {
       }
     "#).unwrap();
 
-    let expected = Request::from_json(&pact.find("expected").unwrap());
+    let expected = Request::from_json(&pact.find("expected").unwrap(), &PactSpecification::V1);
     println!("{:?}", expected);
-    let actual = Request::from_json(&pact.find("actual").unwrap());
+    let actual = Request::from_json(&pact.find("actual").unwrap(), &PactSpecification::V1);
     println!("{:?}", actual);
     let pact_match = pact.find("match").unwrap();
     if pact_match.as_boolean().unwrap() {
@@ -255,9 +258,9 @@ fn missing_key() {
       }
     "#).unwrap();
 
-    let expected = Request::from_json(&pact.find("expected").unwrap());
+    let expected = Request::from_json(&pact.find("expected").unwrap(), &PactSpecification::V1);
     println!("{:?}", expected);
-    let actual = Request::from_json(&pact.find("actual").unwrap());
+    let actual = Request::from_json(&pact.find("actual").unwrap(), &PactSpecification::V1);
     println!("{:?}", actual);
     let pact_match = pact.find("match").unwrap();
     if pact_match.as_boolean().unwrap() {
@@ -298,9 +301,9 @@ fn not_null_found_at_key_when_null_expected() {
       }
     "#).unwrap();
 
-    let expected = Request::from_json(&pact.find("expected").unwrap());
+    let expected = Request::from_json(&pact.find("expected").unwrap(), &PactSpecification::V1);
     println!("{:?}", expected);
-    let actual = Request::from_json(&pact.find("actual").unwrap());
+    let actual = Request::from_json(&pact.find("actual").unwrap(), &PactSpecification::V1);
     println!("{:?}", actual);
     let pact_match = pact.find("match").unwrap();
     if pact_match.as_boolean().unwrap() {
@@ -341,9 +344,9 @@ fn not_null_found_in_array_when_null_expected() {
       }
     "#).unwrap();
 
-    let expected = Request::from_json(&pact.find("expected").unwrap());
+    let expected = Request::from_json(&pact.find("expected").unwrap(), &PactSpecification::V1);
     println!("{:?}", expected);
-    let actual = Request::from_json(&pact.find("actual").unwrap());
+    let actual = Request::from_json(&pact.find("actual").unwrap(), &PactSpecification::V1);
     println!("{:?}", actual);
     let pact_match = pact.find("match").unwrap();
     if pact_match.as_boolean().unwrap() {
@@ -384,9 +387,9 @@ fn null_found_at_key_where_not_null_expected() {
       }
     "#).unwrap();
 
-    let expected = Request::from_json(&pact.find("expected").unwrap());
+    let expected = Request::from_json(&pact.find("expected").unwrap(), &PactSpecification::V1);
     println!("{:?}", expected);
-    let actual = Request::from_json(&pact.find("actual").unwrap());
+    let actual = Request::from_json(&pact.find("actual").unwrap(), &PactSpecification::V1);
     println!("{:?}", actual);
     let pact_match = pact.find("match").unwrap();
     if pact_match.as_boolean().unwrap() {
@@ -427,9 +430,9 @@ fn null_found_in_array_when_not_null_expected() {
       }
     "#).unwrap();
 
-    let expected = Request::from_json(&pact.find("expected").unwrap());
+    let expected = Request::from_json(&pact.find("expected").unwrap(), &PactSpecification::V1);
     println!("{:?}", expected);
-    let actual = Request::from_json(&pact.find("actual").unwrap());
+    let actual = Request::from_json(&pact.find("actual").unwrap(), &PactSpecification::V1);
     println!("{:?}", actual);
     let pact_match = pact.find("match").unwrap();
     if pact_match.as_boolean().unwrap() {
@@ -470,9 +473,9 @@ fn number_found_at_key_when_string_expected() {
       }
     "#).unwrap();
 
-    let expected = Request::from_json(&pact.find("expected").unwrap());
+    let expected = Request::from_json(&pact.find("expected").unwrap(), &PactSpecification::V1);
     println!("{:?}", expected);
-    let actual = Request::from_json(&pact.find("actual").unwrap());
+    let actual = Request::from_json(&pact.find("actual").unwrap(), &PactSpecification::V1);
     println!("{:?}", actual);
     let pact_match = pact.find("match").unwrap();
     if pact_match.as_boolean().unwrap() {
@@ -513,9 +516,9 @@ fn number_found_in_array_when_string_expected() {
       }
     "#).unwrap();
 
-    let expected = Request::from_json(&pact.find("expected").unwrap());
+    let expected = Request::from_json(&pact.find("expected").unwrap(), &PactSpecification::V1);
     println!("{:?}", expected);
-    let actual = Request::from_json(&pact.find("actual").unwrap());
+    let actual = Request::from_json(&pact.find("actual").unwrap(), &PactSpecification::V1);
     println!("{:?}", actual);
     let pact_match = pact.find("match").unwrap();
     if pact_match.as_boolean().unwrap() {
@@ -548,9 +551,9 @@ fn plain_text_that_does_not_match() {
       }
     "#).unwrap();
 
-    let expected = Request::from_json(&pact.find("expected").unwrap());
+    let expected = Request::from_json(&pact.find("expected").unwrap(), &PactSpecification::V1);
     println!("{:?}", expected);
-    let actual = Request::from_json(&pact.find("actual").unwrap());
+    let actual = Request::from_json(&pact.find("actual").unwrap(), &PactSpecification::V1);
     println!("{:?}", actual);
     let pact_match = pact.find("match").unwrap();
     if pact_match.as_boolean().unwrap() {
@@ -583,9 +586,9 @@ fn plain_text_that_matches() {
       }
     "#).unwrap();
 
-    let expected = Request::from_json(&pact.find("expected").unwrap());
+    let expected = Request::from_json(&pact.find("expected").unwrap(), &PactSpecification::V1);
     println!("{:?}", expected);
-    let actual = Request::from_json(&pact.find("actual").unwrap());
+    let actual = Request::from_json(&pact.find("actual").unwrap(), &PactSpecification::V1);
     println!("{:?}", actual);
     let pact_match = pact.find("match").unwrap();
     if pact_match.as_boolean().unwrap() {
@@ -626,9 +629,9 @@ fn string_found_at_key_when_number_expected() {
       }
     "#).unwrap();
 
-    let expected = Request::from_json(&pact.find("expected").unwrap());
+    let expected = Request::from_json(&pact.find("expected").unwrap(), &PactSpecification::V1);
     println!("{:?}", expected);
-    let actual = Request::from_json(&pact.find("actual").unwrap());
+    let actual = Request::from_json(&pact.find("actual").unwrap(), &PactSpecification::V1);
     println!("{:?}", actual);
     let pact_match = pact.find("match").unwrap();
     if pact_match.as_boolean().unwrap() {
@@ -669,9 +672,9 @@ fn string_found_in_array_when_number_expected() {
       }
     "#).unwrap();
 
-    let expected = Request::from_json(&pact.find("expected").unwrap());
+    let expected = Request::from_json(&pact.find("expected").unwrap(), &PactSpecification::V1);
     println!("{:?}", expected);
-    let actual = Request::from_json(&pact.find("actual").unwrap());
+    let actual = Request::from_json(&pact.find("actual").unwrap(), &PactSpecification::V1);
     println!("{:?}", actual);
     let pact_match = pact.find("match").unwrap();
     if pact_match.as_boolean().unwrap() {
@@ -712,9 +715,9 @@ fn unexpected_index_with_not_null_value() {
       }
     "#).unwrap();
 
-    let expected = Request::from_json(&pact.find("expected").unwrap());
+    let expected = Request::from_json(&pact.find("expected").unwrap(), &PactSpecification::V1);
     println!("{:?}", expected);
-    let actual = Request::from_json(&pact.find("actual").unwrap());
+    let actual = Request::from_json(&pact.find("actual").unwrap(), &PactSpecification::V1);
     println!("{:?}", actual);
     let pact_match = pact.find("match").unwrap();
     if pact_match.as_boolean().unwrap() {
@@ -755,9 +758,9 @@ fn unexpected_index_with_null_value() {
       }
     "#).unwrap();
 
-    let expected = Request::from_json(&pact.find("expected").unwrap());
+    let expected = Request::from_json(&pact.find("expected").unwrap(), &PactSpecification::V1);
     println!("{:?}", expected);
-    let actual = Request::from_json(&pact.find("actual").unwrap());
+    let actual = Request::from_json(&pact.find("actual").unwrap(), &PactSpecification::V1);
     println!("{:?}", actual);
     let pact_match = pact.find("match").unwrap();
     if pact_match.as_boolean().unwrap() {
@@ -799,9 +802,9 @@ fn unexpected_key_with_not_null_value() {
       }
     "#).unwrap();
 
-    let expected = Request::from_json(&pact.find("expected").unwrap());
+    let expected = Request::from_json(&pact.find("expected").unwrap(), &PactSpecification::V1);
     println!("{:?}", expected);
-    let actual = Request::from_json(&pact.find("actual").unwrap());
+    let actual = Request::from_json(&pact.find("actual").unwrap(), &PactSpecification::V1);
     println!("{:?}", actual);
     let pact_match = pact.find("match").unwrap();
     if pact_match.as_boolean().unwrap() {
@@ -843,9 +846,9 @@ fn unexpected_key_with_null_value() {
       }
     "#).unwrap();
 
-    let expected = Request::from_json(&pact.find("expected").unwrap());
+    let expected = Request::from_json(&pact.find("expected").unwrap(), &PactSpecification::V1);
     println!("{:?}", expected);
-    let actual = Request::from_json(&pact.find("actual").unwrap());
+    let actual = Request::from_json(&pact.find("actual").unwrap(), &PactSpecification::V1);
     println!("{:?}", actual);
     let pact_match = pact.find("match").unwrap();
     if pact_match.as_boolean().unwrap() {

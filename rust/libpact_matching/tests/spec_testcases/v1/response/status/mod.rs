@@ -1,7 +1,10 @@
 #[allow(unused_imports)]
-use pact_matching::models::Response;
+use pact_matching::models::*;
+#[allow(unused_imports)]
 use pact_matching::match_response;
+#[allow(unused_imports)]
 use rustc_serialize::json::Json;
+#[allow(unused_imports)]
 use expectest::prelude::*;
 
 #[test]
@@ -19,9 +22,9 @@ fn different_status() {
       }
     "#).unwrap();
 
-    let expected = Response::from_json(&pact.find("expected").unwrap());
+    let expected = Response::from_json(&pact.find("expected").unwrap(), &PactSpecification::V1);
     println!("{:?}", expected);
-    let actual = Response::from_json(&pact.find("actual").unwrap());
+    let actual = Response::from_json(&pact.find("actual").unwrap(), &PactSpecification::V1);
     println!("{:?}", actual);
     let pact_match = pact.find("match").unwrap();
     if pact_match.as_boolean().unwrap() {
@@ -46,9 +49,9 @@ fn matches() {
       }
     "#).unwrap();
 
-    let expected = Response::from_json(&pact.find("expected").unwrap());
+    let expected = Response::from_json(&pact.find("expected").unwrap(), &PactSpecification::V1);
     println!("{:?}", expected);
-    let actual = Response::from_json(&pact.find("actual").unwrap());
+    let actual = Response::from_json(&pact.find("actual").unwrap(), &PactSpecification::V1);
     println!("{:?}", actual);
     let pact_match = pact.find("match").unwrap();
     if pact_match.as_boolean().unwrap() {

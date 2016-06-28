@@ -12,15 +12,20 @@ specs.eachFileRecurse(FileType.DIRECTORIES) { dir ->
 
   testFile.withPrintWriter { pw ->
     pw.println('#[allow(unused_imports)]')
+    pw.println('use pact_matching::models::*;')
     if (requestResponsePath == 'request') {
-      pw.println('use pact_matching::models::Request;')
+      pw.println('#[allow(unused_imports)]')
       pw.println('use pact_matching::match_request;')
+      pw.println('#[allow(unused_imports)]')
       pw.println('use rustc_serialize::json::Json;')
+      pw.println('#[allow(unused_imports)]')
       pw.println('use expectest::prelude::*;')
     } else if (requestResponsePath == 'response') {
-      pw.println('use pact_matching::models::Response;')
+      pw.println('#[allow(unused_imports)]')
       pw.println('use pact_matching::match_response;')
+      pw.println('#[allow(unused_imports)]')
       pw.println('use rustc_serialize::json::Json;')
+      pw.println('#[allow(unused_imports)]')
       pw.println('use expectest::prelude::*;')
     }
 
@@ -41,9 +46,9 @@ specs.eachFileRecurse(FileType.DIRECTORIES) { dir ->
       testBody += '|    "#).unwrap();' + '\n'
       if (requestResponsePath == 'request') {
         testBody += """
-        |    let expected = Request::from_json(&pact.find("expected").unwrap());
+        |    let expected = Request::from_json(&pact.find("expected").unwrap(), &PactSpecification::V1);
         |    println!("{:?}", expected);
-        |    let actual = Request::from_json(&pact.find("actual").unwrap());
+        |    let actual = Request::from_json(&pact.find("actual").unwrap(), &PactSpecification::V1);
         |    println!("{:?}", actual);
         |    let pact_match = pact.find("match").unwrap();
         |    if pact_match.as_boolean().unwrap() {
@@ -54,9 +59,9 @@ specs.eachFileRecurse(FileType.DIRECTORIES) { dir ->
         """
       } else if (requestResponsePath == 'response') {
         testBody += """
-        |    let expected = Response::from_json(&pact.find("expected").unwrap());
+        |    let expected = Response::from_json(&pact.find("expected").unwrap(), &PactSpecification::V1);
         |    println!("{:?}", expected);
-        |    let actual = Response::from_json(&pact.find("actual").unwrap());
+        |    let actual = Response::from_json(&pact.find("actual").unwrap(), &PactSpecification::V1);
         |    println!("{:?}", actual);
         |    let pact_match = pact.find("match").unwrap();
         |    if pact_match.as_boolean().unwrap() {
