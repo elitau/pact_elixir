@@ -3,6 +3,7 @@ use super::DiffConfig;
 use sxd_document::*;
 use sxd_document::dom::*;
 use std::collections::btree_map::BTreeMap;
+use itertools::Itertools;
 
 pub fn match_xml(expected: &String, actual: &String, config: DiffConfig, mismatches: &mut Vec<super::Mismatch>) {
     let expected_result = parser::parse(expected);
@@ -32,12 +33,12 @@ pub fn match_xml(expected: &String, actual: &String, config: DiffConfig, mismatc
         let actual_package = actual_result.unwrap();
         let actual_root = actual_package.as_document().root();
         let actual_root_node = actual_root.children().iter().cloned().find(|n| n.element().is_some());
-        compare_element(vec!["$", "body"], &expected_root_node.unwrap().element().unwrap(),
+        compare_element(&vec![s!("$"), s!("body")], &expected_root_node.unwrap().element().unwrap(),
             &actual_root_node.unwrap().element().unwrap(), config, mismatches);
     }
 }
 
-fn compare_element(path: Vec<&str>, expected: &Element, actual: &Element, config: DiffConfig,
+fn compare_element(path: &Vec<String>, expected: &Element, actual: &Element, config: DiffConfig,
     mismatches: &mut Vec<super::Mismatch>) {
     if actual.name() != expected.name() {
       mismatches.push(Mismatch::BodyMismatch { path: path.join("."), expected: Some(s!(expected.name().local_part())),
@@ -45,13 +46,14 @@ fn compare_element(path: Vec<&str>, expected: &Element, actual: &Element, config
           mismatch: format!("Expected element '{}' but received '{}'", expected.name().local_part(), actual.name().local_part())});
     } else {
         let mut new_path = path.to_vec();
-        new_path.push(actual.name().local_part());
-        compare_attributes(new_path.clone(), expected, actual, config.clone(), mismatches);
-        compare_children(new_path, expected, actual, config, mismatches);
+        new_path.push(s!(actual.name().local_part()));
+        compare_attributes(&new_path, expected, actual, config.clone(), mismatches);
+        compare_children(&new_path, expected, actual, config.clone(), mismatches);
+        compare_text(&new_path, expected, actual, config, mismatches);
     }
 }
 
-fn compare_attributes(path: Vec<&str>, expected: &Element, actual: &Element, config: DiffConfig,
+fn compare_attributes(path: &Vec<String>, expected: &Element, actual: &Element, config: DiffConfig,
     mismatches: &mut Vec<super::Mismatch>) {
     let expected_attributes: BTreeMap<String, String> = expected.attributes()
         .iter().map(|attr| (s!(attr.name().local_part()), s!(attr.value()))).collect();
@@ -84,8 +86,8 @@ fn compare_attributes(path: Vec<&str>, expected: &Element, actual: &Element, con
         for (key, value) in expected_attributes.iter() {
             if actual_attributes.contains_key(key) {
                 let mut p = path.to_vec();
-                p.push(&key);
-                compare_value(p, value, &actual_attributes[key], mismatches);
+                p.push(key.clone());
+                compare_value(&p, value, &actual_attributes[key], mismatches);
             } else {
                 mismatches.push(Mismatch::BodyMismatch { path: path.join("."),
                     expected: Some(format!("{:?}", expected_attributes)),
@@ -96,12 +98,55 @@ fn compare_attributes(path: Vec<&str>, expected: &Element, actual: &Element, con
     }
 }
 
-fn compare_children(path: Vec<&str>, expected: &Element, actual: &Element, config: DiffConfig,
+fn children<'a>(element: &Element<'a>) -> Vec<ChildOfElement<'a>> {
+    element.children().iter().cloned().filter(|child| child.element().is_some()).collect()
+}
+
+fn desc_children<'a>(children: &Vec<ChildOfElement<'a>>) -> String {
+    children.iter().map(|child| child.element().unwrap().name().local_part()).join(", ")
+}
+
+fn compare_children(path: &Vec<String>, expected: &Element, actual: &Element, config: DiffConfig,
+    mismatches: &mut Vec<super::Mismatch>) {
+    let expected_children = children(expected);
+    let actual_children = children(actual);
+    if expected_children.is_empty() && !actual_children.is_empty() && config == DiffConfig::NoUnexpectedKeys {
+      mismatches.push(Mismatch::BodyMismatch { path: path.join("."),
+          expected: Some(desc_children(&expected_children)),
+          actual: Some(desc_children(&actual_children)),
+          mismatch: format!("Expected an empty List but received [{}]", desc_children(&actual_children))});
+    } else if expected_children.len() != actual_children.len() {
+        if config == DiffConfig::AllowUnexpectedKeys && expected_children.len() > actual_children.len() {
+            mismatches.push(Mismatch::BodyMismatch { path: path.join("."),
+                expected: Some(desc_children(&expected_children)),
+                actual: Some(desc_children(&actual_children)),
+                mismatch: format!("Expected a List with at least {} element(s) but received {} element(s)",
+                    expected_children.len(), actual_children.len())});
+
+        } else if config == DiffConfig::NoUnexpectedKeys {
+            mismatches.push(Mismatch::BodyMismatch { path: path.join("."),
+                expected: Some(desc_children(&expected_children)),
+                actual: Some(desc_children(&actual_children)),
+                mismatch: format!("Expected a List with {} element(s) but received {} element(s)",
+                    expected_children.len(), actual_children.len())});
+        }
+    }
+    for ((i, exp), act) in expected_children.iter().enumerate().zip(actual_children.iter()) {
+        let mut p = path.to_vec();
+        {
+            let mut last = p.last_mut().unwrap();
+            *last = format!("{}[{}]", last, i);
+        }
+        compare_element(&p.clone(), &exp.element().unwrap(), &act.element().unwrap(), config.clone(), mismatches);
+    }
+}
+
+fn compare_text(path: &Vec<String>, expected: &Element, actual: &Element, config: DiffConfig,
     mismatches: &mut Vec<super::Mismatch>) {
 
 }
 
-fn compare_value(path: Vec<&str>, expected: &String, actual: &String, mismatches: &mut Vec<super::Mismatch>) {
+fn compare_value(path: &Vec<String>, expected: &String, actual: &String, mismatches: &mut Vec<super::Mismatch>) {
     if expected != actual {
         mismatches.push(Mismatch::BodyMismatch { path: path.join("."),
             expected: Some(expected.clone()),
@@ -321,83 +366,128 @@ mod tests {
         expect!(mismatch_message(&mismatch)).to(be_equal_to(s!("Expected \'100\' but received \'101\'")));
     }
 
-    // #[test]
-    // fn match_xml_when_actual_is_non_empty_and_we_do_not_allow_extra_keys() {
-    //     let mut mismatches = vec![];
-    //     let expected = s!(r#"<?xml version="1.0" encoding="UTF-8"?>
-    //     <!-- TEST -->
-    //     "#);
-    //     let actual = s!(r#"<?xml version="1.0" encoding="UTF-8"?>
-    //     <foo><bar></bar></foo>
-    //     "#);
-    //     match_xml(&expected, &actual, DiffConfig::NoUnexpectedKeys, &mut mismatches);
-    //     expect!(mismatches.clone()).to_not(be_empty());
-    //     let mismatch = mismatches[0].clone();
-    //     expect!(&mismatch).to(be_equal_to(&Mismatch::BodyMismatch { path: s!("$.body"), expected: Some(expected),
-    //         actual: Some(actual), mismatch: s!("")}));
-    //     expect!(mismatch_message(&mismatch)).to(be_equal_to(s!("Type mismatch: Expected List [{}] but received Map {}")));
-    // }
+    #[test]
+    fn match_xml_when_actual_is_non_empty_and_we_do_not_allow_extra_keys() {
+        let mut mismatches = vec![];
+        let expected = s!(r#"<?xml version="1.0" encoding="UTF-8"?>
+        <foo/>
+        "#);
+        let actual = s!(r#"<?xml version="1.0" encoding="UTF-8"?>
+        <foo><bar></bar></foo>
+        "#);
+        match_xml(&expected, &actual, DiffConfig::NoUnexpectedKeys, &mut mismatches);
+        expect!(mismatches.iter()).to(have_count(1));
+        let mismatch = mismatches[0].clone();
+        expect!(&mismatch).to(be_equal_to(&Mismatch::BodyMismatch { path: s!("$.body.foo"), expected: Some(s!("")),
+            actual: Some(s!("bar")), mismatch: s!("")}));
+        expect!(mismatch_message(&mismatch)).to(be_equal_to(s!("Expected an empty List but received [bar]")));
+    }
+
+    #[test]
+    fn match_xml_when_actual_is_non_empty_and_we_allow_extra_keys() {
+        let mut mismatches = vec![];
+        let expected = s!(r#"<?xml version="1.0" encoding="UTF-8"?>
+        <foo/>
+        "#);
+        let actual = s!(r#"<?xml version="1.0" encoding="UTF-8"?>
+        <foo><bar></bar></foo>
+        "#);
+        match_xml(&expected, &actual, DiffConfig::AllowUnexpectedKeys, &mut mismatches);
+        expect!(mismatches).to(be_empty());
+    }
+
+    #[test]
+    fn match_xml_when_actual_is_a_super_set() {
+        let mut mismatches = vec![];
+        let expected = s!(r#"<?xml version="1.0" encoding="UTF-8"?>
+        <foo><item1/></foo>
+        "#);
+        let actual = s!(r#"<?xml version="1.0" encoding="UTF-8"?>
+        <foo><item1/><item2/></foo>
+        "#);
+        match_xml(&expected, &actual, DiffConfig::AllowUnexpectedKeys, &mut mismatches);
+        expect!(mismatches).to(be_empty());
+    }
+
+    #[test]
+    fn match_xml_when_actual_is_empty() {
+        let mut mismatches = vec![];
+        let expected = s!(r#"<?xml version="1.0" encoding="UTF-8"?>
+        <foo><bar></bar></foo>
+        "#);
+        let actual = s!(r#"<?xml version="1.0" encoding="UTF-8"?>
+        <foo/>
+        "#);
+        match_xml(&expected, &actual, DiffConfig::NoUnexpectedKeys, &mut mismatches);
+        expect!(mismatches.iter()).to(have_count(1));
+        let mismatch = mismatches[0].clone();
+        expect!(&mismatch).to(be_equal_to(&Mismatch::BodyMismatch { path: s!("$.body.foo"), expected: Some(s!("bar")),
+            actual: Some(s!("")), mismatch: s!("")}));
+        expect!(mismatch_message(&mismatch)).to(be_equal_to(s!("Expected a List with 1 element(s) but received 0 element(s)")));
+    }
+
+    #[test]
+    fn match_xml_when_actual_is_different_size() {
+        let mut mismatches = vec![];
+        let expected = s!(r#"<?xml version="1.0" encoding="UTF-8"?>
+        <foo><one/><two/><three/><four/></foo>
+        "#);
+        let actual = s!(r#"<?xml version="1.0" encoding="UTF-8"?>
+        <foo><one/><two/><three/></foo>
+        "#);
+        match_xml(&expected, &actual, DiffConfig::NoUnexpectedKeys, &mut mismatches);
+        expect!(mismatches.iter()).to(have_count(1));
+        let mismatch = mismatches[0].clone();
+        expect!(&mismatch).to(be_equal_to(&Mismatch::BodyMismatch { path: s!("$.body.foo"),
+            expected: Some(s!("one, two, three, four")),
+            actual: Some(s!("one, two, three")), mismatch: s!("")}));
+        expect!(mismatch_message(&mismatch)).to(be_equal_to(s!("Expected a List with 4 element(s) but received 3 element(s)")));
+    }
+
+    #[test]
+    fn match_xml_when_actual_is_same_size_but_different_children() {
+        let mut mismatches = vec![];
+        let expected = s!(r#"<?xml version="1.0" encoding="UTF-8"?>
+        <foo><one/><two/><three/></foo>
+        "#);
+        let actual = s!(r#"<?xml version="1.0" encoding="UTF-8"?>
+        <foo><one/><two/><four/></foo>
+        "#);
+        match_xml(&expected, &actual, DiffConfig::NoUnexpectedKeys, &mut mismatches);
+        expect!(mismatches.iter()).to(have_count(1));
+        let mismatch = mismatches[0].clone();
+        expect!(&mismatch).to(be_equal_to(&Mismatch::BodyMismatch { path: s!("$.body.foo[2]"),
+            expected: Some(s!("three")),
+            actual: Some(s!("four")), mismatch: s!("")}));
+        expect!(mismatch_message(&mismatch)).to(be_equal_to(s!("Expected element 'three' but received 'four'")));
+    }
+
+    #[test]
+    fn match_xml_when_actual_is_same_size_but_wrong_order() {
+        let mut mismatches = vec![];
+        let expected = s!(r#"<?xml version="1.0" encoding="UTF-8"?>
+        <foo><one/><two/></foo>
+        "#);
+        let actual = s!(r#"<?xml version="1.0" encoding="UTF-8"?>
+        <foo><two/><one/></foo>
+        "#);
+        match_xml(&expected, &actual, DiffConfig::NoUnexpectedKeys, &mut mismatches);
+        expect!(mismatches.iter()).to(have_count(2));
+        let mismatch = mismatches[0].clone();
+        expect!(&mismatch).to(be_equal_to(&Mismatch::BodyMismatch { path: s!("$.body.foo[0]"),
+            expected: Some(s!("one")),
+            actual: Some(s!("two")), mismatch: s!("")}));
+        expect!(mismatch_message(&mismatch)).to(be_equal_to(s!("Expected element 'one' but received 'two'")));
+        let mismatch = mismatches[1].clone();
+        expect!(&mismatch).to(be_equal_to(&Mismatch::BodyMismatch { path: s!("$.body.foo[1]"),
+            expected: Some(s!("two")),
+            actual: Some(s!("one")), mismatch: s!("")}));
+        expect!(mismatch_message(&mismatch)).to(be_equal_to(s!("Expected element 'two' but received 'one'")));
+    }
 
     /*
 
-     "when allowUnexpectedKeys is true" in {
-
-       "and comparing an empty list to a non-empty one" in {
-         expectedBody = OptionalBody.body("<foo></foo>")
-         actualBody = OptionalBody.body("<foo><item/></foo>")
-         matcher.matchBody(expected(), actual(), allowUnexpectedKeys) must beEmpty
-       }
-
-       "and comparing a list to a super-set" in {
-         expectedBody = OptionalBody.body("<foo><item1/></foo>")
-         actualBody = OptionalBody.body("<foo><item1/><item2/></foo>")
-         matcher.matchBody(expected(), actual(), allowUnexpectedKeys) must beEmpty
-       }
-
    "returns a mismatch" should {
-
-     "when comparing anything to an empty body" in {
-       expectedBody = OptionalBody.body(<blah/>.toString())
-       matcher.matchBody(expected(), actual(), diffconfig) must not(beEmpty)
-     }
-
-     "when comparing an empty list to a non-empty one" in {
-       expectedBody = OptionalBody.body("<foo></foo>")
-       actualBody = OptionalBody.body("<foo><item/></foo>")
-       val mismatches: List[BodyMismatch] = matcher.matchBody(expected(), actual(), diffconfig)
-       mismatches must not(beEmpty)
-       mismatches must containMessage("Expected an empty List but received <item/>")
-       mismatches must havePath("$.body.foo")
-     }
-
-     "when comparing a list to one with with different size" in {
-       expectedBody = OptionalBody.body("<foo><one/><two/><three/><four/></foo>")
-       actualBody = OptionalBody.body("<foo><one/><two/><three/></foo>")
-       val mismatches = matcher.matchBody(expected(), actual(), diffconfig)
-       mismatches must not(beEmpty)
-       mismatches must have size 2
-       mismatches must containMessage("Expected a List with 4 elements but received 3 elements")
-       mismatches must containMessage("Expected <four/> but was missing")
-       mismatches must havePath("$.body.foo")
-     }
-
-     "when comparing a list to one with with the same size but different children" in {
-       expectedBody = OptionalBody.body("<foo><one/><two/><three/></foo>")
-       actualBody = OptionalBody.body("<foo><one/><two/><four/></foo>")
-       val mismatches = matcher.matchBody(expected(), actual(), diffconfig)
-
-       mismatches must containMessage("Expected element three but received four")
-       mismatches must havePath("$.body.foo[2]")
-     }
-
-     "when comparing a list to one where the items are in the wrong order" in {
-       expectedBody = OptionalBody.body("<foo><one/><two/><three/></foo>")
-       actualBody = OptionalBody.body("<foo><one/><three/><two/></foo>")
-       val mismatches = matcher.matchBody(expected(), actual(), diffconfig)
-
-       mismatches must containMessage("Expected element two but received three")
-       mismatches must containMessage("Expected element three but received two")
-     }
 
      "when the content of an element does not match" in {
        expectedBody = OptionalBody.body("<foo>hello world</foo>")
