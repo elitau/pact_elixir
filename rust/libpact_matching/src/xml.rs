@@ -46,8 +46,8 @@ fn compare_element(path: Vec<&str>, expected: &Element, actual: &Element, config
     } else {
         let mut new_path = path.to_vec();
         new_path.push(actual.name().local_part());
-        compare_attributes(new_path, expected, actual, config, mismatches);
-    //   compareAttributes(newPath,expected,actual,config,matchers) ++ compareChildren(newPath,expected,actual,config,matchers)
+        compare_attributes(new_path.clone(), expected, actual, config.clone(), mismatches);
+        compare_children(new_path, expected, actual, config, mismatches);
     }
 }
 
@@ -57,7 +57,7 @@ fn compare_attributes(path: Vec<&str>, expected: &Element, actual: &Element, con
         .iter().map(|attr| (s!(attr.name().local_part()), s!(attr.value()))).collect();
     let actual_attributes: BTreeMap<String, String> = actual.attributes()
         .iter().map(|attr| (s!(attr.name().local_part()), s!(attr.value()))).collect();
-    if expected_attributes.is_empty() && !actual_attributes.is_empty() {
+    if expected_attributes.is_empty() && !actual_attributes.is_empty() && config == DiffConfig::NoUnexpectedKeys {
       mismatches.push(Mismatch::BodyMismatch { path: path.join("."),
           expected: Some(format!("{:?}", expected_attributes)),
           actual: Some(format!("{:?}", actual_attributes)),
@@ -94,6 +94,11 @@ fn compare_attributes(path: Vec<&str>, expected: &Element, actual: &Element, con
             }
         }
     }
+}
+
+fn compare_children(path: Vec<&str>, expected: &Element, actual: &Element, config: DiffConfig,
+    mismatches: &mut Vec<super::Mismatch>) {
+
 }
 
 fn compare_value(path: Vec<&str>, expected: &String, actual: &String, mismatches: &mut Vec<super::Mismatch>) {
@@ -244,12 +249,76 @@ mod tests {
         let actual = s!(r#"<?xml version="1.0" encoding="UTF-8"?>
         <blah a="b" c="d"/>
         "#);
-        match_xml(&expected, &actual, DiffConfig::AllowUnexpectedKeys, &mut mismatches);
+        match_xml(&expected, &actual, DiffConfig::NoUnexpectedKeys, &mut mismatches);
         expect!(mismatches.iter()).to(have_count(1));
         let mismatch = mismatches[0].clone();
         expect!(&mismatch).to(be_equal_to(&Mismatch::BodyMismatch { path: s!("$.body.blah"), expected: Some(s!("{}")),
             actual: Some(s!("{\"a\": \"b\", \"c\": \"d\"}")), mismatch: s!("")}));
         expect!(mismatch_message(&mismatch)).to(be_equal_to(s!("Did not expect any attributes but received {\"a\": \"b\", \"c\": \"d\"}")));
+    }
+
+    #[test]
+    fn match_xml_with_comparing_a_tags_attributes_to_one_with_more_entries() {
+        let mut mismatches = vec![];
+        let expected = s!(r#"<?xml version="1.0" encoding="UTF-8"?>
+        <blah a="b"/>
+        "#);
+        let actual = s!(r#"<?xml version="1.0" encoding="UTF-8"?>
+        <blah a="b" c="d"/>
+        "#);
+        match_xml(&expected, &actual, DiffConfig::AllowUnexpectedKeys, &mut mismatches);
+        expect!(mismatches).to(be_empty());
+    }
+
+    #[test]
+    fn match_xml_with_comparing_a_tags_attributes_to_one_with_less_entries() {
+        let mut mismatches = vec![];
+        let expected = s!(r#"<?xml version="1.0" encoding="UTF-8"?>
+        <foo something="100"/>
+        "#);
+        let actual = s!(r#"<?xml version="1.0" encoding="UTF-8"?>
+        <foo something="100" somethingElse="101"/>
+        "#);
+        match_xml(&expected, &actual, DiffConfig::NoUnexpectedKeys, &mut mismatches);
+        expect!(mismatches.iter()).to(have_count(1));
+        let mismatch = mismatches[0].clone();
+        expect!(&mismatch).to(be_equal_to(&Mismatch::BodyMismatch { path: s!("$.body.foo"), expected: Some(s!("{\"something\": \"100\"}")),
+            actual: Some(s!("{\"something\": \"100\", \"somethingElse\": \"101\"}")), mismatch: s!("")}));
+        expect!(mismatch_message(&mismatch)).to(be_equal_to(s!("Expected 1 attribute(s) but received 2 attribute(s)")));
+    }
+
+    #[test]
+    fn match_xml_when_a_tag_has_the_same_number_of_attributes_but_different_keys() {
+        let mut mismatches = vec![];
+        let expected = s!(r#"<?xml version="1.0" encoding="UTF-8"?>
+        <foo something="100" somethingElse="100"/>
+        "#);
+        let actual = s!(r#"<?xml version="1.0" encoding="UTF-8"?>
+        <foo something="100" somethingDifferent="100"/>
+        "#);
+        match_xml(&expected, &actual, DiffConfig::NoUnexpectedKeys, &mut mismatches);
+        expect!(mismatches.iter()).to(have_count(1));
+        let mismatch = mismatches[0].clone();
+        expect!(&mismatch).to(be_equal_to(&Mismatch::BodyMismatch { path: s!("$.body.foo"), expected: Some(s!("{\"something\": \"100\", \"somethingElse\": \"100\"}")),
+            actual: Some(s!("{\"something\": \"100\", \"somethingDifferent\": \"100\"}")), mismatch: s!("")}));
+        expect!(mismatch_message(&mismatch)).to(be_equal_to(s!("Expected attribute \'somethingElse\'=\'100\' but was missing")));
+    }
+
+    #[test]
+    fn match_xml_when_a_tag_has_the_same_number_of_attributes_but_different_values() {
+        let mut mismatches = vec![];
+        let expected = s!(r#"<?xml version="1.0" encoding="UTF-8"?>
+        <foo something="100" somethingElse="100"/>
+        "#);
+        let actual = s!(r#"<?xml version="1.0" encoding="UTF-8"?>
+        <foo something="100" somethingElse="101"/>
+        "#);
+        match_xml(&expected, &actual, DiffConfig::NoUnexpectedKeys, &mut mismatches);
+        expect!(mismatches.iter()).to(have_count(1));
+        let mismatch = mismatches[0].clone();
+        expect!(&mismatch).to(be_equal_to(&Mismatch::BodyMismatch { path: s!("$.body.foo.somethingElse"), expected: Some(s!("100")),
+            actual: Some(s!("101")), mismatch: s!("")}));
+        expect!(mismatch_message(&mismatch)).to(be_equal_to(s!("Expected \'100\' but received \'101\'")));
     }
 
     // #[test]
@@ -273,8 +342,6 @@ mod tests {
 
      "when allowUnexpectedKeys is true" in {
 
-       val allowUnexpectedKeys = DiffConfig(structural = true, allowUnexpectedKeys = true)
-
        "and comparing an empty list to a non-empty one" in {
          expectedBody = OptionalBody.body("<foo></foo>")
          actualBody = OptionalBody.body("<foo><item/></foo>")
@@ -287,41 +354,11 @@ mod tests {
          matcher.matchBody(expected(), actual(), allowUnexpectedKeys) must beEmpty
        }
 
-       "and comparing a tags attributes to one with more entries" in {
-         expectedBody = OptionalBody.body("<foo something=\"100\"/>")
-         actualBody = OptionalBody.body("<foo something=\"100\" somethingElse=\"101\"/>")
-         matcher.matchBody(expected(), actual(), allowUnexpectedKeys) must beEmpty
-       }
-
-     }
-
-   }
-
    "returns a mismatch" should {
-
-     def containMessage(s: String) = (a: List[BodyMismatch]) => (
-         a.exists((m: BodyMismatch) => m.mismatch.get == s),
-         s"$a does not contain '$s'"
-       )
-
-     def havePath(p: String) = (a: List[BodyMismatch]) => (
-       a.forall((m: BodyMismatch) => m.path == p),
-       s"$a does not have path '$p', paths are: ${a.map(m => m.path).mkString(",")}"
-       )
-
 
      "when comparing anything to an empty body" in {
        expectedBody = OptionalBody.body(<blah/>.toString())
        matcher.matchBody(expected(), actual(), diffconfig) must not(beEmpty)
-     }
-
-     "when the root elements do not match" in {
-       expectedBody = OptionalBody.body("<foo/>")
-       actualBody = OptionalBody.body("<bar></bar>")
-       val mismatches: List[BodyMismatch] = matcher.matchBody(expected(), actual(), diffconfig)
-       mismatches must not(beEmpty)
-       mismatches must containMessage("Expected element foo but received bar")
-       mismatches must havePath("$.body")
      }
 
      "when comparing an empty list to a non-empty one" in {
@@ -360,48 +397,6 @@ mod tests {
 
        mismatches must containMessage("Expected element two but received three")
        mismatches must containMessage("Expected element three but received two")
-     }
-
-     "when comparing a tags attributes to one with less entries" in {
-       expectedBody = OptionalBody.body("<foo something=\"100\" somethingElse=\"101\"/>")
-       actualBody = OptionalBody.body("<foo something=\"100\"/>")
-       val mismatches = matcher.matchBody(expected(), actual(), diffconfig)
-       mismatches must not(beEmpty)
-       mismatches must containMessage("Expected a Tag with at least 2 attributes but received 1 attributes")
-     }
-
-     "when comparing a tags attributes to one with more entries" in {
-       expectedBody = OptionalBody.body("<foo something=\"100\"/>")
-       actualBody = OptionalBody.body("<foo something=\"100\" somethingElse=\"101\"/>")
-       val mismatches = matcher.matchBody(expected(), actual(), diffconfig)
-       mismatches must not(beEmpty)
-       mismatches must containMessage("Expected a Tag with at least 1 attributes but received 2 attributes")
-     }
-
-     "when a tag is missing an attribute" in {
-       expectedBody = OptionalBody.body("<foo something=\"100\" somethingElse=\"100\"/>")
-       actualBody = OptionalBody.body("<foo something=\"100\"/>")
-       val mismatches = matcher.matchBody(expected(), actual(), diffconfig)
-       mismatches must not(beEmpty)
-       mismatches must containMessage("Expected somethingElse=100 but was missing")
-     }
-
-     "when a tag has the same number of attributes but different keys" in {
-       expectedBody = OptionalBody.body("<foo something=\"100\" somethingElse=\"100\"/>")
-       actualBody = OptionalBody.body("<foo something=\"100\" somethingDifferent=\"100\"/>")
-       val mismatches = matcher.matchBody(expected(), actual(), diffconfig)
-       mismatches must not(beEmpty)
-       mismatches must containMessage("Expected somethingElse=100 but was missing")
-       mismatches must havePath("$.body.foo.somethingElse")
-     }
-
-     "when a tag has an invalid value" in {
-       expectedBody = OptionalBody.body("<foo something=\"100\"/>")
-       actualBody = OptionalBody.body("<foo something=\"101\"/>")
-       val mismatches = matcher.matchBody(expected(), actual(), diffconfig)
-       mismatches must not(beEmpty)
-       mismatches must containMessage("Expected something=100 but received 101")
-       mismatches must havePath("$.body.foo.something")
      }
 
      "when the content of an element does not match" in {
