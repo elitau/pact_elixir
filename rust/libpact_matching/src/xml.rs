@@ -49,7 +49,7 @@ fn compare_element(path: &Vec<String>, expected: &Element, actual: &Element, con
         new_path.push(s!(actual.name().local_part()));
         compare_attributes(&new_path, expected, actual, config.clone(), mismatches);
         compare_children(&new_path, expected, actual, config.clone(), mismatches);
-        compare_text(&new_path, expected, actual, config, mismatches);
+        compare_text(&new_path, expected, actual, mismatches);
     }
 }
 
@@ -86,7 +86,7 @@ fn compare_attributes(path: &Vec<String>, expected: &Element, actual: &Element, 
         for (key, value) in expected_attributes.iter() {
             if actual_attributes.contains_key(key) {
                 let mut p = path.to_vec();
-                p.push(key.clone());
+                p.push(s!("@") + key);
                 compare_value(&p, value, &actual_attributes[key], mismatches);
             } else {
                 mismatches.push(Mismatch::BodyMismatch { path: path.join("."),
@@ -141,9 +141,23 @@ fn compare_children(path: &Vec<String>, expected: &Element, actual: &Element, co
     }
 }
 
-fn compare_text(path: &Vec<String>, expected: &Element, actual: &Element, config: DiffConfig,
+fn compare_text(path: &Vec<String>, expected: &Element, actual: &Element,
     mismatches: &mut Vec<super::Mismatch>) {
-
+    let expected_text: String = expected.children().iter().cloned()
+        .filter(|child| child.text().is_some())
+        .map(|child| child.text().unwrap().text())
+        .collect();
+    let actual_text: String = actual.children().iter().cloned()
+        .filter(|child| child.text().is_some())
+        .map(|child| child.text().unwrap().text())
+        .collect();
+    if expected_text.trim() != actual_text.trim() {
+        mismatches.push(Mismatch::BodyMismatch { path: path.join(".") + ".#text",
+            expected: Some(s!(expected_text.trim())),
+            actual: Some(s!(actual_text.trim())),
+            mismatch: format!("Expected text '{}' but received '{}'", expected_text.trim(),
+                actual_text.trim())});
+    }
 }
 
 fn compare_value(path: &Vec<String>, expected: &String, actual: &String, mismatches: &mut Vec<super::Mismatch>) {
@@ -276,7 +290,7 @@ mod tests {
             actual: Some(s!("{\"a\": \"b\"}")), mismatch: s!("")}));
         expect!(mismatch_message(&mismatch)).to(be_equal_to(s!("Expected at least 2 attribute(s) but received 1 attribute(s)")));
         let mismatch = mismatches[1].clone();
-        expect!(&mismatch).to(be_equal_to(&Mismatch::BodyMismatch { path: s!("$.body.blah.a"), expected: Some(s!("c")),
+        expect!(&mismatch).to(be_equal_to(&Mismatch::BodyMismatch { path: s!("$.body.blah.@a"), expected: Some(s!("c")),
             actual: Some(s!("b")), mismatch: s!("")}));
         expect!(mismatch_message(&mismatch)).to(be_equal_to(s!("Expected 'c' but received 'b'")));
         let mismatch = mismatches[2].clone();
@@ -361,7 +375,7 @@ mod tests {
         match_xml(&expected, &actual, DiffConfig::NoUnexpectedKeys, &mut mismatches);
         expect!(mismatches.iter()).to(have_count(1));
         let mismatch = mismatches[0].clone();
-        expect!(&mismatch).to(be_equal_to(&Mismatch::BodyMismatch { path: s!("$.body.foo.somethingElse"), expected: Some(s!("100")),
+        expect!(&mismatch).to(be_equal_to(&Mismatch::BodyMismatch { path: s!("$.body.foo.@somethingElse"), expected: Some(s!("100")),
             actual: Some(s!("101")), mismatch: s!("")}));
         expect!(mismatch_message(&mismatch)).to(be_equal_to(s!("Expected \'100\' but received \'101\'")));
     }
@@ -485,19 +499,69 @@ mod tests {
         expect!(mismatch_message(&mismatch)).to(be_equal_to(s!("Expected element 'two' but received 'one'")));
     }
 
+    #[test]
+    fn match_xml_with_the_same_text() {
+        let mut mismatches = vec![];
+        let expected = s!(r#"<?xml version="1.0" encoding="UTF-8"?>
+        <foo>hello world</foo>
+        "#);
+        let actual = s!(r#"<?xml version="1.0" encoding="UTF-8"?>
+        <foo>hello world</foo>
+        "#);
+        match_xml(&expected, &actual, DiffConfig::AllowUnexpectedKeys, &mut mismatches);
+        expect!(mismatches).to(be_empty());
+    }
+
+    #[test]
+    fn match_xml_with_the_same_text_between_nodes() {
+        let mut mismatches = vec![];
+        let expected = s!(r#"<?xml version="1.0" encoding="UTF-8"?>
+        <foo>hello<bar/>world</foo>
+        "#);
+        let actual = s!(r#"<?xml version="1.0" encoding="UTF-8"?>
+        <foo>hello<bar/>world</foo>
+        "#);
+        match_xml(&expected, &actual, DiffConfig::AllowUnexpectedKeys, &mut mismatches);
+        expect!(mismatches).to(be_empty());
+    }
+
+    #[test]
+    fn match_xml_with_the_different_text() {
+        let mut mismatches = vec![];
+        let expected = s!(r#"<?xml version="1.0" encoding="UTF-8"?>
+        <foo>hello world</foo>
+        "#);
+        let actual = s!(r#"<?xml version="1.0" encoding="UTF-8"?>
+        <foo>hello mars</foo>
+        "#);
+        match_xml(&expected, &actual, DiffConfig::AllowUnexpectedKeys, &mut mismatches);
+        expect!(mismatches.iter()).to(have_count(1));
+        let mismatch = mismatches[0].clone();
+        expect!(&mismatch).to(be_equal_to(&Mismatch::BodyMismatch { path: s!("$.body.foo.#text"),
+            expected: Some(s!("hello world")),
+            actual: Some(s!("hello mars")), mismatch: s!("")}));
+        expect!(mismatch_message(&mismatch)).to(be_equal_to(s!("Expected text 'hello world' but received 'hello mars'")));
+    }
+
+    #[test]
+    fn match_xml_with_the_different_text_between_nodes() {
+        let mut mismatches = vec![];
+        let expected = s!(r#"<?xml version="1.0" encoding="UTF-8"?>
+        <foo>hello<bar/>world</foo>
+        "#);
+        let actual = s!(r#"<?xml version="1.0" encoding="UTF-8"?>
+        <foo>hello<bar/>mars </foo>
+        "#);
+        match_xml(&expected, &actual, DiffConfig::AllowUnexpectedKeys, &mut mismatches);
+        expect!(mismatches.iter()).to(have_count(1));
+        let mismatch = mismatches[0].clone();
+        expect!(&mismatch).to(be_equal_to(&Mismatch::BodyMismatch { path: s!("$.body.foo.#text"),
+            expected: Some(s!("helloworld")),
+            actual: Some(s!("hellomars")), mismatch: s!("")}));
+        expect!(mismatch_message(&mismatch)).to(be_equal_to(s!("Expected text 'helloworld' but received 'hellomars'")));
+    }
+
     /*
-
-   "returns a mismatch" should {
-
-     "when the content of an element does not match" in {
-       expectedBody = OptionalBody.body("<foo>hello world</foo>")
-       actualBody = OptionalBody.body("<foo>hello my friend</foo>")
-       val mismatches = matcher.matchBody(expected(), actual(), diffconfig)
-       mismatches must not(beEmpty)
-       mismatches must containMessage("Expected value 'hello world' but received 'hello my friend'")
-       mismatches must havePath("$.body.foo[0]")
-     }
-   }
 
    "with a matcher defined" should {
 
