@@ -284,6 +284,19 @@ fn body_matches_if_expected_is_missing() {
 }
 
 #[test]
+fn body_matches_with_extended_mime_types() {
+    let mut mismatches = vec![];
+    let expected = Request { method: s!("GET"), path: s!("/"), query: None,
+        headers: Some(hashmap!{ s!("Content-Type") => s!("application/thrift+json") }),
+        body: OptionalBody::Present(s!(r#"{"test":true}"#)), matching_rules: None };
+    let actual = Request { method: s!("GET"), path: s!("/"), query: None,
+        headers: Some(hashmap!{ s!("Content-Type") => s!("application/thrift+json") }),
+        body: OptionalBody::Present(s!(r#"{"test": true}"#)), matching_rules: None };
+    match_body(&expected, &actual, DiffConfig::NoUnexpectedKeys, &mut mismatches);
+    expect!(mismatches.clone()).to(be_empty());
+}
+
+#[test]
 fn partial_equal_for_method_mismatch() {
     let mismatch = Mismatch::MethodMismatch { expected: s!("get"), actual: s!("post") };
     let mismatch2 = Mismatch::MethodMismatch { expected: s!("get"), actual: s!("post") };
