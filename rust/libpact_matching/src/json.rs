@@ -92,8 +92,7 @@ fn compare_maps(path: Vec<&str>, expected: &BTreeMap<String, Json>, actual: &BTr
 
         for (key, value) in expected.iter() {
             if actual.contains_key(key) {
-                let mut p = vec![];
-                p.extend(path.iter().cloned());
+                let mut p = path.to_vec();
                 p.push(&key);
                 compare(p, value, &actual[key], config, mismatches);
             } else {
@@ -130,8 +129,7 @@ fn compare_list_content(path: Vec<&str>, expected: &Vec<Json>, actual: &Vec<Json
     for (index, value) in expected.iter().enumerate() {
       let ps = index.to_string();
       if index < actual.len() {
-          let mut p = vec![];
-          p.extend(path.iter().cloned());
+          let mut p = path.to_vec();
           p.push(&ps);
           compare(p, value, &actual[index], config, mismatches);
       } else {

@@ -12,6 +12,7 @@ extern crate regex;
 extern crate semver;
 #[macro_use] extern crate itertools;
 extern crate rand;
+extern crate sxd_document;
 
 /// Simple macro to convert a string slice to a `String` struct.
 #[macro_export]
@@ -231,6 +232,7 @@ impl PartialEq for Mismatch {
 }
 
 /// Enum that defines the configuration options for performing a match.
+#[derive(Debug, Clone, PartialEq)]
 pub enum DiffConfig {
     /// If unexpected keys are allowed and ignored during matching.
     AllowUnexpectedKeys,
