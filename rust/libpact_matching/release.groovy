@@ -99,9 +99,9 @@ ask('Publish library to crates.io?: [Y]') {
 }
 
 ask('Copy docs to pact foundation github pages project?: [Y]') {
-  def docDir = System.console().readLine('Copy the library docs to: [../../../../pact-foundation.github.io/reference/rust/]').trim()
+  def docDir = System.console().readLine('Copy the library docs to: [../../../pact-foundation.github.io/reference/rust/]').trim()
   if (docDir.empty) {
-    docDir = '../../../../pact-foundation.github.io/reference/rust/'
+    docDir = '../../../pact-foundation.github.io/reference/rust/'
   }
 
   executeOnShell "mkdir -p $docDir/libpact_matching-docs-$releaseVer"

@@ -4,7 +4,7 @@ Reference implementations for Pact Specification
 This project contains a reference implementations of the [Pact specifications](https://github.com/pact-foundation/pact-specification) written in Rust, as well as an example
 JavaScript project that uses the mock server library.
 
-This is the [V1.1 implementation](https://github.com/pact-foundation/pact-specification/tree/version-1.1). For [V1 Specification Implementation](https://github.com/pact-foundation/pact-specification/tree/version-1) go to the [v1-spec branch](https://github.com/pact-foundation/pact-reference/tree/v1-spec).
+This is the [V2 implementation](https://github.com/pact-foundation/pact-specification/tree/version-2). For [V1 Specification implementation](https://github.com/pact-foundation/pact-specification/tree/version-1) go to the [v1-spec branch](https://github.com/pact-foundation/pact-reference/tree/v1-spec), and for [V1.1 Specification implementation](https://github.com/pact-foundation/pact-specification/tree/version-1.1) go to the [v1.1-spec branch](https://github.com/pact-foundation/pact-reference/tree/v1.1-spec).
 
 [Rust Implementation](rust)
 
