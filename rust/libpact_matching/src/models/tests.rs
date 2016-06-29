@@ -225,13 +225,14 @@ fn load_empty_pact() {
     expect!(pact.consumer.name).to(be_equal_to("consumer"));
     expect!(pact.interactions.iter()).to(have_count(0));
     expect!(pact.metadata.iter()).to(have_count(0));
+    expect!(pact.specification_version).to(be_equal_to(PactSpecification::V2));
 }
 
 #[test]
 fn missing_metadata() {
     let pact_json = r#"{}"#;
     let pact = Pact::from_json(&Json::from_str(pact_json).unwrap());
-    expect!(pact.specification_version).to(be_equal_to(PactSpecification::V1_1));
+    expect!(pact.specification_version).to(be_equal_to(PactSpecification::V2));
 }
 
 #[test]
@@ -241,7 +242,7 @@ fn missing_spec_version() {
         }
     }"#;
     let pact = Pact::from_json(&Json::from_str(pact_json).unwrap());
-    expect!(pact.specification_version).to(be_equal_to(PactSpecification::V1_1));
+    expect!(pact.specification_version).to(be_equal_to(PactSpecification::V2));
 }
 
 #[test]
@@ -254,7 +255,7 @@ fn missing_version_in_spec_version() {
         }
     }"#;
     let pact = Pact::from_json(&Json::from_str(pact_json).unwrap());
-    expect!(pact.specification_version).to(be_equal_to(PactSpecification::V1_1));
+    expect!(pact.specification_version).to(be_equal_to(PactSpecification::V2));
 }
 
 #[test]
@@ -347,7 +348,7 @@ fn load_basic_pact() {
         body: OptionalBody::Present(s!("\"That is some good Mallory.\"")),
         matching_rules: None
     }));
-    expect!(pact.specification_version).to(be_equal_to(PactSpecification::V1_1));
+    expect!(pact.specification_version).to(be_equal_to(PactSpecification::V2));
     expect!(pact.metadata.iter()).to(have_count(0));
 }
 
@@ -714,7 +715,7 @@ fn write_pact_test() {
       "version": "{}"
     }},
     "pact-specification": {{
-      "version": "1.1.0"
+      "version": "2.0.0"
     }}
   }},
   "provider": {{
@@ -797,7 +798,7 @@ fn write_pact_test_should_merge_pacts() {
       "version": "{}"
     }},
     "pact-specification": {{
-      "version": "1.1.0"
+      "version": "2.0.0"
     }}
   }},
   "provider": {{
@@ -869,7 +870,7 @@ fn write_pact_test_should_not_merge_pacts_with_conflicts() {
       "version": "{}"
     }},
     "pact-specification": {{
-      "version": "1.1.0"
+      "version": "2.0.0"
     }}
   }},
   "provider": {{
