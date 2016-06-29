@@ -39,7 +39,7 @@
     "request" : {
       "method" : "GET",
       "path" : "/",
-      "query" : "options=delete.topic.enable=true&broker=1",
+      "query" : "broker=1&options=delete%2Etopic%2Eenable%3Dtrue",
       "body" : {
         "test" : true
       }

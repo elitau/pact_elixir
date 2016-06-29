@@ -28,7 +28,9 @@ pub enum PactSpecification {
     /// First version of the pact specification (https://github.com/pact-foundation/pact-specification/tree/version-1)
     V1,
     /// Second version of the pact specification (https://github.com/pact-foundation/pact-specification/tree/version-1.1)
-    V1_1
+    V1_1,
+    /// Version two of the pact specification (https://github.com/pact-foundation/pact-specification/tree/version-2)
+    V2
 }
 
 impl PactSpecification {
@@ -37,6 +39,7 @@ impl PactSpecification {
         match *self {
             PactSpecification::V1 => s!("1.0.0"),
             PactSpecification::V1_1 => s!("1.1.0"),
+            PactSpecification::V2 => s!("2.0.00"),
             _ => s!("unknown")
         }
     }
@@ -46,6 +49,7 @@ impl PactSpecification {
         match *self {
             PactSpecification::V1 => s!("V1"),
             PactSpecification::V1_1 => s!("V1.1"),
+            PactSpecification::V2 => s!("V2"),
             _ => s!("unknown")
         }
     }
