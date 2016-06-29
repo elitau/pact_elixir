@@ -8,7 +8,6 @@ use rustc_serialize::json::Json;
 use expectest::prelude::*;
 
 #[test]
-#[ignore]
 fn missing_params() {
     let pact = Json::from_str(r#"
       {
@@ -19,14 +18,14 @@ fn missing_params() {
           "path": "/path",
           "query": "alligator=Mary&hippo=John&elephant=missing",
           "headers": {}
-      
+
         },
         "actual": {
           "method": "GET",
           "path": "/path",
           "query": "alligator=Mary&hippo=Fred",
           "headers": {}
-      
+
         }
       }
     "#).unwrap();
@@ -44,7 +43,6 @@ fn missing_params() {
 }
 
 #[test]
-#[ignore]
 fn matches_with_equals_in_the_query_value() {
     let pact = Json::from_str(r#"
       {
@@ -55,14 +53,14 @@ fn matches_with_equals_in_the_query_value() {
           "path": "/path",
           "query": "options=delete.topic.enable=true&broker=1",
           "headers": {}
-      
+
         },
         "actual": {
           "method": "GET",
           "path": "/path",
           "query": "options=delete.topic.enable%3Dtrue&broker=1",
           "headers": {}
-      
+
         }
       }
     "#).unwrap();
@@ -80,7 +78,6 @@ fn matches_with_equals_in_the_query_value() {
 }
 
 #[test]
-#[ignore]
 fn same_parameter_multiple_times() {
     let pact = Json::from_str(r#"
       {
@@ -91,7 +88,7 @@ fn same_parameter_multiple_times() {
           "path": "/path",
           "query": "animal=alligator&animal=hippo&animal=elephant&hippo=Fred",
           "headers": {}
-      
+
         },
         "actual": {
           "method": "GET",
@@ -115,7 +112,6 @@ fn same_parameter_multiple_times() {
 }
 
 #[test]
-#[ignore]
 fn unexpected_param() {
     let pact = Json::from_str(r#"
       {
@@ -126,14 +122,14 @@ fn unexpected_param() {
           "path": "/path",
           "query": "alligator=Mary&hippo=John",
           "headers": {}
-      
+
         },
         "actual": {
           "method": "GET",
           "path": "/path",
           "query": "alligator=Mary&hippo=Fred&elephant=unexpected",
           "headers": {}
-      
+
         }
       }
     "#).unwrap();
@@ -151,7 +147,6 @@ fn unexpected_param() {
 }
 
 #[test]
-#[ignore]
 fn different_order() {
     let pact = Json::from_str(r#"
       {
@@ -162,14 +157,14 @@ fn different_order() {
           "path": "/path",
           "query": "alligator=Mary&hippo=John",
           "headers": {}
-      
+
         },
         "actual": {
           "method": "GET",
           "path": "/path",
           "query": "hippo=John&alligator=Mary",
           "headers": {}
-      
+
         }
       }
     "#).unwrap();
@@ -187,7 +182,6 @@ fn different_order() {
 }
 
 #[test]
-#[ignore]
 fn different_params() {
     let pact = Json::from_str(r#"
       {
@@ -198,14 +192,14 @@ fn different_params() {
           "path": "/path",
           "query": "alligator=Mary&hippo=John",
           "headers": {}
-      
+
         },
         "actual": {
           "method": "GET",
           "path": "/path",
           "query": "alligator=Mary&hippo=Fred",
           "headers": {}
-      
+
         }
       }
     "#).unwrap();
@@ -223,7 +217,6 @@ fn different_params() {
 }
 
 #[test]
-#[ignore]
 fn matches() {
     let pact = Json::from_str(r#"
       {
@@ -234,14 +227,14 @@ fn matches() {
           "path": "/path",
           "query": "alligator=Mary&hippo=John",
           "headers": {}
-      
+
         },
         "actual": {
           "method": "GET",
           "path": "/path",
           "query": "alligator=Mary&hippo=John",
           "headers": {}
-      
+
         }
       }
     "#).unwrap();
@@ -259,7 +252,6 @@ fn matches() {
 }
 
 #[test]
-#[ignore]
 fn same_parameter_different_values() {
     let pact = Json::from_str(r#"
       {
@@ -270,14 +262,14 @@ fn same_parameter_different_values() {
           "path": "/path",
           "query": "animal=alligator&animal=hippo",
           "headers": {}
-      
+
         },
         "actual": {
           "method": "GET",
           "path": "/path",
           "query": "animal=alligator&animal=elephant",
           "headers": {}
-      
+
         }
       }
     "#).unwrap();
@@ -295,7 +287,6 @@ fn same_parameter_different_values() {
 }
 
 #[test]
-#[ignore]
 fn same_parameter_multiple_times_in_different_order() {
     let pact = Json::from_str(r#"
       {
@@ -306,7 +297,7 @@ fn same_parameter_multiple_times_in_different_order() {
           "path": "/path",
           "query": "animal=alligator&animal=hippo&animal=elephant",
           "headers": {}
-      
+
         },
         "actual": {
           "method": "GET",
@@ -330,7 +321,6 @@ fn same_parameter_multiple_times_in_different_order() {
 }
 
 #[test]
-#[ignore]
 fn trailing_ampersand() {
     let pact = Json::from_str(r#"
       {
@@ -341,14 +331,14 @@ fn trailing_ampersand() {
           "path": "/path",
           "query": "alligator=Mary&hippo=John",
           "headers": {}
-      
+
         },
         "actual": {
           "method": "GET",
           "path": "/path",
           "query": "alligator=Mary&hippo=John&",
           "headers": {}
-      
+
         }
       }
     "#).unwrap();

@@ -8,7 +8,6 @@ use rustc_serialize::json::Json;
 use expectest::prelude::*;
 
 #[test]
-#[ignore]
 fn empty_headers() {
     let pact = Json::from_str(r#"
         {
@@ -16,7 +15,7 @@ fn empty_headers() {
         "comment": "Empty headers match",
         "expected" : {
           "headers": {}
-      
+
         },
         "actual": {
           "headers": {}
@@ -37,7 +36,6 @@ fn empty_headers() {
 }
 
 #[test]
-#[ignore]
 fn whitespace_after_comma_different() {
     let pact = Json::from_str(r#"
       {
@@ -69,7 +67,6 @@ fn whitespace_after_comma_different() {
 }
 
 #[test]
-#[ignore]
 fn unexpected_header_found() {
     let pact = Json::from_str(r#"
       {
@@ -121,7 +118,7 @@ fn matches_with_regex() {
           }
         }
       }
-              
+
     "#).unwrap();
 
     let expected = Response::from_json(&pact.find("expected").unwrap(), &PactSpecification::V2);
@@ -137,7 +134,6 @@ fn matches_with_regex() {
 }
 
 #[test]
-#[ignore]
 fn header_value_is_different_case() {
     let pact = Json::from_str(r#"
       {
@@ -169,7 +165,6 @@ fn header_value_is_different_case() {
 }
 
 #[test]
-#[ignore]
 fn order_of_comma_separated_header_values_different() {
     let pact = Json::from_str(r#"
       {
@@ -201,7 +196,6 @@ fn order_of_comma_separated_header_values_different() {
 }
 
 #[test]
-#[ignore]
 fn header_name_is_different_case() {
     let pact = Json::from_str(r#"
       {
@@ -233,7 +227,6 @@ fn header_name_is_different_case() {
 }
 
 #[test]
-#[ignore]
 fn matches() {
     let pact = Json::from_str(r#"
       {

@@ -8,7 +8,6 @@ use rustc_serialize::json::Json;
 use expectest::prelude::*;
 
 #[test]
-#[ignore]
 fn different_status() {
     let pact = Json::from_str(r#"
       {
@@ -36,7 +35,6 @@ fn different_status() {
 }
 
 #[test]
-#[ignore]
 fn matches() {
     let pact = Json::from_str(r#"
       {

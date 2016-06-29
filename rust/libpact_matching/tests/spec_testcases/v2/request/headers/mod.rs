@@ -8,7 +8,6 @@ use rustc_serialize::json::Json;
 use expectest::prelude::*;
 
 #[test]
-#[ignore]
 fn empty_headers() {
     let pact = Json::from_str(r#"
       {
@@ -19,7 +18,7 @@ fn empty_headers() {
           "path": "/path",
           "query": "",
           "headers": {}
-      
+
         },
         "actual": {
           "method": "POST",
@@ -43,7 +42,6 @@ fn empty_headers() {
 }
 
 #[test]
-#[ignore]
 fn header_name_is_different_case() {
     let pact = Json::from_str(r#"
       {
@@ -122,7 +120,6 @@ fn matches_with_regex() {
 }
 
 #[test]
-#[ignore]
 fn whitespace_after_comma_different() {
     let pact = Json::from_str(r#"
       {
@@ -160,7 +157,6 @@ fn whitespace_after_comma_different() {
 }
 
 #[test]
-#[ignore]
 fn header_value_is_different_case() {
     let pact = Json::from_str(r#"
       {
@@ -198,7 +194,6 @@ fn header_value_is_different_case() {
 }
 
 #[test]
-#[ignore]
 fn order_of_comma_separated_header_values_different() {
     let pact = Json::from_str(r#"
       {
@@ -236,7 +231,6 @@ fn order_of_comma_separated_header_values_different() {
 }
 
 #[test]
-#[ignore]
 fn matches() {
     let pact = Json::from_str(r#"
       {
@@ -276,7 +270,6 @@ fn matches() {
 }
 
 #[test]
-#[ignore]
 fn unexpected_header_found() {
     let pact = Json::from_str(r#"
       {

@@ -8,7 +8,6 @@ use rustc_serialize::json::Json;
 use expectest::prelude::*;
 
 #[test]
-#[ignore]
 fn method_is_different_case() {
     let pact = Json::from_str(r#"
       {
@@ -25,7 +24,7 @@ fn method_is_different_case() {
           "path": "/",
           "query": "",
           "headers": {}
-      
+
         }
       }
     "#).unwrap();
@@ -43,7 +42,6 @@ fn method_is_different_case() {
 }
 
 #[test]
-#[ignore]
 fn different_method() {
     let pact = Json::from_str(r#"
       {
@@ -60,7 +58,7 @@ fn different_method() {
           "path": "/",
           "query": "",
           "headers": {}
-      
+
         }
       }
     "#).unwrap();
@@ -78,7 +76,6 @@ fn different_method() {
 }
 
 #[test]
-#[ignore]
 fn matches() {
     let pact = Json::from_str(r#"
       {
@@ -95,7 +92,7 @@ fn matches() {
           "path": "/",
           "query": "",
           "headers": {}
-      
+
         }
       }
     "#).unwrap();

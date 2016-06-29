@@ -104,7 +104,6 @@ fn objects_in_array_with_type_mismatching() {
 }
 
 #[test]
-#[ignore]
 fn property_name_is_different_case() {
     let pact = Json::from_str(r#"
       {
@@ -142,7 +141,6 @@ fn property_name_is_different_case() {
 }
 
 #[test]
-#[ignore]
 fn string_found_at_key_when_number_expected() {
     let pact = Json::from_str(r#"
       {
@@ -210,9 +208,9 @@ fn array_with_type_matcher() {
               5,
               1910
             ]
-          }    
+          }
         }
-      }   
+      }
     "#).unwrap();
 
     let expected = Response::from_json(&pact.find("expected").unwrap(), &PactSpecification::V2);
@@ -319,7 +317,6 @@ fn matches_with_type() {
 }
 
 #[test]
-#[ignore]
 fn matches() {
     let pact = Json::from_str(r#"
       {
@@ -361,7 +358,6 @@ fn matches() {
 }
 
 #[test]
-#[ignore]
 fn missing_key() {
     let pact = Json::from_str(r#"
       {
@@ -400,7 +396,6 @@ fn missing_key() {
 }
 
 #[test]
-#[ignore]
 fn no_body_no_content_type() {
     let pact = Json::from_str(r#"
       {
@@ -434,7 +429,6 @@ fn no_body_no_content_type() {
 }
 
 #[test]
-#[ignore]
 fn not_null_found_in_array_when_null_expected() {
     let pact = Json::from_str(r#"
       {
@@ -499,9 +493,9 @@ fn array_with_type_matcher_mismatch() {
               5,
               "100299"
             ]
-          }    
+          }
         }
-      }   
+      }
     "#).unwrap();
 
     let expected = Response::from_json(&pact.find("expected").unwrap(), &PactSpecification::V2);
@@ -545,9 +539,9 @@ fn additional_property_with_type_matcher() {
               "age": 39,
               "nationality": "Australian"
             }
-          }    
+          }
         }
-      }   
+      }
     "#).unwrap();
 
     let expected = Response::from_json(&pact.find("expected").unwrap(), &PactSpecification::V2);
@@ -642,7 +636,6 @@ fn array_at_top_level_with_matchers() {
 }
 
 #[test]
-#[ignore]
 fn null_found_at_key_where_not_null_expected() {
     let pact = Json::from_str(r#"
       {
@@ -680,7 +673,6 @@ fn null_found_at_key_where_not_null_expected() {
 }
 
 #[test]
-#[ignore]
 fn different_value_found_at_key() {
     let pact = Json::from_str(r#"
       {
@@ -718,7 +710,6 @@ fn different_value_found_at_key() {
 }
 
 #[test]
-#[ignore]
 fn keys_out_of_order_match() {
     let pact = Json::from_str(r#"
       {
@@ -754,7 +745,6 @@ fn keys_out_of_order_match() {
 }
 
 #[test]
-#[ignore]
 fn array_in_different_order() {
     let pact = Json::from_str(r#"
       {
@@ -792,7 +782,6 @@ fn array_in_different_order() {
 }
 
 #[test]
-#[ignore]
 fn missing_index() {
     let pact = Json::from_str(r#"
       {
@@ -830,7 +819,6 @@ fn missing_index() {
 }
 
 #[test]
-#[ignore]
 fn deeply_nested_objects() {
     let pact = Json::from_str(r#"
       {
@@ -890,7 +878,6 @@ fn deeply_nested_objects() {
 }
 
 #[test]
-#[ignore]
 fn different_value_found_at_index() {
     let pact = Json::from_str(r#"
       {
@@ -928,7 +915,6 @@ fn different_value_found_at_index() {
 }
 
 #[test]
-#[ignore]
 fn not_null_found_at_key_when_null_expected() {
     let pact = Json::from_str(r#"
       {
@@ -966,7 +952,6 @@ fn not_null_found_at_key_when_null_expected() {
 }
 
 #[test]
-#[ignore]
 fn null_found_in_array_when_not_null_expected() {
     let pact = Json::from_str(r#"
       {
@@ -1004,7 +989,6 @@ fn null_found_in_array_when_not_null_expected() {
 }
 
 #[test]
-#[ignore]
 fn number_found_at_key_when_string_expected() {
     let pact = Json::from_str(r#"
       {
@@ -1042,7 +1026,6 @@ fn number_found_at_key_when_string_expected() {
 }
 
 #[test]
-#[ignore]
 fn number_found_in_array_when_string_expected() {
     let pact = Json::from_str(r#"
       {
@@ -1080,7 +1063,6 @@ fn number_found_in_array_when_string_expected() {
 }
 
 #[test]
-#[ignore]
 fn objects_in_array_first_matches() {
     let pact = Json::from_str(r#"
       {
@@ -1123,7 +1105,6 @@ fn objects_in_array_first_matches() {
 }
 
 #[test]
-#[ignore]
 fn objects_in_array_no_matches() {
     let pact = Json::from_str(r#"
       {
@@ -1161,7 +1142,6 @@ fn objects_in_array_no_matches() {
 }
 
 #[test]
-#[ignore]
 fn objects_in_array_second_matches() {
     let pact = Json::from_str(r#"
       {
@@ -1198,7 +1178,6 @@ fn objects_in_array_second_matches() {
 }
 
 #[test]
-#[ignore]
 fn array_at_top_level() {
     let pact = Json::from_str(r#"
       {
@@ -1284,9 +1263,9 @@ fn array_with_regex_matcher() {
               "15/12/2014",
               "30/06/2015"
             ]
-          }    
+          }
         }
-      }   
+      }
     "#).unwrap();
 
     let expected = Response::from_json(&pact.find("expected").unwrap(), &PactSpecification::V2);
@@ -1302,7 +1281,6 @@ fn array_with_regex_matcher() {
 }
 
 #[test]
-#[ignore]
 fn unexpected_index_with_not_null_value() {
     let pact = Json::from_str(r#"
       {
@@ -1340,7 +1318,6 @@ fn unexpected_index_with_not_null_value() {
 }
 
 #[test]
-#[ignore]
 fn unexpected_index_with_null_value() {
     let pact = Json::from_str(r#"
       {
@@ -1378,7 +1355,6 @@ fn unexpected_index_with_null_value() {
 }
 
 #[test]
-#[ignore]
 fn unexpected_key_with_not_null_value() {
     let pact = Json::from_str(r#"
       {
@@ -1417,7 +1393,6 @@ fn unexpected_key_with_not_null_value() {
 }
 
 #[test]
-#[ignore]
 fn unexpected_key_with_null_value() {
     let pact = Json::from_str(r#"
       {
@@ -1456,7 +1431,6 @@ fn unexpected_key_with_null_value() {
 }
 
 #[test]
-#[ignore]
 fn string_found_in_array_when_number_expected() {
     let pact = Json::from_str(r#"
       {
@@ -1494,7 +1468,6 @@ fn string_found_in_array_when_number_expected() {
 }
 
 #[test]
-#[ignore]
 fn missing_body() {
     let pact = Json::from_str(r#"
       {
@@ -1529,7 +1502,6 @@ fn missing_body() {
 }
 
 #[test]
-#[ignore]
 fn plain_text_that_does_not_match() {
     let pact = Json::from_str(r#"
       {
@@ -1559,7 +1531,6 @@ fn plain_text_that_does_not_match() {
 }
 
 #[test]
-#[ignore]
 fn plain_text_that_matches() {
     let pact = Json::from_str(r#"
       {
