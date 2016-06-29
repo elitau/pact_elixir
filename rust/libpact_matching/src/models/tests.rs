@@ -1,4 +1,5 @@
 use super::*;
+use super::matchers_from_json;
 use std::collections::HashMap;
 use std::fs::{self, File};
 use std::io;
@@ -1102,4 +1103,162 @@ fn hash_for_response() {
     expect!(hash(&response3)).to(be_equal_to(hash(&response3)));
     expect!(hash(&response1)).to_not(be_equal_to(hash(&response2)));
     expect!(hash(&response3)).to_not(be_equal_to(hash(&response4)));
+}
+
+#[test]
+fn matchers_from_json_handles_missing_matchers() {
+    let json = Json::from_str(r#"
+      {
+          "path": "/",
+          "query": "",
+          "headers": {}
+      }
+    "#).unwrap();
+    let matchers = matchers_from_json(&json, s!("deprecatedName"));
+    expect!(matchers).to(be_none());
+}
+
+#[test]
+fn matchers_from_json_handles_empty_matchers() {
+    let json = Json::from_str(r#"
+      {
+          "path": "/",
+          "query": "",
+          "headers": {},
+          "matchingRules": {}
+      }
+    "#).unwrap();
+    let matchers = matchers_from_json(&json, s!("deprecatedName"));
+    expect!(matchers).to(be_none());
+}
+
+#[test]
+fn matchers_from_json_handles_matcher_with_no_matching_rules() {
+    let json = Json::from_str(r#"
+      {
+          "path": "/",
+          "query": "",
+          "headers": {},
+          "matchingRules": {
+            "*.path": {}
+          }
+      }
+    "#).unwrap();
+    let matchers = matchers_from_json(&json, s!("deprecatedName"));
+    expect!(matchers).to(be_some().value(hashmap!{
+        s!("*.path") => hashmap!{}
+    }));
+}
+
+#[test]
+fn matchers_from_json_loads_matchers_correctly() {
+    let json = Json::from_str(r#"
+      {
+          "path": "/",
+          "query": "",
+          "headers": {},
+          "matchingRules": {
+            "*.path": {
+                "match": "regex",
+                "regex": "\\d+"
+            }
+          }
+      }
+    "#).unwrap();
+    let matchers = matchers_from_json(&json, s!("deprecatedName"));
+    expect!(matchers).to(be_some().value(hashmap!{
+        s!("*.path") => hashmap!{
+            s!("match") => s!("regex"),
+            s!("regex") => s!(r#"\d+"#)
+        }
+    }));
+}
+
+#[test]
+fn matchers_from_json_loads_matchers_from_deprecated_name() {
+    let json = Json::from_str(r#"
+      {
+          "path": "/",
+          "query": "",
+          "headers": {},
+          "deprecatedName": {
+            "*.path": {
+                "match": "regex",
+                "regex": "\\d+"
+            }
+          }
+      }
+    "#).unwrap();
+    let matchers = matchers_from_json(&json, s!("deprecatedName"));
+    expect!(matchers).to(be_some().value(hashmap!{
+        s!("*.path") => hashmap!{
+            s!("match") => s!("regex"),
+            s!("regex") => s!(r#"\d+"#)
+        }
+    }));
+}
+
+#[test]
+fn write_pact_test_with_matchers() {
+    let pact = Pact { consumer: Consumer { name: s!("write_pact_test_consumer") },
+        provider: Provider { name: s!("write_pact_test_provider") },
+        interactions: vec![
+            Interaction {
+                description: s!("Test Interaction"),
+                provider_state: Some(s!("Good state to be in")),
+                request: Request {
+                    matching_rules: Some(hashmap!{
+                        s!("*.body") => hashmap!{ s!("match") => s!("type") }
+                    }),
+                    .. Request::default_request()
+                },
+                response: Response::default_response()
+            }
+        ],
+        .. Pact::default() };
+    let mut dir = env::temp_dir();
+    let x = rand::random::<u16>();
+    dir.push(format!("pact_test_{}", x));
+    dir.push(pact.default_file_name());
+
+    let result = pact.write_pact(dir.as_path());
+
+    let pact_file = read_pact_file(dir.as_path().to_str().unwrap()).unwrap_or(s!(""));
+    fs::remove_dir_all(dir.parent().unwrap()).unwrap_or(());
+
+    expect!(result).to(be_ok());
+    expect(pact_file).to(be_equal_to(format!(r#"{{
+  "consumer": {{
+    "name": "write_pact_test_consumer"
+  }},
+  "interactions": [
+    {{
+      "description": "Test Interaction",
+      "providerState": "Good state to be in",
+      "request": {{
+        "matchingRules": {{
+          "*.body": {{
+            "match": "type"
+          }}
+        }},
+        "method": "GET",
+        "path": "/"
+      }},
+      "response": {{
+        "status": 200
+      }}
+    }}
+  ],
+  "metadata": {{
+    "pact-rust": {{
+      "version": "{}"
+    }},
+    "pact-specification": {{
+      "version": "2.0.0"
+    }}
+  }},
+  "provider": {{
+    "name": "write_pact_test_provider"
+  }}
+}}"#, super::VERSION.unwrap())));
 }

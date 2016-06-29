@@ -87,6 +87,7 @@ fn test_load_pact_encoded_query() {
                 expect(pact_request.find("path")).to(be_equal_to(file_request.find("path")));
                 expect(pact_request.find("headers")).to(be_equal_to(file_request.find("headers")));
                 expect(pact_request.find("body")).to(be_equal_to(file_request.find("body")));
+                expect(pact_request.find("matchers")).to(be_equal_to(file_request.find("matchers")));
                 expect(pact_request.find("query").unwrap().to_string().to_uppercase()).to(
                     be_equal_to(file_request.find("query").unwrap().to_string().to_uppercase()));
             }
@@ -129,6 +130,7 @@ fn test_load_test_pact_lowercase_method() {
                 expect(pact_request.find("path")).to(be_equal_to(file_request.find("path")));
                 expect(pact_request.find("headers")).to(be_equal_to(file_request.find("headers")));
                 expect(pact_request.find("body")).to(be_equal_to(file_request.find("body")));
+                expect(pact_request.find("matchers")).to(be_equal_to(file_request.find("matchers")));
                 // This is a V3 pact, so we can't load the query string
                 expect(pact_request.find("query")).to(be_none());
             }
@@ -345,6 +347,7 @@ fn test_load_v2_pact_query() {
                 expect(pact_request.find("path")).to(be_equal_to(file_request.find("path")));
                 expect(pact_request.find("headers")).to(be_equal_to(file_request.find("headers")));
                 expect(pact_request.find("body")).to(be_equal_to(file_request.find("body")));
+                expect(pact_request.find("matchers")).to(be_equal_to(file_request.find("matchers")));
                 expect(pact_request.find("query").unwrap().to_string().to_uppercase()).to(
                     be_equal_to(file_request.find("query").unwrap().to_string().to_uppercase()));
             }
@@ -360,7 +363,6 @@ fn test_load_v2_pact_query() {
 }
 
 #[test]
-#[ignore]
 fn test_load_test_pact_matcherst() {
     let pact_file = Path::new(file!()).parent().unwrap().join("test_pact_matchers.json");
     let pact_result = Pact::read_pact(&pact_file);
@@ -385,7 +387,6 @@ fn test_load_test_pact_matcherst() {
 }
 
 #[test]
-#[ignore]
 fn test_load_test_pact_matchers_old_format() {
     let pact_file = Path::new(file!()).parent().unwrap().join("test_pact_matchers_old_format.json");
     let pact_result = Pact::read_pact(&pact_file);
@@ -397,7 +398,32 @@ fn test_load_test_pact_matchers_old_format() {
             let pact_json = pact.to_json();
             expect(pact_json.find("consumer")).to(be_equal_to(pact_json_from_file.find("consumer")));
             expect(pact_json.find("provider")).to(be_equal_to(pact_json_from_file.find("provider")));
-            expect(pact_json.find("interactions")).to(be_equal_to(pact_json_from_file.find("interactions")));
+
+            let pact_interactions = pact_json.find("interactions").unwrap().as_array().unwrap();
+            let pact_interactions_from_file = pact_json_from_file.find("interactions").unwrap().as_array().unwrap();
+            expect(pact_interactions.len()).to(be_equal_to(pact_interactions_from_file.len()));
+
+            for (pact_interaction, file_interaction) in pact_interactions.iter().zip(pact_interactions_from_file.iter()) {
+                expect(pact_interaction.find("providerState")).to(be_equal_to(file_interaction.find("providerState")));
+                expect(pact_interaction.find("description")).to(be_equal_to(file_interaction.find("description")));
+
+                let pact_request = pact_interaction.find("request").unwrap();
+                let file_request = file_interaction.find("request").unwrap();
+                expect(pact_request.find("method")).to(be_equal_to(file_request.find("method")));
+                expect(pact_request.find("path")).to(be_equal_to(file_request.find("path")));
+                expect(pact_request.find("headers")).to(be_equal_to(file_request.find("headers")));
+                expect(pact_request.find("body")).to(be_equal_to(file_request.find("body")));
+                expect(pact_request.find("matchers")).to(be_equal_to(file_request.find("matchers")));
+                expect(pact_request.find("query").unwrap().to_string().to_uppercase()).to(
+                    be_equal_to(file_request.find("query").unwrap().to_string().to_uppercase()));
+
+                let pact_response = pact_interaction.find("response").unwrap();
+                let file_response = file_interaction.find("response").unwrap();
+                expect(pact_response.find("status")).to(be_equal_to(file_response.find("status")));
+                expect(pact_response.find("headers")).to(be_equal_to(file_response.find("headers")));
+                expect(pact_response.find("body")).to(be_equal_to(file_response.find("body")));
+                expect(pact_response.find("matchers")).to(be_equal_to(file_response.find("matchers")));
+            }
 
             expect(pact.metadata.get("pact-specification").unwrap().get("version")).to(be_some().value("2.0.0"));
             let metadata = pact_json.find("metadata").unwrap().as_object().unwrap();

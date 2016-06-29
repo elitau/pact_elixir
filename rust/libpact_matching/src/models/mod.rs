@@ -245,6 +245,15 @@ impl Hash for Request {
             }
         }
         self.body.hash(state);
+        if self.matching_rules.is_some() {
+            for (k, map) in self.matching_rules.clone().unwrap() {
+                k.hash(state);
+                for (k2, v) in map.clone() {
+                    k2.hash(state);
+                    v.hash(state);
+                }
+            }
+        }
     }
 }
 
@@ -299,6 +308,48 @@ fn build_query_string(query: HashMap<String, Vec<String>>) -> String {
         .join("&")
 }
 
+fn matchers_from_json(json: &Json, deprecated_name: String) -> Option<HashMap<String, HashMap<String, String>>> {
+    let matchers_json = match (json.find("matchingRules"), json.find(&deprecated_name)) {
+        (Some(v), _) => Some(v),
+        (None, Some(v)) => Some(v),
+        (None, None) => None
+    };
+    let matchers = matchers_json.map(|v| {
+        match *v {
+            Json::Object(ref m) => m.iter().map(|(k, val)| {
+                (k.clone(), match *val {
+                    Json::Object(ref m2) => m2.iter().map(|(k2, v2)| {
+                        (k2.clone(), match v2 {
+                            &Json::String(ref s) => s.clone(),
+                            _ => v2.to_string()
+                        })
+                    }).collect(),
+                    _ => hashmap!{}
+                })
+            }).collect(),
+            _ => hashmap!{}
+        }
+    });
+    match matchers {
+        Some(m) => if m.is_empty() {
+            None
+        } else {
+            Some(m)
+        },
+        None => None
+    }
+}
+
+fn matchers_to_json(matchers: &HashMap<String, HashMap<String, String>>) -> Json {
+    Json::Object(matchers.iter().fold(BTreeMap::new(), |mut map, kv| {
+        map.insert(kv.0.clone(), Json::Object(kv.1.clone().iter().fold(BTreeMap::new(), |mut map, kv| {
+            map.insert(kv.0.clone(), Json::String(kv.1.clone()));
+            map
+        })));
+        map
+    }))
+}
+
 impl Request {
     /// Builds a `Request` from a `Json` struct.
     pub fn from_json(request: &Json, spec_version: &PactSpecification) -> Request {
@@ -333,7 +384,7 @@ impl Request {
             query: query_val,
             headers: headers_from_json(request),
             body: body_from_json(request),
-            matching_rules: None
+            matching_rules: matchers_from_json(request, s!("requestMatchingRules"))
         }
     }
 
@@ -366,6 +417,9 @@ impl Request {
             OptionalBody::Empty => { json.insert(s!("body"), Json::String(s!(""))); },
             OptionalBody::Missing => (),
             OptionalBody::Null => { json.insert(s!("body"), Json::Null); }
+        }
+        if self.matching_rules.is_some() {
+            json.insert(s!("matchingRules"), matchers_to_json(&self.matching_rules.clone().unwrap()));
         }
         Json::Object(json)
     }
@@ -408,7 +462,7 @@ impl Response {
             status: status_val,
             headers: headers_from_json(response),
             body: body_from_json(response),
-            matching_rules: None
+            matching_rules:  matchers_from_json(response, s!("responseMatchingRules"))
         }
     }
 
@@ -448,6 +502,9 @@ impl Response {
             OptionalBody::Missing => (),
             OptionalBody::Null => { json.insert(s!("body"), Json::Null); }
         }
+        if self.matching_rules.is_some() {
+            json.insert(s!("matchingRules"), matchers_to_json(&self.matching_rules.clone().unwrap()));
+        }
         Json::Object(json)
     }
 }
@@ -476,6 +533,15 @@ impl Hash for Response {
             }
         }
         self.body.hash(state);
+        if self.matching_rules.is_some() {
+            for (k, map) in self.matching_rules.clone().unwrap() {
+                k.hash(state);
+                for (k2, v) in map.clone() {
+                    k2.hash(state);
+                    v.hash(state);
+                }
+            }
+        }
     }
 }
 
