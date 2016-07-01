@@ -149,6 +149,9 @@ lazy_static! {
     static ref XMLREGEXP2: Regex = Regex::new(r#"^\s*<\w+\s*(:\w+=["”][^"”]+["”])?.*"#).unwrap();
 }
 
+/// Data structure for representing a collection of matchers
+pub type Matchers = HashMap<String, HashMap<String, String>>;
+
 /// Trait to specify an HTTP part of a message. It encapsulates the shared parts of a request and
 /// response.
 pub trait HttpPart {
@@ -157,7 +160,7 @@ pub trait HttpPart {
     /// Returns the body of the HTTP part.
     fn body(&self) -> &OptionalBody;
     /// Returns the matching rules of the HTTP part.
-    fn matching_rules(&self) -> &Option<HashMap<String, HashMap<String, String>>>;
+    fn matching_rules(&self) -> &Option<Matchers>;
 
     /// Determins the content type of the HTTP part. If a `Content-Type` header is present, the
     /// value of that header will be returned. Otherwise, the body will be inspected.
@@ -211,7 +214,7 @@ pub struct Request {
     /// Request body
     pub body: OptionalBody,
     /// Request matching rules (currently not used)
-    pub matching_rules: Option<HashMap<String, HashMap<String, String>>>
+    pub matching_rules: Option<Matchers>
 }
 
 impl HttpPart for Request {
@@ -223,7 +226,7 @@ impl HttpPart for Request {
         &self.body
     }
 
-    fn matching_rules(&self) -> &Option<HashMap<String, HashMap<String, String>>> {
+    fn matching_rules(&self) -> &Option<Matchers> {
         &self.matching_rules
     }
 }
@@ -308,7 +311,7 @@ fn build_query_string(query: HashMap<String, Vec<String>>) -> String {
         .join("&")
 }
 
-fn matchers_from_json(json: &Json, deprecated_name: String) -> Option<HashMap<String, HashMap<String, String>>> {
+fn matchers_from_json(json: &Json, deprecated_name: String) -> Option<Matchers> {
     let matchers_json = match (json.find("matchingRules"), json.find(&deprecated_name)) {
         (Some(v), _) => Some(v),
         (None, Some(v)) => Some(v),
@@ -340,7 +343,7 @@ fn matchers_from_json(json: &Json, deprecated_name: String) -> Option<HashMap<St
     }
 }
 
-fn matchers_to_json(matchers: &HashMap<String, HashMap<String, String>>) -> Json {
+fn matchers_to_json(matchers: &Matchers) -> Json {
     Json::Object(matchers.iter().fold(BTreeMap::new(), |mut map, kv| {
         map.insert(kv.0.clone(), Json::Object(kv.1.clone().iter().fold(BTreeMap::new(), |mut map, kv| {
             map.insert(kv.0.clone(), Json::String(kv.1.clone()));
@@ -447,7 +450,7 @@ pub struct Response {
     /// Response body
     pub body: OptionalBody,
     /// Response matching rules (not currently used)
-    pub matching_rules: Option<HashMap<String, HashMap<String, String>>>
+    pub matching_rules: Option<Matchers>
 }
 
 impl Response {
@@ -518,7 +521,7 @@ impl HttpPart for Response {
         &self.body
     }
 
-    fn matching_rules(&self) -> &Option<HashMap<String, HashMap<String, String>>> {
+    fn matching_rules(&self) -> &Option<Matchers> {
         &self.matching_rules
     }
 }

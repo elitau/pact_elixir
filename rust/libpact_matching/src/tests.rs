@@ -456,3 +456,41 @@ fn strip_whitespace_quickcheck() {
     }
     quickcheck(prop as fn(_, _) -> _);
 }
+
+#[test]
+fn match_path_returns_nothing_if_the_path_matches() {
+    let mut mismatches = vec![];
+    match_path(s!("/path/one"), s!("/path/one"), &mut mismatches, &None);
+    expect!(mismatches).to(be_empty());
+}
+
+#[test]
+#[ignore]
+fn match_path_returns_a_mismatch_if_the_path_does_not_match() {
+    let mut mismatches = vec![];
+    match_path(s!("/path/one"), s!("/path/two"), &mut mismatches, &None);
+    expect!(mismatches.clone()).to_not(be_empty());
+    expect!(mismatches[0].clone()).to(be_equal_to(Mismatch::PathMismatch { expected: s!("/path/one"),
+        actual: s!("/path/two") }));
+}
+
+#[test]
+fn match_path_returns_nothing_if_the_path_matches_with_a_matcher() {
+    let mut mismatches = vec![];
+    match_path(s!("/path/1234"), s!("/path/5678"), &mut mismatches, &Some(hashmap!{
+        s!("$.path") => hashmap!{ s!("match") => s!("regex"), s!("regex") => s!("/path/\\d+") }
+    }));
+    expect!(mismatches).to(be_empty());
+}
+
+#[test]
+#[ignore]
+fn match_path_returns_a_mismatch_if_the_path_does_not_match_with_a_matcher() {
+    let mut mismatches = vec![];
+    match_path(s!("/path/1234"), s!("/path/abc"), &mut mismatches, &Some(hashmap!{
+        s!("$.path") => hashmap!{ s!("match") => s!("regex"), s!("regex") => s!("/path/\\d+") }
+    }));
+    expect!(mismatches.clone()).to_not(be_empty());
+    expect!(mismatches[0].clone()).to(be_equal_to(Mismatch::PathMismatch { expected: s!("/path/1234"),
+        actual: s!("/path/abc") }));
+}

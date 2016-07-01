@@ -26,8 +26,12 @@ use rustc_serialize::json::{Json, ToJson};
 use regex::Regex;
 
 pub mod models;
+mod path_exp;
+mod matchers;
 mod json;
 mod xml;
+
+use models::Matchers;
 
 fn strip_whitespace<'a, T: FromIterator<&'a str>>(val: &'a String, split_by: &'a str) -> T {
     val.split(split_by).map(|v| v.trim().clone() ).collect()
@@ -257,8 +261,13 @@ pub fn match_method(expected: String, actual: String, mismatches: &mut Vec<Misma
 }
 
 /// Matches the actual request path to the expected one.
-pub fn match_path(expected: String, actual: String, mismatches: &mut Vec<Mismatch>) {
-    if expected != actual {
+pub fn match_path(expected: String, actual: String, mismatches: &mut Vec<Mismatch>,
+    matchers: &Option<Matchers>) {
+    if matchers::matcher_is_defined(vec![s!("$"), s!("path")], matchers) {
+        // val mismatch = Matchers.domatch[PathMismatch](matchers, Seq("$", "path"), expected.getPath,
+        //     replacedActual, PathMismatchFactory)
+        // mismatch.headOption
+    } else if expected != actual {
         mismatches.push(Mismatch::PathMismatch { expected: expected, actual: actual });
     }
 }
@@ -475,9 +484,9 @@ pub fn match_request(expected: models::Request, actual: models::Request) -> Vec<
     let mut mismatches = vec![];
 
     info!("comparing to expected request: {:?}", expected);
+    match_method(expected.method.clone(), actual.method.clone(), &mut mismatches);
+    match_path(expected.path.clone(), actual.path.clone(), &mut mismatches, &expected.matching_rules);
     match_body(&expected, &actual, DiffConfig::NoUnexpectedKeys, &mut mismatches);
-    match_method(expected.method, actual.method, &mut mismatches);
-    match_path(expected.path, actual.path, &mut mismatches);
     match_query(expected.query, actual.query, &mut mismatches);
     match_headers(expected.headers, actual.headers, &mut mismatches);
 
