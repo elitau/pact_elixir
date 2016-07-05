@@ -55,7 +55,8 @@ pub fn matcher_is_defined(path: &Vec<String>, matchers: &Option<Matchers>) -> bo
 #[derive(Debug, Clone, PartialEq)]
 pub enum Matcher {
     EqualityMatcher,
-    RegexMatcher(Regex)
+    RegexMatcher(Regex),
+    TypeMatcher
 }
 
 pub trait Matches<A> {
@@ -73,7 +74,8 @@ impl Matches<String> for String {
                    Err(format!("Expected '{}' to match '{}'", actual, regex))
                }
            },
-           _ => {
+           Matcher::TypeMatcher => Ok(()),
+           Matcher::EqualityMatcher => {
                if self == actual {
                    Ok(())
                } else {
@@ -95,7 +97,31 @@ impl Matches<u64> for String {
                    Err(format!("Expected '{}' to match '{}'", actual, regex))
                }
            },
-           _ => Err(format!("Expected '{}' (String) to be equal to '{}' (Number)", self, actual))
+           Matcher::TypeMatcher => Err(format!("Expected '{}' (String) to be the same type as '{}' (Number)", self, actual)),
+           Matcher::EqualityMatcher => Err(format!("Expected '{}' (String) to be equal to '{}' (Number)", self, actual))
+       }
+    }
+}
+
+impl Matches<u64> for u64 {
+    fn matches(&self, actual: &u64, matcher: &Matcher) -> Result<(), String> {
+        debug!("comparing '{}' to {} using {:?}", self, actual, matcher);
+        match *matcher {
+           Matcher::RegexMatcher(ref regex) => {
+               if regex.is_match(&actual.to_string()) {
+                   Ok(())
+               } else {
+                   Err(format!("Expected '{}' to match '{}'", actual, regex))
+               }
+           },
+           Matcher::TypeMatcher => Ok(()),
+           Matcher::EqualityMatcher => {
+               if self == actual {
+                   Ok(())
+               } else {
+                   Err(format!("Expected '{}' to be equal to '{}'", self, actual))
+               }
+           }
        }
     }
 }
@@ -111,7 +137,48 @@ impl Matches<f64> for u64 {
                    Err(format!("Expected '{}' to match '{}'", actual, regex))
                }
            },
-           _ => Err(format!("Expected '{}' (String) to be equal to '{}' (Number)", self, actual))
+           Matcher::TypeMatcher => Err(format!("Expected '{}' (Integer) to be the same type as '{}' (Decimal)", self, actual)),
+           Matcher::EqualityMatcher => Err(format!("Expected '{}' (Integer) to be equal to '{}' (Decimal)", self, actual))
+       }
+    }
+}
+
+impl Matches<f64> for f64 {
+    fn matches(&self, actual: &f64, matcher: &Matcher) -> Result<(), String> {
+        debug!("comparing '{}' to {} using {:?}", self, actual, matcher);
+        match *matcher {
+           Matcher::RegexMatcher(ref regex) => {
+               if regex.is_match(&actual.to_string()) {
+                   Ok(())
+               } else {
+                   Err(format!("Expected '{}' to match '{}'", actual, regex))
+               }
+           },
+           Matcher::TypeMatcher => Ok(()),
+           Matcher::EqualityMatcher => {
+               if self == actual {
+                   Ok(())
+               } else {
+                   Err(format!("Expected '{}' to be equal to '{}'", self, actual))
+               }
+           }
+       }
+    }
+}
+
+impl Matches<u64> for f64 {
+    fn matches(&self, actual: &u64, matcher: &Matcher) -> Result<(), String> {
+        debug!("comparing '{}' to {} using {:?}", self, actual, matcher);
+        match *matcher {
+           Matcher::RegexMatcher(ref regex) => {
+               if regex.is_match(&actual.to_string()) {
+                   Ok(())
+               } else {
+                   Err(format!("Expected '{}' to match '{}'", actual, regex))
+               }
+           },
+           Matcher::TypeMatcher => Err(format!("Expected '{}' (Decimal) to be the same type as '{}' (Integer)", self, actual)),
+           Matcher::EqualityMatcher => Err(format!("Expected '{}' (Decimal) to be equal to '{}' (Integer)", self, actual))
        }
     }
 }
@@ -348,7 +415,9 @@ mod tests {
         expect!(s!("100").matches(&s!("100"), &matcher)).to(be_ok());
         expect!(s!("100").matches(&s!("101"), &matcher)).to(be_err());
         expect!(s!("100").matches(&100, &matcher)).to(be_err());
+        expect!(100.matches(&100, &matcher)).to(be_ok());
         expect!(100.matches(&100.0, &matcher)).to(be_err());
+        expect!(100.1f64.matches(&100.0, &matcher)).to(be_err());
     }
 
     #[test]
@@ -357,7 +426,20 @@ mod tests {
         expect!(s!("100").matches(&s!("100"), &matcher)).to(be_ok());
         expect!(s!("100").matches(&s!("10a"), &matcher)).to(be_err());
         expect!(s!("100").matches(&100, &matcher)).to(be_ok());
+        expect!(100.matches(&100, &matcher)).to(be_ok());
+        expect!(100.matches(&100.01f64, &matcher)).to(be_err());
+        expect!(100.1f64.matches(&100.02f64, &matcher)).to(be_err());
+    }
+
+    #[test]
+    fn type_matcher_test() {
+        let matcher = Matcher::TypeMatcher;
+        expect!(s!("100").matches(&s!("100"), &matcher)).to(be_ok());
+        expect!(s!("100").matches(&s!("10a"), &matcher)).to(be_ok());
+        expect!(s!("100").matches(&100, &matcher)).to(be_err());
+        expect!(100.matches(&200, &matcher)).to(be_ok());
         expect!(100.matches(&100.1, &matcher)).to(be_err());
+        expect!(100.1f64.matches(&100.2, &matcher)).to(be_ok());
     }
 
 }
