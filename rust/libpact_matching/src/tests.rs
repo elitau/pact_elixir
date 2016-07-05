@@ -306,7 +306,7 @@ fn partial_equal_for_method_mismatch() {
     expect!(&mismatch).to(be_equal_to(&mismatch2));
     expect!(&mismatch).to_not(be_equal_to(&mismatch3));
     expect!(&mismatch).to_not(be_equal_to(&mismatch4));
-    expect!(&mismatch).to_not(be_equal_to(&Mismatch::PathMismatch { expected: s!("get"), actual: s!("post") }));
+    expect!(&mismatch).to_not(be_equal_to(&Mismatch::PathMismatch { expected: s!("get"), actual: s!("post"), mismatch: s!("") }));
     expect!(&mismatch).to_not(be_equal_to(&Mismatch::StatusMismatch { expected: 200, actual: 300 }));
     expect!(&mismatch).to_not(be_equal_to(&Mismatch::QueryMismatch { parameter: s!(""), expected: s!(""), actual: s!(""), mismatch: s!("") }));
     expect!(&mismatch).to_not(be_equal_to(&Mismatch::HeaderMismatch { key: s!(""), expected: s!(""), actual: s!(""), mismatch: s!("") }));
@@ -316,10 +316,10 @@ fn partial_equal_for_method_mismatch() {
 
 #[test]
 fn partial_equal_for_path_mismatch() {
-    let mismatch = Mismatch::PathMismatch { expected: s!("get"), actual: s!("post") };
-    let mismatch2 = Mismatch::PathMismatch { expected: s!("get"), actual: s!("post") };
-    let mismatch3 = Mismatch::PathMismatch { expected: s!("get"), actual: s!("put") };
-    let mismatch4 = Mismatch::PathMismatch { expected: s!("post"), actual: s!("post") };
+    let mismatch = Mismatch::PathMismatch { expected: s!("get"), actual: s!("post"), mismatch: s!("") };
+    let mismatch2 = Mismatch::PathMismatch { expected: s!("get"), actual: s!("post"), mismatch: s!("") };
+    let mismatch3 = Mismatch::PathMismatch { expected: s!("get"), actual: s!("put"), mismatch: s!("") };
+    let mismatch4 = Mismatch::PathMismatch { expected: s!("post"), actual: s!("post"), mismatch: s!("") };
     expect!(&mismatch).to(be_equal_to(&mismatch));
     expect!(&mismatch).to(be_equal_to(&mismatch2));
     expect!(&mismatch).to_not(be_equal_to(&mismatch3));
@@ -343,7 +343,7 @@ fn partial_equal_for_status_mismatch() {
     expect!(&mismatch).to_not(be_equal_to(&mismatch3));
     expect!(&mismatch).to_not(be_equal_to(&mismatch4));
     expect!(&mismatch).to_not(be_equal_to(&Mismatch::MethodMismatch { expected: s!("get"), actual: s!("post") }));
-    expect!(&mismatch).to_not(be_equal_to(&Mismatch::PathMismatch { expected: s!("200"), actual: s!("300") }));
+    expect!(&mismatch).to_not(be_equal_to(&Mismatch::PathMismatch { expected: s!("200"), actual: s!("300"), mismatch: s!("") }));
     expect!(&mismatch).to_not(be_equal_to(&Mismatch::QueryMismatch { parameter: s!(""), expected: s!(""), actual: s!(""), mismatch: s!("") }));
     expect!(&mismatch).to_not(be_equal_to(&Mismatch::HeaderMismatch { key: s!(""), expected: s!(""), actual: s!(""), mismatch: s!("") }));
     expect!(&mismatch).to_not(be_equal_to(&Mismatch::BodyTypeMismatch { expected: s!(""), actual: s!("") }));
@@ -364,7 +364,7 @@ fn partial_equal_for_body_type_mismatch() {
     expect!(&mismatch).to_not(be_equal_to(&Mismatch::StatusMismatch { expected: 200, actual: 300 }));
     expect!(&mismatch).to_not(be_equal_to(&Mismatch::QueryMismatch { parameter: s!(""), expected: s!(""), actual: s!(""), mismatch: s!("") }));
     expect!(&mismatch).to_not(be_equal_to(&Mismatch::HeaderMismatch { key: s!(""), expected: s!(""), actual: s!(""), mismatch: s!("") }));
-    expect!(&mismatch).to_not(be_equal_to(&Mismatch::PathMismatch { expected: s!(""), actual: s!("") }));
+    expect!(&mismatch).to_not(be_equal_to(&Mismatch::PathMismatch { expected: s!(""), actual: s!(""), mismatch: s!("") }));
     expect!(&mismatch).to_not(be_equal_to(&Mismatch::BodyMismatch { expected: Some(s!("get")), actual: Some(s!("post")), mismatch: s!(""), path: s!("/") }));
 }
 
@@ -384,7 +384,7 @@ fn partial_equal_for_query_mismatch() {
     expect!(&mismatch).to_not(be_equal_to(&mismatch5));
     expect!(&mismatch).to_not(be_equal_to(&Mismatch::MethodMismatch { expected: s!("get"), actual: s!("post") }));
     expect!(&mismatch).to_not(be_equal_to(&Mismatch::StatusMismatch { expected: 200, actual: 300 }));
-    expect!(&mismatch).to_not(be_equal_to(&Mismatch::PathMismatch { expected: s!(""), actual: s!("")}));
+    expect!(&mismatch).to_not(be_equal_to(&Mismatch::PathMismatch { expected: s!(""), actual: s!(""), mismatch: s!("")}));
     expect!(&mismatch).to_not(be_equal_to(&Mismatch::HeaderMismatch { key: s!(""), expected: s!(""), actual: s!(""), mismatch: s!("") }));
     expect!(&mismatch).to_not(be_equal_to(&Mismatch::BodyTypeMismatch { expected: s!(""), actual: s!("") }));
     expect!(&mismatch).to_not(be_equal_to(&Mismatch::BodyMismatch { expected: Some(s!("get")), actual: Some(s!("post")), mismatch: s!(""), path: s!("/") }));
@@ -406,7 +406,7 @@ fn partial_equal_for_header_mismatch() {
     expect!(&mismatch).to_not(be_equal_to(&mismatch5));
     expect!(&mismatch).to_not(be_equal_to(&Mismatch::MethodMismatch { expected: s!("get"), actual: s!("post") }));
     expect!(&mismatch).to_not(be_equal_to(&Mismatch::StatusMismatch { expected: 200, actual: 300 }));
-    expect!(&mismatch).to_not(be_equal_to(&Mismatch::PathMismatch { expected: s!(""), actual: s!("")}));
+    expect!(&mismatch).to_not(be_equal_to(&Mismatch::PathMismatch { expected: s!(""), actual: s!(""), mismatch: s!("")}));
     expect!(&mismatch).to_not(be_equal_to(&Mismatch::QueryMismatch { parameter: s!(""), expected: s!(""), actual: s!(""), mismatch: s!("") }));
     expect!(&mismatch).to_not(be_equal_to(&Mismatch::BodyTypeMismatch { expected: s!(""), actual: s!("") }));
     expect!(&mismatch).to_not(be_equal_to(&Mismatch::BodyMismatch { expected: Some(s!("get")), actual: Some(s!("post")), mismatch: s!(""), path: s!("/") }));
@@ -428,7 +428,7 @@ fn partial_equal_for_body_mismatch() {
     expect!(&mismatch).to_not(be_equal_to(&mismatch5));
     expect!(&mismatch).to_not(be_equal_to(&Mismatch::MethodMismatch { expected: s!("get"), actual: s!("post") }));
     expect!(&mismatch).to_not(be_equal_to(&Mismatch::StatusMismatch { expected: 200, actual: 300 }));
-    expect!(&mismatch).to_not(be_equal_to(&Mismatch::PathMismatch { expected: s!(""), actual: s!("")}));
+    expect!(&mismatch).to_not(be_equal_to(&Mismatch::PathMismatch { expected: s!(""), actual: s!(""), mismatch: s!("")}));
     expect!(&mismatch).to_not(be_equal_to(&Mismatch::HeaderMismatch { key: s!(""), expected: s!(""), actual: s!(""), mismatch: s!("") }));
     expect!(&mismatch).to_not(be_equal_to(&Mismatch::BodyTypeMismatch { expected: s!(""), actual: s!("") }));
     expect!(&mismatch).to_not(be_equal_to(&Mismatch::QueryMismatch { parameter: s!(""), expected: s!("get"), actual: s!("post"), mismatch: s!("") }));
@@ -465,13 +465,12 @@ fn match_path_returns_nothing_if_the_path_matches() {
 }
 
 #[test]
-#[ignore]
 fn match_path_returns_a_mismatch_if_the_path_does_not_match() {
     let mut mismatches = vec![];
     match_path(s!("/path/one"), s!("/path/two"), &mut mismatches, &None);
     expect!(mismatches.clone()).to_not(be_empty());
     expect!(mismatches[0].clone()).to(be_equal_to(Mismatch::PathMismatch { expected: s!("/path/one"),
-        actual: s!("/path/two") }));
+        actual: s!("/path/two"), mismatch: s!("") }));
 }
 
 #[test]
@@ -484,7 +483,6 @@ fn match_path_returns_nothing_if_the_path_matches_with_a_matcher() {
 }
 
 #[test]
-#[ignore]
 fn match_path_returns_a_mismatch_if_the_path_does_not_match_with_a_matcher() {
     let mut mismatches = vec![];
     match_path(s!("/path/1234"), s!("/path/abc"), &mut mismatches, &Some(hashmap!{
@@ -492,5 +490,5 @@ fn match_path_returns_a_mismatch_if_the_path_does_not_match_with_a_matcher() {
     }));
     expect!(mismatches.clone()).to_not(be_empty());
     expect!(mismatches[0].clone()).to(be_equal_to(Mismatch::PathMismatch { expected: s!("/path/1234"),
-        actual: s!("/path/abc") }));
+        actual: s!("/path/abc"), mismatch: s!("") }));
 }

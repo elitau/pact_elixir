@@ -32,6 +32,7 @@ mod json;
 mod xml;
 
 use models::Matchers;
+use matchers::*;
 
 fn strip_whitespace<'a, T: FromIterator<&'a str>>(val: &'a String, split_by: &'a str) -> T {
     val.split(split_by).map(|v| v.trim().clone() ).collect()
@@ -59,7 +60,9 @@ pub enum Mismatch {
         /// expected request path
         expected: String,
         /// actual request path
-        actual: String
+        actual: String,
+        /// description of the mismatch
+        mismatch: String
     },
     /// Response status mismatch
     StatusMismatch {
@@ -122,11 +125,12 @@ impl Mismatch {
                 };
                 Json::Object(map)
             },
-            &Mismatch::PathMismatch { expected: ref e, actual: ref a } => {
+            &Mismatch::PathMismatch { expected: ref e, actual: ref a, mismatch: ref m } => {
                 let map = btreemap!{
                     s!("type") => s!("PathMismatch").to_json(),
                     s!("expected") => e.to_json(),
-                    s!("actual") => a.to_json()
+                    s!("actual") => a.to_json(),
+                    s!("mismatch") => m.to_json()
                 };
                 Json::Object(map)
             },
@@ -206,8 +210,8 @@ impl PartialEq for Mismatch {
                 &Mismatch::MethodMismatch{ expected: ref e2, actual: ref a2 }) => {
                 e1 == e2 && a1 == a2
             },
-            (&Mismatch::PathMismatch{ expected: ref e1, actual: ref a1 },
-                &Mismatch::PathMismatch{ expected: ref e2, actual: ref a2 }) => {
+            (&Mismatch::PathMismatch{ expected: ref e1, actual: ref a1, mismatch: _ },
+                &Mismatch::PathMismatch{ expected: ref e2, actual: ref a2, mismatch: _ }) => {
                 e1 == e2 && a1 == a2
             },
             (&Mismatch::StatusMismatch{ expected: ref e1, actual: ref a1 },
@@ -263,12 +267,15 @@ pub fn match_method(expected: String, actual: String, mismatches: &mut Vec<Misma
 /// Matches the actual request path to the expected one.
 pub fn match_path(expected: String, actual: String, mismatches: &mut Vec<Mismatch>,
     matchers: &Option<Matchers>) {
-    if matchers::matcher_is_defined(vec![s!("$"), s!("path")], matchers) {
-        // val mismatch = Matchers.domatch[PathMismatch](matchers, Seq("$", "path"), expected.getPath,
-        //     replacedActual, PathMismatchFactory)
-        // mismatch.headOption
-    } else if expected != actual {
-        mismatches.push(Mismatch::PathMismatch { expected: expected, actual: actual });
+    let matcher_result = if matchers::matcher_is_defined(vec![s!("$"), s!("path")], matchers) {
+        matchers::match_values(vec![s!("$"), s!("path")], matchers.clone().unwrap(), &expected, &actual)
+    } else {
+        expected.matches(&actual, &Matcher::EqualityMatcher)
+    };
+    match matcher_result {
+        Err(message) => mismatches.push(Mismatch::PathMismatch { expected: expected.clone(),
+            actual: actual.clone(), mismatch: message.clone() }),
+        Ok(_) => ()
     }
 }
 
