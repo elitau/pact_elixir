@@ -46,7 +46,7 @@ fn match_query_returns_nothing_if_there_are_no_query_strings() {
     let mut mismatches = vec![];
     let expected = None;
     let actual = None;
-    match_query(expected, actual, &mut mismatches);
+    match_query(expected, actual, &mut mismatches, &None);
     assert!(mismatches.is_empty());
 }
 
@@ -57,7 +57,7 @@ fn match_query_returns_a_mismatch_if_there_is_no_expected_query_string() {
     let mut query_map = HashMap::new();
     query_map.insert("a".to_string(), vec!["b".to_string()]);
     let actual = Some(query_map);
-    match_query(expected, actual, &mut mismatches);
+    match_query(expected, actual, &mut mismatches, &None);
     assert!(!mismatches.is_empty());
     assert_eq!(mismatches[0], Mismatch::QueryMismatch { parameter: "a".to_string(),
         expected: "".to_string(), actual: "[\"b\"]".to_string(),
@@ -71,7 +71,7 @@ fn match_query_returns_a_mismatch_if_there_is_no_actual_query_string() {
     query_map.insert("a".to_string(), vec!["b".to_string()]);
     let expected = Some(query_map);
     let actual = None;
-    match_query(expected, actual, &mut mismatches);
+    match_query(expected, actual, &mut mismatches, &None);
     assert!(!mismatches.is_empty());
     assert_eq!(mismatches[0], Mismatch::QueryMismatch { parameter: "a".to_string(),
         expected: "[\"b\"]".to_string(), actual: "".to_string(),
@@ -88,7 +88,7 @@ fn match_query_returns_a_mismatch_if_there_is_an_actual_query_parameter_that_is_
     query_map.insert("a".to_string(), vec!["b".to_string()]);
     query_map.insert("c".to_string(), vec!["d".to_string()]);
     let actual = Some(query_map);
-    match_query(expected, actual, &mut mismatches);
+    match_query(expected, actual, &mut mismatches, &None);
     assert!(!mismatches.is_empty());
     assert_eq!(mismatches[0], Mismatch::QueryMismatch { parameter: "c".to_string(),
         expected: "".to_string(), actual: "[\"d\"]".to_string(),
@@ -105,7 +105,7 @@ fn match_query_returns_a_mismatch_if_there_is_an_expected_query_parameter_that_i
     query_map = HashMap::new();
     query_map.insert("a".to_string(), vec!["b".to_string()]);
     let actual = Some(query_map);
-    match_query(expected, actual, &mut mismatches);
+    match_query(expected, actual, &mut mismatches, &None);
     assert!(!mismatches.is_empty());
     assert_eq!(mismatches[0], Mismatch::QueryMismatch { parameter: "c".to_string(),
         expected: "[\"d\"]".to_string(), actual: "".to_string(),
@@ -123,7 +123,7 @@ fn match_query_returns_a_mismatch_if_there_is_an_empty_expected_query_parameter_
     query_map.insert("a".to_string(), vec!["b".to_string()]);
     query_map.insert("c".to_string(), vec!["d".to_string()]);
     let actual = Some(query_map);
-    match_query(expected, actual, &mut mismatches);
+    match_query(expected, actual, &mut mismatches, &None);
     assert!(!mismatches.is_empty());
     assert_eq!(mismatches[0], Mismatch::QueryMismatch { parameter: "c".to_string(),
         expected: "[]".to_string(), actual: "[\"d\"]".to_string(),
@@ -141,7 +141,7 @@ fn match_query_returns_a_mismatch_if_the_query_values_have_different_lengths() {
     query_map.insert("a".to_string(), vec!["b".to_string()]);
     query_map.insert("c".to_string(), vec!["d".to_string()]);
     let actual = Some(query_map);
-    match_query(expected, actual, &mut mismatches);
+    match_query(expected, actual, &mut mismatches, &None);
     assert_eq!(mismatches.len(), 2);
     assert_eq!(mismatches[0], Mismatch::QueryMismatch { parameter: "c".to_string(),
         expected: "[\"d\", \"e\"]".to_string(), actual: "[\"d\"]".to_string(),
@@ -160,7 +160,7 @@ fn match_query_returns_a_mismatch_if_the_values_are_not_the_same() {
     query_map = HashMap::new();
     query_map.insert("a".to_string(), vec!["c".to_string()]);
     let actual = Some(query_map);
-    match_query(expected, actual, &mut mismatches);
+    match_query(expected, actual, &mut mismatches, &None);
     assert!(!mismatches.is_empty());
     assert_eq!(mismatches[0], Mismatch::QueryMismatch { parameter: "a".to_string(),
         expected: "b".to_string(), actual: "c".to_string(),
@@ -170,14 +170,16 @@ fn match_query_returns_a_mismatch_if_the_values_are_not_the_same() {
 #[test]
 fn matching_headers_be_true_when_headers_are_equal() {
     let mut mismatches = vec![];
-    match_header_value(&"HEADER".to_string(), &"HEADER".to_string(), &"HEADER".to_string(), &mut mismatches);
+    match_header_value(&"HEADER".to_string(), &"HEADER".to_string(), &"HEADER".to_string(),
+        &mut mismatches, &None);
     assert!(mismatches.is_empty());
 }
 
 #[test]
 fn matching_headers_be_false_when_headers_are_not_equal() {
     let mut mismatches = vec![];
-    match_header_value(&"HEADER".to_string(), &"HEADER".to_string(), &"HEADER2".to_string(), &mut mismatches);
+    match_header_value(&"HEADER".to_string(), &"HEADER".to_string(), &"HEADER2".to_string(),
+        &mut mismatches, &None);
     assert!(!mismatches.is_empty());
     assert_eq!(mismatches[0], Mismatch::HeaderMismatch { key: "HEADER".to_string(),
         expected: "HEADER".to_string(), actual: "HEADER2".to_string(),
@@ -187,7 +189,8 @@ fn matching_headers_be_false_when_headers_are_not_equal() {
 #[test]
 fn matching_headers_exclude_whitespaces() {
     let mut mismatches = vec![];
-    match_header_value(&"HEADER".to_string(), &"HEADER1, HEADER2,   3".to_string(), &"HEADER1,HEADER2,3".to_string(), &mut mismatches);
+    match_header_value(&"HEADER".to_string(), &"HEADER1, HEADER2,   3".to_string(),
+        &"HEADER1,HEADER2,3".to_string(), &mut mismatches, &None);
     expect!(mismatches).to(be_empty());
 }
 
@@ -195,7 +198,7 @@ fn matching_headers_exclude_whitespaces() {
 fn matching_headers_includes_whitespaces_within_a_value() {
     let mut mismatches = vec![];
     match_header_value(&"HEADER".to_string(), &"HEADER 1, \tHEADER 2,\n3".to_string(),
-        &"HEADER 1,HEADER 2,3".to_string(), &mut mismatches);
+        &"HEADER 1,HEADER 2,3".to_string(), &mut mismatches, &None);
     expect!(mismatches).to(be_empty());
 }
 
@@ -203,7 +206,7 @@ fn matching_headers_includes_whitespaces_within_a_value() {
 fn content_type_header_matches_when_headers_are_equal() {
     let mut mismatches = vec![];
     match_header_value(&"CONTENT-TYPE".to_string(), &"application/json;charset=UTF-8".to_string(),
-        &"application/json; charset=UTF-8".to_string(), &mut mismatches);
+        &"application/json; charset=UTF-8".to_string(), &mut mismatches, &None);
     expect!(mismatches).to(be_empty());
 }
 
@@ -211,7 +214,7 @@ fn content_type_header_matches_when_headers_are_equal() {
 fn content_type_header_does_not_match_when_headers_are_not_equal() {
     let mut mismatches = vec![];
     match_header_value(&"CONTENT-TYPE".to_string(), &"application/pdf;charset=UTF-8".to_string(),
-        &"application/json;charset=UTF-8".to_string(), &mut mismatches);
+        &"application/json;charset=UTF-8".to_string(), &mut mismatches, &None);
     expect!(mismatches).to_not(be_empty());
 }
 
@@ -219,7 +222,7 @@ fn content_type_header_does_not_match_when_headers_are_not_equal() {
 fn content_type_header_does_not_match_when_expected_is_empty() {
     let mut mismatches = vec![];
     match_header_value(&"CONTENT-TYPE".to_string(), &"".to_string(),
-        &"application/json;charset=UTF-8".to_string(), &mut mismatches);
+        &"application/json;charset=UTF-8".to_string(), &mut mismatches, &None);
     expect!(mismatches).to_not(be_empty());
 }
 
@@ -227,7 +230,7 @@ fn content_type_header_does_not_match_when_expected_is_empty() {
 fn content_type_header_does_not_match_when_actual_is_empty() {
     let mut mismatches = vec![];
     match_header_value(&"CONTENT-TYPE".to_string(), &"application/pdf;charset=UTF-8".to_string(),
-        &"".to_string(), &mut mismatches);
+        &"".to_string(), &mut mismatches, &None);
     expect!(mismatches).to_not(be_empty());
 }
 
@@ -235,7 +238,7 @@ fn content_type_header_does_not_match_when_actual_is_empty() {
 fn content_type_header_does_not_match_when_charsets_are_not_equal() {
     let mut mismatches = vec![];
     match_header_value(&"CONTENT-TYPE".to_string(), &"application/json;charset=UTF-8".to_string(),
-        &"application/json;charset=UTF-16".to_string(), &mut mismatches);
+        &"application/json;charset=UTF-16".to_string(), &mut mismatches, &None);
     expect!(mismatches).to_not(be_empty());
 }
 
@@ -243,7 +246,7 @@ fn content_type_header_does_not_match_when_charsets_are_not_equal() {
 fn content_type_header_does_not_match_when_charsets_other_parameters_not_equal() {
     let mut mismatches = vec![];
     match_header_value(&"CONTENT-TYPE".to_string(), &"application/json;declaration=\"<950118.AEB0@XIson.com>\"".to_string(),
-        &"application/json;charset=UTF-8".to_string(), &mut mismatches);
+        &"application/json;charset=UTF-8".to_string(), &mut mismatches, &None);
     expect!(mismatches).to_not(be_empty());
 }
 
@@ -251,7 +254,7 @@ fn content_type_header_does_not_match_when_charsets_other_parameters_not_equal()
 fn content_type_header_does_match_when_charsets_is_missing_from_expected_header() {
     let mut mismatches = vec![];
     match_header_value(&"CONTENT-TYPE".to_string(), &"application/json".to_string(),
-        &"application/json;charset=UTF-8".to_string(), &mut mismatches);
+        &"application/json;charset=UTF-8".to_string(), &mut mismatches, &None);
     expect!(mismatches).to(be_empty());
 }
 
@@ -491,4 +494,60 @@ fn match_path_returns_a_mismatch_if_the_path_does_not_match_with_a_matcher() {
     expect!(mismatches.clone()).to_not(be_empty());
     expect!(mismatches[0].clone()).to(be_equal_to(Mismatch::PathMismatch { expected: s!("/path/1234"),
         actual: s!("/path/abc"), mismatch: s!("") }));
+}
+
+#[test]
+fn match_query_returns_no_mismatch_if_the_values_are_not_the_same_but_match_by_a_matcher() {
+    let mut mismatches = vec![];
+    let mut query_map = HashMap::new();
+    query_map.insert("a".to_string(), vec!["b".to_string()]);
+    let expected = Some(query_map);
+    query_map = HashMap::new();
+    query_map.insert("a".to_string(), vec!["c".to_string()]);
+    let actual = Some(query_map);
+    match_query(expected, actual, &mut mismatches, &Some(hashmap!{
+        s!("$.query.a") => hashmap!{ s!("match") => s!("regex"), s!("regex") => s!("\\w+") }
+    }));
+    expect!(mismatches).to(be_empty());
+}
+
+#[test]
+fn match_query_returns_a_mismatch_if_the_values_do_not_match_by_a_matcher() {
+    let mut mismatches = vec![];
+    let mut query_map = HashMap::new();
+    query_map.insert("a".to_string(), vec!["b".to_string()]);
+    let expected = Some(query_map);
+    query_map = HashMap::new();
+    query_map.insert("a".to_string(), vec!["b".to_string()]);
+    let actual = Some(query_map);
+    match_query(expected, actual, &mut mismatches, &Some(hashmap!{
+        s!("$.query.a") => hashmap!{ s!("match") => s!("regex"), s!("regex") => s!("\\d+") }
+    }));
+    expect!(mismatches.clone()).to_not(be_empty());
+    assert_eq!(mismatches[0], Mismatch::QueryMismatch { parameter: "a".to_string(),
+        expected: "b".to_string(), actual: "b".to_string(),
+        mismatch: s!("") });
+}
+
+#[test]
+fn matching_headers_be_true_when_headers_match_by_matcher() {
+    let mut mismatches = vec![];
+    match_header_value(&"HEADER".to_string(), &"HEADERX".to_string(), &"HEADERY".to_string(),
+        &mut mismatches, &Some(hashmap!{
+            s!("$.headers.HEADER") => hashmap!{ s!("match") => s!("regex"), s!("regex") => s!("\\w+") }
+        }));
+    expect!(mismatches).to(be_empty());
+}
+
+#[test]
+fn matching_headers_be_false_when_headers_do_not_match_by_matcher() {
+    let mut mismatches = vec![];
+    match_header_value(&"HEADER".to_string(), &"HEADER".to_string(), &"HEADER".to_string(),
+        &mut mismatches, &Some(hashmap!{
+            s!("$.headers.HEADER") => hashmap!{ s!("match") => s!("regex"), s!("regex") => s!("\\d+") }
+        }));
+    expect!(mismatches.clone()).to_not(be_empty());
+    assert_eq!(mismatches[0], Mismatch::HeaderMismatch { key: "HEADER".to_string(),
+        expected: "HEADER".to_string(), actual: "HEADER".to_string(),
+        mismatch: s!("") });
 }

@@ -45,9 +45,9 @@ fn resolve_matchers(path: &Vec<String>, matchers: &Matchers) -> Matchers {
         .filter(|kv| calc_path_weight(kv.0.clone(), path) > 0).collect()
 }
 
-pub fn matcher_is_defined(path: Vec<String>, matchers: &Option<Matchers>) -> bool {
+pub fn matcher_is_defined(path: &Vec<String>, matchers: &Option<Matchers>) -> bool {
     match *matchers {
-        Some(ref m) => !resolve_matchers(&path, m).is_empty(),
+        Some(ref m) => !resolve_matchers(path, m).is_empty(),
         None => false
     }
 }
@@ -64,6 +64,7 @@ pub trait Matches<A> {
 
 impl Matches<String> for String {
     fn matches(&self, actual: &String, matcher: &Matcher) -> Result<(), String> {
+        debug!("comparing '{}' to '{}' using {:?}", self, actual, matcher);
         match *matcher {
            Matcher::RegexMatcher(ref regex) => {
                if regex.is_match(actual) {
@@ -85,6 +86,7 @@ impl Matches<String> for String {
 
 impl Matches<u64> for String {
     fn matches(&self, actual: &u64, matcher: &Matcher) -> Result<(), String> {
+        debug!("comparing '{}' to {} using {:?}", self, actual, matcher);
         match *matcher {
            Matcher::RegexMatcher(ref regex) => {
                if regex.is_match(&actual.to_string()) {
@@ -100,6 +102,7 @@ impl Matches<u64> for String {
 
 impl Matches<f64> for u64 {
     fn matches(&self, actual: &f64, matcher: &Matcher) -> Result<(), String> {
+        debug!("comparing '{}' to {} using {:?}", self, actual, matcher);
         match *matcher {
            Matcher::RegexMatcher(ref regex) => {
                if regex.is_match(&actual.to_string()) {
@@ -183,9 +186,9 @@ fn select_best_matcher(path: &Vec<String>, matchers: &Matchers) -> Result<Matche
     matcher
 }
 
-pub fn match_values<E, A>(path: Vec<String>, matchers: Matchers, expected: &E, actual: &A) -> Result<(), String>
+pub fn match_values<E, A>(path: &Vec<String>, matchers: Matchers, expected: &E, actual: &A) -> Result<(), String>
     where E: Matches<A> + Display, A: Display {
-    let matcher = select_best_matcher(&path, &matchers);
+    let matcher = select_best_matcher(path, &matchers);
     match matcher {
         Err(err) => Err(format!("Matcher for path '{}' is invalid - {}", path.iter().join("."), err)),
         Ok(ref matcher) => expected.matches(actual, matcher)
@@ -202,24 +205,24 @@ mod tests {
 
     #[test]
     fn matcher_is_defined_returns_false_when_there_are_no_matchers() {
-        expect!(matcher_is_defined(vec![s!("$"), s!("a"), s!("b")], &None)).to(be_false());
+        expect!(matcher_is_defined(&vec![s!("$"), s!("a"), s!("b")], &None)).to(be_false());
     }
 
     #[test]
     fn matcher_is_defined_returns_false_when_the_path_does_not_have_a_matcher_entry() {
-        expect!(matcher_is_defined(vec![s!("$"), s!("a"), s!("b")], &Some(hashmap!{}))).to(be_false());
+        expect!(matcher_is_defined(&vec![s!("$"), s!("a"), s!("b")], &Some(hashmap!{}))).to(be_false());
     }
 
     #[test]
     fn matcher_is_defined_returns_true_when_the_path_does_have_a_matcher_entry() {
-        expect!(matcher_is_defined(vec![s!("$"), s!("a"), s!("b")], &Some(hashmap!{
+        expect!(matcher_is_defined(&vec![s!("$"), s!("a"), s!("b")], &Some(hashmap!{
             s!("$.a.b") => hashmap!{}
         }))).to(be_true());
     }
 
     #[test]
     fn matcher_is_defined_returns_true_when_the_parent_of_the_path_does_have_a_matcher_entry() {
-        expect!(matcher_is_defined(vec![s!("$"), s!("a"), s!("b"), s!("c")], &Some(hashmap!{
+        expect!(matcher_is_defined(&vec![s!("$"), s!("a"), s!("b"), s!("c")], &Some(hashmap!{
             s!("$.a.b") => hashmap!{}
         }))).to(be_true());
     }

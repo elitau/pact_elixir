@@ -96,7 +96,6 @@ fn unexpected_header_found() {
 }
 
 #[test]
-#[ignore]
 fn matches_with_regex() {
     let pact = Json::from_str(r#"
       {

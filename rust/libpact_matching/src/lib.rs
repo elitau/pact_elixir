@@ -267,8 +267,9 @@ pub fn match_method(expected: String, actual: String, mismatches: &mut Vec<Misma
 /// Matches the actual request path to the expected one.
 pub fn match_path(expected: String, actual: String, mismatches: &mut Vec<Mismatch>,
     matchers: &Option<Matchers>) {
-    let matcher_result = if matchers::matcher_is_defined(vec![s!("$"), s!("path")], matchers) {
-        matchers::match_values(vec![s!("$"), s!("path")], matchers.clone().unwrap(), &expected, &actual)
+    let path = vec![s!("$"), s!("path")];
+    let matcher_result = if matchers::matcher_is_defined(&path, matchers) {
+        matchers::match_values(&path, matchers.clone().unwrap(), &expected, &actual)
     } else {
         expected.matches(&actual, &Matcher::EqualityMatcher)
     };
@@ -280,21 +281,28 @@ pub fn match_path(expected: String, actual: String, mismatches: &mut Vec<Mismatc
 }
 
 fn compare_query_parameter_value(key: &String, expected: &String, actual: &String,
-    mismatches: &mut Vec<Mismatch>) {
-    if expected != actual {
-        mismatches.push(Mismatch::QueryMismatch { parameter: key.clone(),
+    mismatches: &mut Vec<Mismatch>, matchers: &Option<Matchers>) {
+    let path = vec![s!("$"), s!("query"), key.clone()];
+    let matcher_result = if matchers::matcher_is_defined(&path, matchers) {
+        matchers::match_values(&path, matchers.clone().unwrap(), expected, actual)
+    } else {
+        expected.matches(actual, &Matcher::EqualityMatcher)
+    };
+    match matcher_result {
+        Err(message) => mismatches.push(Mismatch::QueryMismatch { parameter: key.clone(),
             expected: expected.clone(),
             actual: actual.clone(),
-            mismatch: format!("Expected '{}' but received '{}' for query parameter '{}'",
-            expected, actual, key) });
+            mismatch: message
+        }),
+        Ok(_) => ()
     }
 }
 
 fn compare_query_parameter_values(key: &String, expected: &Vec<String>, actual: &Vec<String>,
-    mismatches: &mut Vec<Mismatch>) {
+    mismatches: &mut Vec<Mismatch>, matchers: &Option<Matchers>) {
     for (index, val) in expected.iter().enumerate() {
         if index < actual.len() {
-            compare_query_parameter_value(key, val, &actual[index], mismatches);
+            compare_query_parameter_value(key, val, &actual[index], mismatches, matchers);
         } else {
             mismatches.push(Mismatch::QueryMismatch { parameter: key.clone(),
                 expected: format!("{:?}", expected),
@@ -305,7 +313,7 @@ fn compare_query_parameter_values(key: &String, expected: &Vec<String>, actual: 
 }
 
 fn match_query_values(key: &String, expected: &Vec<String>, actual: &Vec<String>,
-    mismatches: &mut Vec<Mismatch>) {
+    mismatches: &mut Vec<Mismatch>, matchers: &Option<Matchers>) {
     if expected.is_empty() && !actual.is_empty() {
         mismatches.push(Mismatch::QueryMismatch { parameter: key.clone(),
             expected: format!("{:?}", expected),
@@ -320,15 +328,15 @@ fn match_query_values(key: &String, expected: &Vec<String>, actual: &Vec<String>
                     "Expected query parameter '{}' with {} value(s) but received {} value(s)",
                     key, expected.len(), actual.len()) });
         }
-        compare_query_parameter_values(key, expected, actual, mismatches);
+        compare_query_parameter_values(key, expected, actual, mismatches, matchers);
     }
 }
 
 fn match_query_maps(expected: HashMap<String, Vec<String>>, actual: HashMap<String, Vec<String>>,
-    mismatches: &mut Vec<Mismatch>) {
+    mismatches: &mut Vec<Mismatch>, matchers: &Option<Matchers>) {
     for (key, value) in &expected {
         match actual.get(key) {
-            Some(actual_value) => match_query_values(key, value, actual_value, mismatches),
+            Some(actual_value) => match_query_values(key, value, actual_value, mismatches, matchers),
             None => mismatches.push(Mismatch::QueryMismatch { parameter: key.clone(),
                 expected: format!("{:?}", value),
                 actual: "".to_string(),
@@ -348,9 +356,10 @@ fn match_query_maps(expected: HashMap<String, Vec<String>>, actual: HashMap<Stri
 
 /// Matches the actual query parameters to the expected ones.
 pub fn match_query(expected: Option<HashMap<String, Vec<String>>>,
-    actual: Option<HashMap<String, Vec<String>>>, mismatches: &mut Vec<Mismatch>) {
+    actual: Option<HashMap<String, Vec<String>>>, mismatches: &mut Vec<Mismatch>,
+    matchers: &Option<Matchers>) {
     match (actual, expected) {
-        (Some(aqm), Some(eqm)) => match_query_maps(eqm, aqm, mismatches),
+        (Some(aqm), Some(eqm)) => match_query_maps(eqm, aqm, mismatches, matchers),
         (Some(aqm), None) => for (key, value) in &aqm {
             mismatches.push(Mismatch::QueryMismatch { parameter: key.clone(),
                 expected: "".to_string(),
@@ -403,14 +412,25 @@ fn match_content_type(expected: &String, actual: &String, mismatches: &mut Vec<M
     }
 }
 
-fn match_header_value(key: &String, expected: &String, actual: &String, mismatches: &mut Vec<Mismatch>) {
-    if key.to_lowercase() == "content-type" {
-        match_content_type(expected, actual, mismatches);
-    } else if strip_whitespace::<String>(expected, ",") != strip_whitespace::<String>(actual, ",") {
-        mismatches.push(Mismatch::HeaderMismatch { key: key.clone(),
-            expected: format!("{}", expected),
-            actual: format!("{}", actual),
-            mismatch: format!("Expected header '{}' to have value '{}' but was '{}'", key, expected, actual) });
+fn match_header_value(key: &String, expected: &String, actual: &String, mismatches: &mut Vec<Mismatch>,
+    matchers: &Option<Matchers>) {
+    let path = vec![s!("$"), s!("headers"), key.clone()];
+    let expected = strip_whitespace::<String>(expected, ",");
+    let actual = strip_whitespace::<String>(actual, ",");
+    let matcher_result = if matchers::matcher_is_defined(&path, matchers) {
+        matchers::match_values(&path, matchers.clone().unwrap(), &expected, &actual)
+    } else if key.to_lowercase() == "content-type" {
+        match_content_type(&expected, &actual, mismatches);
+        Ok(())
+    } else {
+        expected.matches(&actual, &Matcher::EqualityMatcher)
+    };
+    match matcher_result {
+        Err(message) => mismatches.push(Mismatch::HeaderMismatch { key: key.clone(),
+                expected: expected.clone(),
+                actual: actual.clone(),
+                mismatch: message }),
+        Ok(_) => ()
     }
 }
 
@@ -422,10 +442,10 @@ fn find_entry(map: &HashMap<String, String>, key: &String) -> Option<(String, St
 }
 
 fn match_header_maps(expected: HashMap<String, String>, actual: HashMap<String, String>,
-    mismatches: &mut Vec<Mismatch>) {
+    mismatches: &mut Vec<Mismatch>, matchers: &Option<Matchers>) {
     for (key, value) in &expected {
         match find_entry(&actual, key) {
-            Some((_, actual_value)) => match_header_value(key, value, &actual_value, mismatches),
+            Some((_, actual_value)) => match_header_value(key, value, &actual_value, mismatches, matchers),
             None => mismatches.push(Mismatch::HeaderMismatch { key: key.clone(),
                 expected: format!("{:?}", value),
                 actual: "".to_string(),
@@ -436,9 +456,10 @@ fn match_header_maps(expected: HashMap<String, String>, actual: HashMap<String, 
 
 /// Matches the actual headers to the expected ones.
 pub fn match_headers(expected: Option<HashMap<String, String>>,
-    actual: Option<HashMap<String, String>>, mismatches: &mut Vec<Mismatch>) {
+    actual: Option<HashMap<String, String>>, mismatches: &mut Vec<Mismatch>,
+    matchers: &Option<Matchers>) {
     match (actual, expected) {
-        (Some(aqm), Some(eqm)) => match_header_maps(eqm, aqm, mismatches),
+        (Some(aqm), Some(eqm)) => match_header_maps(eqm, aqm, mismatches, matchers),
         (Some(_), None) => (),
         (None, Some(eqm)) => for (key, value) in &eqm {
             mismatches.push(Mismatch::HeaderMismatch { key: key.clone(),
@@ -494,8 +515,8 @@ pub fn match_request(expected: models::Request, actual: models::Request) -> Vec<
     match_method(expected.method.clone(), actual.method.clone(), &mut mismatches);
     match_path(expected.path.clone(), actual.path.clone(), &mut mismatches, &expected.matching_rules);
     match_body(&expected, &actual, DiffConfig::NoUnexpectedKeys, &mut mismatches);
-    match_query(expected.query, actual.query, &mut mismatches);
-    match_headers(expected.headers, actual.headers, &mut mismatches);
+    match_query(expected.query, actual.query, &mut mismatches, &expected.matching_rules);
+    match_headers(expected.headers, actual.headers, &mut mismatches, &expected.matching_rules);
 
     mismatches
 }
@@ -514,7 +535,7 @@ pub fn match_response(expected: models::Response, actual: models::Response) -> V
     info!("comparing to expected response: {:?}", expected);
     match_body(&expected, &actual, DiffConfig::AllowUnexpectedKeys, &mut mismatches);
     match_status(expected.status, actual.status, &mut mismatches);
-    match_headers(expected.headers, actual.headers, &mut mismatches);
+    match_headers(expected.headers, actual.headers, &mut mismatches, &expected.matching_rules);
 
     mismatches
 }

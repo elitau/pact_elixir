@@ -79,7 +79,6 @@ fn header_name_is_different_case() {
 }
 
 #[test]
-#[ignore]
 fn matches_with_regex() {
     let pact = Json::from_str(r#"
       {
