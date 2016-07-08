@@ -8,7 +8,6 @@ use rustc_serialize::json::Json;
 use expectest::prelude::*;
 
 #[test]
-#[ignore]
 fn array_with_nested_array_that_does_not_match() {
     let pact = Json::from_str(r#"
       {
@@ -68,7 +67,6 @@ fn array_with_nested_array_that_does_not_match() {
 }
 
 #[test]
-#[ignore]
 fn array_with_at_least_one_element_matching_by_example() {
     let pact = Json::from_str(r#"
       {
@@ -122,7 +120,6 @@ fn array_with_at_least_one_element_matching_by_example() {
 }
 
 #[test]
-#[ignore]
 fn array_with_nested_array_that_matches() {
     let pact = Json::from_str(r#"
       {
@@ -191,7 +188,6 @@ fn array_with_nested_array_that_matches() {
 }
 
 #[test]
-#[ignore]
 fn matches_with_regex() {
     let pact = Json::from_str(r#"
       {
@@ -244,7 +240,6 @@ fn matches_with_regex() {
 }
 
 #[test]
-#[ignore]
 fn matches_with_type() {
     let pact = Json::from_str(r#"
       {
@@ -902,7 +897,6 @@ fn unexpected_key_with_null_value() {
 }
 
 #[test]
-#[ignore]
 fn array_size_less_than_required() {
     let pact = Json::from_str(r#"
       {
@@ -1093,7 +1087,6 @@ fn array_with_at_least_one_element_not_matching_example_type() {
 }
 
 #[test]
-#[ignore]
 fn array_with_regular_expression_in_element() {
     let pact = Json::from_str(r#"
       {
@@ -1203,7 +1196,6 @@ fn array_with_regular_expression_that_does_not_match_in_element() {
 }
 
 #[test]
-#[ignore]
 fn matches_with_regex_with_bracket_notation() {
     let pact = Json::from_str(r#"
       {
@@ -1250,7 +1242,6 @@ fn matches_with_regex_with_bracket_notation() {
 }
 
 #[test]
-#[ignore]
 fn missing_key() {
     let pact = Json::from_str(r#"
       {

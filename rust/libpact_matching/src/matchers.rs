@@ -211,6 +211,7 @@ fn select_best_matcher(path: &Vec<String>, matchers: &Matchers) -> Result<Matche
                                 }
                             }
                         },
+                        "type" => Ok(Matcher::TypeMatcher),
                         _ => {
                             warn!("Unrecognised matcher type '{}' for path '{}', defaulting to equality",
                                 val, path_str);

@@ -8,7 +8,6 @@ use rustc_serialize::json::Json;
 use expectest::prelude::*;
 
 #[test]
-#[ignore]
 fn objects_in_array_type_matching() {
     let pact = Json::from_str(r#"
       {
@@ -59,7 +58,6 @@ fn objects_in_array_type_matching() {
 }
 
 #[test]
-#[ignore]
 fn objects_in_array_with_type_mismatching() {
     let pact = Json::from_str(r#"
       {
@@ -178,7 +176,6 @@ fn string_found_at_key_when_number_expected() {
 }
 
 #[test]
-#[ignore]
 fn array_with_type_matcher() {
     let pact = Json::from_str(r#"
       {
@@ -226,7 +223,6 @@ fn array_with_type_matcher() {
 }
 
 #[test]
-#[ignore]
 fn matches_with_regex() {
     let pact = Json::from_str(r#"
       {
@@ -271,7 +267,6 @@ fn matches_with_regex() {
 }
 
 #[test]
-#[ignore]
 fn matches_with_type() {
     let pact = Json::from_str(r#"
       {
@@ -466,7 +461,6 @@ fn not_null_found_in_array_when_null_expected() {
 }
 
 #[test]
-#[ignore]
 fn array_with_type_matcher_mismatch() {
     let pact = Json::from_str(r#"
       {
@@ -511,7 +505,6 @@ fn array_with_type_matcher_mismatch() {
 }
 
 #[test]
-#[ignore]
 fn additional_property_with_type_matcher() {
     let pact = Json::from_str(r#"
       {
@@ -557,7 +550,6 @@ fn additional_property_with_type_matcher() {
 }
 
 #[test]
-#[ignore]
 fn array_at_top_level_with_matchers() {
     let pact = Json::from_str(r#"
       {
@@ -1233,7 +1225,6 @@ fn array_at_top_level() {
 }
 
 #[test]
-#[ignore]
 fn array_with_regex_matcher() {
     let pact = Json::from_str(r#"
       {

@@ -39,7 +39,8 @@ fn strip_whitespace<'a, T: FromIterator<&'a str>>(val: &'a String, split_by: &'a
 }
 
 lazy_static! {
-    static ref BODY_MATCHERS: [(Regex, fn(expected: &String, actual: &String, config: DiffConfig, mismatches: &mut Vec<Mismatch>)); 2] = [
+    static ref BODY_MATCHERS: [(Regex, fn(expected: &String, actual: &String, config: DiffConfig,
+            mismatches: &mut Vec<Mismatch>, matchers: &Option<Matchers>)); 2] = [
         (Regex::new("application/.*json").unwrap(), json::match_json),
         (Regex::new("application/.*xml").unwrap(), xml::match_xml)
     ];
@@ -472,16 +473,16 @@ pub fn match_headers(expected: Option<HashMap<String, String>>,
 }
 
 fn compare_bodies(mimetype: String, expected: &String, actual: &String, config: DiffConfig,
-    mismatches: &mut Vec<Mismatch>) {
+    mismatches: &mut Vec<Mismatch>, matchers: &Option<Matchers>) {
     match BODY_MATCHERS.iter().find(|mt| mt.0.is_match(&mimetype)) {
-        Some(ref match_fn) => match_fn.1(expected, actual, config, mismatches),
+        Some(ref match_fn) => match_fn.1(expected, actual, config, mismatches, matchers),
         None => match_text(expected, actual, mismatches)
     }
 }
 
 /// Matches the actual body to the expected one. This takes into account the content type of each.
 pub fn match_body(expected: &models::HttpPart, actual: &models::HttpPart, config: DiffConfig,
-    mismatches: &mut Vec<Mismatch>) {
+    mismatches: &mut Vec<Mismatch>, matchers: &Option<Matchers>) {
     if expected.mimetype() == actual.mimetype() {
         match (expected.body(), actual.body()) {
             (&models::OptionalBody::Missing, _) => (),
@@ -498,7 +499,7 @@ pub fn match_body(expected: &models::HttpPart, actual: &models::HttpPart, config
             },
             (_, _) => {
                 compare_bodies(expected.mimetype(), &expected.body().value(), &actual.body().value(),
-                    config, mismatches);
+                    config, mismatches, matchers);
             }
         }
     } else if expected.body().is_present() {
@@ -514,7 +515,7 @@ pub fn match_request(expected: models::Request, actual: models::Request) -> Vec<
     info!("comparing to expected request: {:?}", expected);
     match_method(expected.method.clone(), actual.method.clone(), &mut mismatches);
     match_path(expected.path.clone(), actual.path.clone(), &mut mismatches, &expected.matching_rules);
-    match_body(&expected, &actual, DiffConfig::NoUnexpectedKeys, &mut mismatches);
+    match_body(&expected, &actual, DiffConfig::NoUnexpectedKeys, &mut mismatches, &expected.matching_rules);
     match_query(expected.query, actual.query, &mut mismatches, &expected.matching_rules);
     match_headers(expected.headers, actual.headers, &mut mismatches, &expected.matching_rules);
 
@@ -533,7 +534,7 @@ pub fn match_response(expected: models::Response, actual: models::Response) -> V
     let mut mismatches = vec![];
 
     info!("comparing to expected response: {:?}", expected);
-    match_body(&expected, &actual, DiffConfig::AllowUnexpectedKeys, &mut mismatches);
+    match_body(&expected, &actual, DiffConfig::AllowUnexpectedKeys, &mut mismatches, &expected.matching_rules);
     match_status(expected.status, actual.status, &mut mismatches);
     match_headers(expected.headers, actual.headers, &mut mismatches, &expected.matching_rules);
 
