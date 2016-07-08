@@ -6,6 +6,7 @@ use pact_matching::match_request;
 use rustc_serialize::json::Json;
 #[allow(unused_imports)]
 use expectest::prelude::*;
+use env_logger;
 
 #[test]
 fn array_with_nested_array_that_does_not_match() {
@@ -898,6 +899,7 @@ fn unexpected_key_with_null_value() {
 
 #[test]
 fn array_size_less_than_required() {
+    env_logger::init().unwrap_or(());
     let pact = Json::from_str(r#"
       {
         "match": false,

@@ -25,15 +25,53 @@ impl Matches<Json> for Json {
     fn matches(&self, actual: &Json, matcher: &Matcher) -> Result<(), String> {
         let result = match *matcher {
            Matcher::RegexMatcher(ref regex) => {
-               if regex.is_match(&actual.to_string()) {
+               let actual_str = match actual {
+                   &Json::String(ref s) => s.clone(),
+                   _ => actual.to_string()
+               };
+               if regex.is_match(&actual_str) {
                    Ok(())
                } else {
                    Err(format!("Expected '{}' to match '{}'", value_of(actual), regex))
                }
            },
-           Matcher::TypeMatcher | Matcher::MinTypeMatcher(_) | Matcher::MaxTypeMatcher(_) => {
+           Matcher::TypeMatcher => {
                match (self, actual) {
                    (&Json::Array(_), &Json::Array(_)) => Ok(()),
+                   (&Json::Boolean(_), &Json::Boolean(_)) => Ok(()),
+                   (&Json::F64(_), &Json::F64(_)) => Ok(()),
+                   (&Json::I64(_), &Json::I64(_)) => Ok(()),
+                   (&Json::Null, &Json::Null) => Ok(()),
+                   (&Json::Object(_), &Json::Object(_)) => Ok(()),
+                   (&Json::String(_), &Json::String(_)) => Ok(()),
+                   (&Json::U64(_), &Json::U64(_)) => Ok(()),
+                   (_, _) => Err(format!("Expected '{}' to be the same type as '{}'", value_of(self), value_of(actual))),
+               }
+           },
+           Matcher::MinTypeMatcher(min) => {
+               match (self, actual) {
+                   (&Json::Array(_), &Json::Array(ref actual_array)) => if actual_array.len() < min {
+                       Err(format!("Expected '{}' to have at least {} item(s)", value_of(actual), min))
+                   } else {
+                       Ok(())
+                   },
+                   (&Json::Boolean(_), &Json::Boolean(_)) => Ok(()),
+                   (&Json::F64(_), &Json::F64(_)) => Ok(()),
+                   (&Json::I64(_), &Json::I64(_)) => Ok(()),
+                   (&Json::Null, &Json::Null) => Ok(()),
+                   (&Json::Object(_), &Json::Object(_)) => Ok(()),
+                   (&Json::String(_), &Json::String(_)) => Ok(()),
+                   (&Json::U64(_), &Json::U64(_)) => Ok(()),
+                   (_, _) => Err(format!("Expected '{}' to be the same type as '{}'", value_of(self), value_of(actual))),
+               }
+           },
+           Matcher::MaxTypeMatcher(max) => {
+               match (self, actual) {
+                   (&Json::Array(_), &Json::Array(ref actual_array)) => if actual_array.len() > max {
+                       Err(format!("Expected '{}' to have at most {} item(s)", value_of(actual), max))
+                   } else {
+                       Ok(())
+                   },
                    (&Json::Boolean(_), &Json::Boolean(_)) => Ok(()),
                    (&Json::F64(_), &Json::F64(_)) => Ok(()),
                    (&Json::I64(_), &Json::I64(_)) => Ok(()),
@@ -267,6 +305,9 @@ mod tests {
     use expectest::prelude::*;
     use Mismatch;
     use DiffConfig;
+    use matchers::*;
+    use rustc_serialize::json::Json;
+    use regex::Regex;
 
     #[test]
     fn match_json_handles_invalid_expected_json() {
@@ -553,6 +594,50 @@ mod tests {
             s!("$.body.*") => hashmap!{ s!("match") => s!("type") }
         }));
         expect!(mismatches.clone()).to(be_empty());
+    }
+
+    #[test]
+    fn equality_matcher_test() {
+        let matcher = Matcher::EqualityMatcher;
+        expect!(Json::String(s!("100")).matches(&Json::String(s!("100")), &matcher)).to(be_ok());
+        expect!(Json::String(s!("100")).matches(&Json::String(s!("101")), &matcher)).to(be_err());
+        expect!(Json::String(s!("100")).matches(&Json::U64(100), &matcher)).to(be_err());
+    }
+
+    #[test]
+    fn regex_matcher_test() {
+        let matcher = Matcher::RegexMatcher(Regex::new("^\\d+$").unwrap());
+        expect!(Json::String(s!("100")).matches(&Json::String(s!("100")), &matcher)).to(be_ok());
+        expect!(Json::String(s!("100")).matches(&Json::String(s!("101")), &matcher)).to(be_ok());
+        expect!(Json::String(s!("100")).matches(&Json::String(s!("10a")), &matcher)).to(be_err());
+        expect!(Json::String(s!("100")).matches(&Json::U64(100), &matcher)).to(be_ok());
+        expect!(Json::String(s!("100")).matches(&Json::F64(100.02), &matcher)).to(be_err());
+    }
+
+    #[test]
+    fn type_matcher_test() {
+        let matcher = Matcher::TypeMatcher;
+        expect!(Json::String(s!("100")).matches(&Json::String(s!("100")), &matcher)).to(be_ok());
+        expect!(Json::String(s!("100")).matches(&Json::String(s!("101")), &matcher)).to(be_ok());
+        expect!(Json::String(s!("100")).matches(&Json::String(s!("10a")), &matcher)).to(be_ok());
+        expect!(Json::String(s!("100")).matches(&Json::U64(100), &matcher)).to(be_err());
+        expect!(Json::String(s!("100")).matches(&Json::F64(100f64), &matcher)).to(be_err());
+    }
+
+    #[test]
+    fn min_type_matcher_test() {
+        let matcher = Matcher::MinTypeMatcher(2);
+        expect!(Json::Array(vec![]).matches(&Json::Array(vec![Json::U64(100), Json::U64(100)]), &matcher)).to(be_ok());
+        expect!(Json::Array(vec![]).matches(&Json::Array(vec![Json::U64(100)]), &matcher)).to(be_err());
+        expect!(Json::String(s!("100")).matches(&Json::String(s!("101")), &matcher)).to(be_ok());
+    }
+
+    #[test]
+    fn max_type_matcher_test() {
+        let matcher = Matcher::MaxTypeMatcher(1);
+        expect!(Json::Array(vec![]).matches(&Json::Array(vec![Json::U64(100), Json::U64(100)]), &matcher)).to(be_err());
+        expect!(Json::Array(vec![]).matches(&Json::Array(vec![Json::U64(100)]), &matcher)).to(be_ok());
+        expect!(Json::String(s!("100")).matches(&Json::String(s!("101")), &matcher)).to(be_ok());
     }
 
 }

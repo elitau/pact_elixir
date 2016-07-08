@@ -206,11 +206,11 @@ fn select_best_matcher(path: &Vec<String>, matchers: &Matchers) -> Result<Matche
     let path_str = path.iter().join(".");
     let matcher = match matchers.iter().max_by_key(|&(k, _)| calc_path_weight(k.clone(), path)) {
         Some(kv) => {
-            match kv.1.get(&s!("match")) {
+            match kv.1.get("match") {
                 Some(val) => {
                     match val.as_str() {
                         "regex" => {
-                            match kv.1.get(&s!("regex")) {
+                            match kv.1.get("regex") {
                                 Some(regex) => {
                                     match Regex::new(regex) {
                                         Ok(regex) => Ok(Matcher::RegexMatcher(regex)),
@@ -230,8 +230,8 @@ fn select_best_matcher(path: &Vec<String>, matchers: &Matchers) -> Result<Matche
                                 }
                             }
                         },
-                        "type" => if kv.1.contains_key(&s!("min")) {
-                            let min = kv.1.get(&s!("min")).unwrap();
+                        "type" => if kv.1.contains_key("min") {
+                            let min = kv.1.get("min").unwrap();
                             match min.parse() {
                                 Ok(min) => Ok(Matcher::MinTypeMatcher(min)),
                                 Err(err) => {
@@ -239,8 +239,8 @@ fn select_best_matcher(path: &Vec<String>, matchers: &Matchers) -> Result<Matche
                                     Ok(Matcher::TypeMatcher)
                                 }
                             }
-                        } else if kv.1.contains_key(&s!("max")) {
-                            let max = kv.1.get(&s!("max")).unwrap();
+                        } else if kv.1.contains_key("max") {
+                            let max = kv.1.get("max").unwrap();
                             match max.parse() {
                                 Ok(max) => Ok(Matcher::MaxTypeMatcher(max)),
                                 Err(err) => {
@@ -259,26 +259,40 @@ fn select_best_matcher(path: &Vec<String>, matchers: &Matchers) -> Result<Matche
                     }
                 },
                 None => {
-                    warn!("Matcher defined for path '{}' does not have an explicit 'match' attribute, falling back to equality or regular expression matching",
+                    warn!("Matcher defined for path '{}' does not have an explicit 'match' attribute, falling back to equality, type or regular expression matching",
                         path_str);
-                    match kv.1.get(&s!("regex")) {
-                        Some(regex) => {
-                            match Regex::new(regex) {
-                                Ok(regex) => Ok(Matcher::RegexMatcher(regex)),
-                                Err(err) => {
-                                    error!("Failed to compile regular expression '{}' provided for regex matcher for path '{}' - {}",
-                                        regex, path_str, err);
-                                    Err(format!("Failed to compile regular expression '{}' provided for regex matcher for path '{}' - {}",
-                                        regex, path_str, err))
-                                }
+                    if kv.1.contains_key("regex") {
+                        let regex = kv.1.get("regex").unwrap();
+                        match Regex::new(regex) {
+                            Ok(regex) => Ok(Matcher::RegexMatcher(regex)),
+                            Err(err) => {
+                                error!("Failed to compile regular expression '{}' provided for regex matcher for path '{}' - {}",
+                                    regex, path_str, err);
+                                Err(format!("Failed to compile regular expression '{}' provided for regex matcher for path '{}' - {}",
+                                    regex, path_str, err))
                             }
-                        },
-                        None => {
-                            error!("No regular expression provided for regex matcher for path '{}'",
-                                path_str);
-                            Err(format!("No regular expression provided for regex matcher for path '{}'",
-                                path_str))
                         }
+                    } else if kv.1.contains_key("min") {
+                        let min = kv.1.get("min").unwrap();
+                        match min.parse() {
+                            Ok(min) => Ok(Matcher::MinTypeMatcher(min)),
+                            Err(err) => {
+                                warn!("Failed to parse minimum value '{}', defaulting to type matcher - {}", min, err);
+                                Ok(Matcher::TypeMatcher)
+                            }
+                        }
+                    } else if kv.1.contains_key("max") {
+                        let max = kv.1.get("max").unwrap();
+                        match max.parse() {
+                            Ok(max) => Ok(Matcher::MaxTypeMatcher(max)),
+                            Err(err) => {
+                                warn!("Failed to parse maximum value '{}', defaulting to type matcher - {}", max, err);
+                                Ok(Matcher::TypeMatcher)
+                            }
+                        }
+                    } else {
+                        error!("Invalid matcher definition {:?} for path '{}'", kv.1, path_str);
+                        Err(format!("Invalid matcher definition {:?} for path '{}'", kv.1, path_str))
                     }
                 }
             }
@@ -447,6 +461,21 @@ mod tests {
         expect!(select_best_matcher(&vec![s!("$"), s!("body"), s!("item1"), s!("level"), s!("3"), s!("id")], &matchers)).to(be_ok().value(Matcher::RegexMatcher(Regex::new("12").unwrap())));
         expect!(select_best_matcher(&vec![s!("$"), s!("body"), s!("item2"), s!("level"), s!("1"), s!("id")], &matchers)).to(be_ok().value(Matcher::RegexMatcher(Regex::new("13").unwrap())));
         expect!(select_best_matcher(&vec![s!("$"), s!("body"), s!("item2"), s!("level"), s!("3"), s!("id")], &matchers)).to(be_ok().value(Matcher::RegexMatcher(Regex::new("13").unwrap())));
+    }
+
+    #[test]
+    fn select_best_matcher_selects_handles_missing_type_attribute() {
+        let matchers = hashmap!{
+            s!("$.body.item1") => hashmap!{ s!("regex") => s!("3") },
+            s!("$.body.item2") => hashmap!{ s!("min") => s!("4") },
+            s!("$.body.item3") => hashmap!{ s!("max") => s!("4") },
+            s!("$.body.item4") => hashmap!{ s!("other") => s!("4") },
+        };
+
+        expect!(select_best_matcher(&vec![s!("$"), s!("body"), s!("item1")], &matchers)).to(be_ok().value(Matcher::RegexMatcher(Regex::new("3").unwrap())));
+        expect!(select_best_matcher(&vec![s!("$"), s!("body"), s!("item2")], &matchers)).to(be_ok().value(Matcher::MinTypeMatcher(4)));
+        expect!(select_best_matcher(&vec![s!("$"), s!("body"), s!("item3")], &matchers)).to(be_ok().value(Matcher::MaxTypeMatcher(4)));
+        expect!(select_best_matcher(&vec![s!("$"), s!("body"), s!("item4")], &matchers)).to(be_err());
     }
 
     #[test]
