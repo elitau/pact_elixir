@@ -1033,7 +1033,6 @@ fn unexpected_index_with_null_value() {
 }
 
 #[test]
-#[ignore]
 fn array_with_at_least_one_element_not_matching_example_type() {
     let pact = Json::from_str(r#"
       {
@@ -1141,7 +1140,6 @@ fn array_with_regular_expression_in_element() {
 }
 
 #[test]
-#[ignore]
 fn array_with_regular_expression_that_does_not_match_in_element() {
     let pact = Json::from_str(r#"
       {

@@ -56,7 +56,9 @@ pub fn matcher_is_defined(path: &Vec<String>, matchers: &Option<Matchers>) -> bo
 pub enum Matcher {
     EqualityMatcher,
     RegexMatcher(Regex),
-    TypeMatcher
+    TypeMatcher,
+    MinTypeMatcher(usize),
+    MaxTypeMatcher(usize)
 }
 
 pub trait Matches<A> {
@@ -75,6 +77,20 @@ impl Matches<String> for String {
                }
            },
            Matcher::TypeMatcher => Ok(()),
+           Matcher::MinTypeMatcher(min) => {
+               if actual.len() < min {
+                   Err(format!("Expected '{}' to have a minimum length of {}", actual, min))
+               } else {
+                   Ok(())
+               }
+           },
+           Matcher::MaxTypeMatcher(max) => {
+               if actual.len() > max {
+                   Err(format!("Expected '{}' to have a maximum length of {}", actual, max))
+               } else {
+                   Ok(())
+               }
+           },
            Matcher::EqualityMatcher => {
                if self == actual {
                    Ok(())
@@ -97,7 +113,8 @@ impl Matches<u64> for String {
                    Err(format!("Expected '{}' to match '{}'", actual, regex))
                }
            },
-           Matcher::TypeMatcher => Err(format!("Expected '{}' (String) to be the same type as '{}' (Number)", self, actual)),
+           Matcher::TypeMatcher | Matcher::MinTypeMatcher(_) | Matcher::MaxTypeMatcher(_) => Err(
+               format!("Expected '{}' (String) to be the same type as '{}' (Number)", self, actual)),
            Matcher::EqualityMatcher => Err(format!("Expected '{}' (String) to be equal to '{}' (Number)", self, actual))
        }
     }
@@ -114,7 +131,7 @@ impl Matches<u64> for u64 {
                    Err(format!("Expected '{}' to match '{}'", actual, regex))
                }
            },
-           Matcher::TypeMatcher => Ok(()),
+           Matcher::TypeMatcher | Matcher::MinTypeMatcher(_) | Matcher::MaxTypeMatcher(_) => Ok(()),
            Matcher::EqualityMatcher => {
                if self == actual {
                    Ok(())
@@ -137,7 +154,8 @@ impl Matches<f64> for u64 {
                    Err(format!("Expected '{}' to match '{}'", actual, regex))
                }
            },
-           Matcher::TypeMatcher => Err(format!("Expected '{}' (Integer) to be the same type as '{}' (Decimal)", self, actual)),
+           Matcher::TypeMatcher | Matcher::MinTypeMatcher(_) | Matcher::MaxTypeMatcher(_) => Err(
+               format!("Expected '{}' (Integer) to be the same type as '{}' (Decimal)", self, actual)),
            Matcher::EqualityMatcher => Err(format!("Expected '{}' (Integer) to be equal to '{}' (Decimal)", self, actual))
        }
     }
@@ -154,7 +172,7 @@ impl Matches<f64> for f64 {
                    Err(format!("Expected '{}' to match '{}'", actual, regex))
                }
            },
-           Matcher::TypeMatcher => Ok(()),
+           Matcher::TypeMatcher | Matcher::MinTypeMatcher(_) | Matcher::MaxTypeMatcher(_) => Ok(()),
            Matcher::EqualityMatcher => {
                if self == actual {
                    Ok(())
@@ -177,7 +195,8 @@ impl Matches<u64> for f64 {
                    Err(format!("Expected '{}' to match '{}'", actual, regex))
                }
            },
-           Matcher::TypeMatcher => Err(format!("Expected '{}' (Decimal) to be the same type as '{}' (Integer)", self, actual)),
+           Matcher::TypeMatcher | Matcher::MinTypeMatcher(_) | Matcher::MaxTypeMatcher(_) => Err(
+               format!("Expected '{}' (Decimal) to be the same type as '{}' (Integer)", self, actual)),
            Matcher::EqualityMatcher => Err(format!("Expected '{}' (Decimal) to be equal to '{}' (Integer)", self, actual))
        }
     }
@@ -211,7 +230,27 @@ fn select_best_matcher(path: &Vec<String>, matchers: &Matchers) -> Result<Matche
                                 }
                             }
                         },
-                        "type" => Ok(Matcher::TypeMatcher),
+                        "type" => if kv.1.contains_key(&s!("min")) {
+                            let min = kv.1.get(&s!("min")).unwrap();
+                            match min.parse() {
+                                Ok(min) => Ok(Matcher::MinTypeMatcher(min)),
+                                Err(err) => {
+                                    warn!("Failed to parse minimum value '{}', defaulting to type matcher - {}", min, err);
+                                    Ok(Matcher::TypeMatcher)
+                                }
+                            }
+                        } else if kv.1.contains_key(&s!("max")) {
+                            let max = kv.1.get(&s!("max")).unwrap();
+                            match max.parse() {
+                                Ok(max) => Ok(Matcher::MaxTypeMatcher(max)),
+                                Err(err) => {
+                                    warn!("Failed to parse maximum value '{}', defaulting to type matcher - {}", max, err);
+                                    Ok(Matcher::TypeMatcher)
+                                }
+                            }
+                        } else {
+                            Ok(Matcher::TypeMatcher)
+                        },
                         _ => {
                             warn!("Unrecognised matcher type '{}' for path '{}', defaulting to equality",
                                 val, path_str);
@@ -443,4 +482,27 @@ mod tests {
         expect!(100.1f64.matches(&100.2, &matcher)).to(be_ok());
     }
 
+    #[test]
+    fn min_type_matcher_test() {
+        let matcher = Matcher::MinTypeMatcher(3);
+        expect!(s!("100").matches(&s!("100"), &matcher)).to(be_ok());
+        expect!(s!("100").matches(&s!("10a"), &matcher)).to(be_ok());
+        expect!(s!("100").matches(&s!("10"), &matcher)).to(be_err());
+        expect!(s!("100").matches(&100, &matcher)).to(be_err());
+        expect!(100.matches(&200, &matcher)).to(be_ok());
+        expect!(100.matches(&100.1, &matcher)).to(be_err());
+        expect!(100.1f64.matches(&100.2, &matcher)).to(be_ok());
+    }
+
+    #[test]
+    fn max_type_matcher_test() {
+        let matcher = Matcher::MaxTypeMatcher(3);
+        expect!(s!("100").matches(&s!("100"), &matcher)).to(be_ok());
+        expect!(s!("100").matches(&s!("10a"), &matcher)).to(be_ok());
+        expect!(s!("100").matches(&s!("1000"), &matcher)).to(be_err());
+        expect!(s!("100").matches(&100, &matcher)).to(be_err());
+        expect!(100.matches(&200, &matcher)).to(be_ok());
+        expect!(100.matches(&100.1, &matcher)).to(be_err());
+        expect!(100.1f64.matches(&100.2, &matcher)).to(be_ok());
+    }
 }

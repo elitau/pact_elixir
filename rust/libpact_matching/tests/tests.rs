@@ -2,6 +2,7 @@
 extern crate rustc_serialize;
 #[macro_use(expect)] extern crate expectest;
 #[macro_use] extern crate p_macro;
+extern crate env_logger;
 
 mod spec_testcases;
 
