@@ -31,10 +31,11 @@ fn empty_headers() {
     let actual = Response::from_json(&pact.find("actual").unwrap(), &PactSpecification::V1);
     println!("{:?}", actual);
     let pact_match = pact.find("match").unwrap();
+    let result = match_response(expected, actual);
     if pact_match.as_boolean().unwrap() {
-       expect!(match_response(expected, actual)).to(be_empty());
+       expect!(result).to(be_empty());
     } else {
-       expect!(match_response(expected, actual)).to_not(be_empty());
+       expect!(result).to_not(be_empty());
     }
 }
 
@@ -63,10 +64,11 @@ fn header_name_is_different_case() {
     let actual = Response::from_json(&pact.find("actual").unwrap(), &PactSpecification::V1);
     println!("{:?}", actual);
     let pact_match = pact.find("match").unwrap();
+    let result = match_response(expected, actual);
     if pact_match.as_boolean().unwrap() {
-       expect!(match_response(expected, actual)).to(be_empty());
+       expect!(result).to(be_empty());
     } else {
-       expect!(match_response(expected, actual)).to_not(be_empty());
+       expect!(result).to_not(be_empty());
     }
 }
 
@@ -95,10 +97,11 @@ fn header_value_is_different_case() {
     let actual = Response::from_json(&pact.find("actual").unwrap(), &PactSpecification::V1);
     println!("{:?}", actual);
     let pact_match = pact.find("match").unwrap();
+    let result = match_response(expected, actual);
     if pact_match.as_boolean().unwrap() {
-       expect!(match_response(expected, actual)).to(be_empty());
+       expect!(result).to(be_empty());
     } else {
-       expect!(match_response(expected, actual)).to_not(be_empty());
+       expect!(result).to_not(be_empty());
     }
 }
 
@@ -129,10 +132,11 @@ fn matches() {
     let actual = Response::from_json(&pact.find("actual").unwrap(), &PactSpecification::V1);
     println!("{:?}", actual);
     let pact_match = pact.find("match").unwrap();
+    let result = match_response(expected, actual);
     if pact_match.as_boolean().unwrap() {
-       expect!(match_response(expected, actual)).to(be_empty());
+       expect!(result).to(be_empty());
     } else {
-       expect!(match_response(expected, actual)).to_not(be_empty());
+       expect!(result).to_not(be_empty());
     }
 }
 
@@ -161,10 +165,11 @@ fn order_of_comma_separated_header_values_different() {
     let actual = Response::from_json(&pact.find("actual").unwrap(), &PactSpecification::V1);
     println!("{:?}", actual);
     let pact_match = pact.find("match").unwrap();
+    let result = match_response(expected, actual);
     if pact_match.as_boolean().unwrap() {
-       expect!(match_response(expected, actual)).to(be_empty());
+       expect!(result).to(be_empty());
     } else {
-       expect!(match_response(expected, actual)).to_not(be_empty());
+       expect!(result).to_not(be_empty());
     }
 }
 
@@ -191,10 +196,11 @@ fn unexpected_header_found() {
     let actual = Response::from_json(&pact.find("actual").unwrap(), &PactSpecification::V1);
     println!("{:?}", actual);
     let pact_match = pact.find("match").unwrap();
+    let result = match_response(expected, actual);
     if pact_match.as_boolean().unwrap() {
-       expect!(match_response(expected, actual)).to(be_empty());
+       expect!(result).to(be_empty());
     } else {
-       expect!(match_response(expected, actual)).to_not(be_empty());
+       expect!(result).to_not(be_empty());
     }
 }
 
@@ -223,9 +229,10 @@ fn whitespace_after_comma_different() {
     let actual = Response::from_json(&pact.find("actual").unwrap(), &PactSpecification::V1);
     println!("{:?}", actual);
     let pact_match = pact.find("match").unwrap();
+    let result = match_response(expected, actual);
     if pact_match.as_boolean().unwrap() {
-       expect!(match_response(expected, actual)).to(be_empty());
+       expect!(result).to(be_empty());
     } else {
-       expect!(match_response(expected, actual)).to_not(be_empty());
+       expect!(result).to_not(be_empty());
     }
 }

@@ -2857,33 +2857,25 @@ fn string_found_in_array_when_number_expected_xml() {
 }
 
 #[test]
-fn unexpected_index_with_not_null_value_xml() {
+fn unexpected_index_with_non_empty_value_xml() {
     env_logger::init().unwrap_or(());
     let pact = Json::from_str(r#"
       {
         "match": false,
-        "comment": "Unexpected favourite colour",
+        "comment": "XML Unexpected favourite colour",
         "expected" : {
           "method": "POST",
           "path": "/",
           "query": "",
-          "headers": {"Content-Type": "application/json"},
-          "body": {
-            "alligator":{
-              "favouriteColours": ["red","blue"]
-            }
-          }
+          "headers": {"Content-Type": "application/xml"},
+          "body": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><alligator><favouriteColours><favouriteColour>red</favouriteColour><favouriteColour>blue</favouriteColour></favouriteColours></alligator>"
         },
         "actual": {
           "method": "POST",
           "path": "/",
           "query": "",
-          "headers": {"Content-Type": "application/json"},
-          "body": {
-            "alligator":{
-              "favouriteColours": ["red","blue","taupe"]
-            }
-          }
+          "headers": {"Content-Type": "application/xml"},
+          "body": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><alligator><favouriteColours><favouriteColour>red</favouriteColour><favouriteColour>blue</favouriteColour><favouriteColour>taupe</favouriteColour></favouriteColours></alligator>"
         }
       }
     "#).unwrap();
@@ -2901,33 +2893,25 @@ fn unexpected_index_with_not_null_value_xml() {
 }
 
 #[test]
-fn unexpected_index_with_null_value_xml() {
+fn unexpected_key_with_empty_value_xml() {
     env_logger::init().unwrap_or(());
     let pact = Json::from_str(r#"
       {
         "match": false,
-        "comment": "Unexpected favourite colour with null value",
+        "comment": "XML Unexpected phone number with empty value",
         "expected" : {
           "method": "POST",
           "path": "/",
           "query": "",
-          "headers": {"Content-Type": "application/json"},
-          "body": {
-            "alligator":{
-              "favouriteColours": ["red","blue"]
-            }
-          }
+          "headers": {"Content-Type": "application/xml"},
+          "body": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><alligator name=\"Mary\"/>"
         },
         "actual": {
           "method": "POST",
           "path": "/",
           "query": "",
-          "headers": {"Content-Type": "application/json"},
-          "body": {
-            "alligator":{
-              "favouriteColours": ["red","blue", null]
-            }
-          }
+          "headers": {"Content-Type": "application/xml"},
+          "body": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><alligator name=\"Mary\" phoneNumber=\"\"/>"
         }
       }
     "#).unwrap();
@@ -2945,34 +2929,25 @@ fn unexpected_index_with_null_value_xml() {
 }
 
 #[test]
-fn unexpected_key_with_not_null_value_xml() {
+fn unexpected_key_with_non_empty_value_xml() {
     env_logger::init().unwrap_or(());
     let pact = Json::from_str(r#"
       {
         "match": false,
-        "comment": "Unexpected phone number",
+        "comment": "XML Unexpected phone number",
         "expected" : {
           "method": "POST",
           "path": "/",
           "query": "",
-          "headers": {"Content-Type": "application/json"},
-          "body": {
-            "alligator":{
-              "name": "Mary"
-            }
-          }
+          "headers": {"Content-Type": "application/xml"},
+          "body": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><alligator name=\"Mary\"/>"
         },
         "actual": {
           "method": "POST",
           "path": "/",
           "query": "",
-          "headers": {"Content-Type": "application/json"},
-          "body": {
-            "alligator":{
-              "name": "Mary",
-              "phoneNumber": "12345678"
-            }
-          }
+          "headers": {"Content-Type": "application/xml"},
+          "body": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><alligator name=\"Mary\" phoneNumber=\"12345678\"/>"
         }
       }
     "#).unwrap();
@@ -2990,34 +2965,25 @@ fn unexpected_key_with_not_null_value_xml() {
 }
 
 #[test]
-fn unexpected_key_with_null_value_xml() {
+fn unexpected_index_with_missing_value_xml() {
     env_logger::init().unwrap_or(());
     let pact = Json::from_str(r#"
       {
         "match": false,
-        "comment": "Unexpected phone number with null value",
+        "comment": "XML Unexpected favourite colour with empty value",
         "expected" : {
           "method": "POST",
           "path": "/",
           "query": "",
-          "headers": {"Content-Type": "application/json"},
-          "body": {
-            "alligator":{
-              "name": "Mary"
-            }
-          }
+          "headers": {"Content-Type": "application/xml"},
+          "body": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><alligator><favouriteColours><favouriteColour>red</favouriteColour><favouriteColour>blue</favouriteColour></favouriteColours></alligator>"
         },
         "actual": {
           "method": "POST",
           "path": "/",
           "query": "",
-          "headers": {"Content-Type": "application/json"},
-          "body": {
-            "alligator":{
-              "name": "Mary",
-              "phoneNumber": null
-            }
-          }
+          "headers": {"Content-Type": "application/xml"},
+          "body": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><alligator><favouriteColours><favouriteColour>red</favouriteColour><favouriteColour>blue</favouriteColour><favouriteColour></favouriteColour></favouriteColours></alligator>"
         }
       }
     "#).unwrap();

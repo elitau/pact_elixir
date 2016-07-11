@@ -40,7 +40,7 @@ specs.eachFileRecurse(FileType.DIRECTORIES) { dir ->
       def json = new JsonSlurper().parse(it)
       def testBody = """
         |#[test]
-        |fn ${it.name.replaceAll(' ', '_').replaceAll('\\.json', '')}() {
+        |fn ${it.name.replaceAll(' ', '_').replaceAll('-', '_').replaceAll('\\.json', '')}() {
         |    env_logger::init().unwrap_or(());
         |    let pact = Json::from_str(r#"
       """
@@ -68,10 +68,11 @@ specs.eachFileRecurse(FileType.DIRECTORIES) { dir ->
         |    let actual = Response::from_json(&pact.find("actual").unwrap(), &PactSpecification::$specVersion);
         |    println!("{:?}", actual);
         |    let pact_match = pact.find("match").unwrap();
+        |    let result = match_response(expected, actual);
         |    if pact_match.as_boolean().unwrap() {
-        |       expect!(match_response(expected, actual)).to(be_empty());
+        |       expect!(result).to(be_empty());
         |    } else {
-        |       expect!(match_response(expected, actual)).to_not(be_empty());
+        |       expect!(result).to_not(be_empty());
         |    }
         """
       }

@@ -53,10 +53,11 @@ fn objects_in_array_type_matching() {
     let actual = Response::from_json(&pact.find("actual").unwrap(), &PactSpecification::V2);
     println!("{:?}", actual);
     let pact_match = pact.find("match").unwrap();
+    let result = match_response(expected, actual);
     if pact_match.as_boolean().unwrap() {
-       expect!(match_response(expected, actual)).to(be_empty());
+       expect!(result).to(be_empty());
     } else {
-       expect!(match_response(expected, actual)).to_not(be_empty());
+       expect!(result).to_not(be_empty());
     }
 }
 
@@ -98,10 +99,11 @@ fn objects_in_array_with_type_mismatching() {
     let actual = Response::from_json(&pact.find("actual").unwrap(), &PactSpecification::V2);
     println!("{:?}", actual);
     let pact_match = pact.find("match").unwrap();
+    let result = match_response(expected, actual);
     if pact_match.as_boolean().unwrap() {
-       expect!(match_response(expected, actual)).to(be_empty());
+       expect!(result).to(be_empty());
     } else {
-       expect!(match_response(expected, actual)).to_not(be_empty());
+       expect!(result).to_not(be_empty());
     }
 }
 
@@ -136,10 +138,11 @@ fn property_name_is_different_case() {
     let actual = Response::from_json(&pact.find("actual").unwrap(), &PactSpecification::V2);
     println!("{:?}", actual);
     let pact_match = pact.find("match").unwrap();
+    let result = match_response(expected, actual);
     if pact_match.as_boolean().unwrap() {
-       expect!(match_response(expected, actual)).to(be_empty());
+       expect!(result).to(be_empty());
     } else {
-       expect!(match_response(expected, actual)).to_not(be_empty());
+       expect!(result).to_not(be_empty());
     }
 }
 
@@ -174,10 +177,11 @@ fn string_found_at_key_when_number_expected() {
     let actual = Response::from_json(&pact.find("actual").unwrap(), &PactSpecification::V2);
     println!("{:?}", actual);
     let pact_match = pact.find("match").unwrap();
+    let result = match_response(expected, actual);
     if pact_match.as_boolean().unwrap() {
-       expect!(match_response(expected, actual)).to(be_empty());
+       expect!(result).to(be_empty());
     } else {
-       expect!(match_response(expected, actual)).to_not(be_empty());
+       expect!(result).to_not(be_empty());
     }
 }
 
@@ -222,10 +226,11 @@ fn array_with_type_matcher() {
     let actual = Response::from_json(&pact.find("actual").unwrap(), &PactSpecification::V2);
     println!("{:?}", actual);
     let pact_match = pact.find("match").unwrap();
+    let result = match_response(expected, actual);
     if pact_match.as_boolean().unwrap() {
-       expect!(match_response(expected, actual)).to(be_empty());
+       expect!(result).to(be_empty());
     } else {
-       expect!(match_response(expected, actual)).to_not(be_empty());
+       expect!(result).to_not(be_empty());
     }
 }
 
@@ -267,10 +272,11 @@ fn matches_with_regex() {
     let actual = Response::from_json(&pact.find("actual").unwrap(), &PactSpecification::V2);
     println!("{:?}", actual);
     let pact_match = pact.find("match").unwrap();
+    let result = match_response(expected, actual);
     if pact_match.as_boolean().unwrap() {
-       expect!(match_response(expected, actual)).to(be_empty());
+       expect!(result).to(be_empty());
     } else {
-       expect!(match_response(expected, actual)).to_not(be_empty());
+       expect!(result).to_not(be_empty());
     }
 }
 
@@ -313,10 +319,11 @@ fn matches_with_type() {
     let actual = Response::from_json(&pact.find("actual").unwrap(), &PactSpecification::V2);
     println!("{:?}", actual);
     let pact_match = pact.find("match").unwrap();
+    let result = match_response(expected, actual);
     if pact_match.as_boolean().unwrap() {
-       expect!(match_response(expected, actual)).to(be_empty());
+       expect!(result).to(be_empty());
     } else {
-       expect!(match_response(expected, actual)).to_not(be_empty());
+       expect!(result).to_not(be_empty());
     }
 }
 
@@ -355,10 +362,11 @@ fn matches() {
     let actual = Response::from_json(&pact.find("actual").unwrap(), &PactSpecification::V2);
     println!("{:?}", actual);
     let pact_match = pact.find("match").unwrap();
+    let result = match_response(expected, actual);
     if pact_match.as_boolean().unwrap() {
-       expect!(match_response(expected, actual)).to(be_empty());
+       expect!(result).to(be_empty());
     } else {
-       expect!(match_response(expected, actual)).to_not(be_empty());
+       expect!(result).to_not(be_empty());
     }
 }
 
@@ -394,10 +402,11 @@ fn missing_key() {
     let actual = Response::from_json(&pact.find("actual").unwrap(), &PactSpecification::V2);
     println!("{:?}", actual);
     let pact_match = pact.find("match").unwrap();
+    let result = match_response(expected, actual);
     if pact_match.as_boolean().unwrap() {
-       expect!(match_response(expected, actual)).to(be_empty());
+       expect!(result).to(be_empty());
     } else {
-       expect!(match_response(expected, actual)).to_not(be_empty());
+       expect!(result).to_not(be_empty());
     }
 }
 
@@ -428,10 +437,11 @@ fn no_body_no_content_type() {
     let actual = Response::from_json(&pact.find("actual").unwrap(), &PactSpecification::V2);
     println!("{:?}", actual);
     let pact_match = pact.find("match").unwrap();
+    let result = match_response(expected, actual);
     if pact_match.as_boolean().unwrap() {
-       expect!(match_response(expected, actual)).to(be_empty());
+       expect!(result).to(be_empty());
     } else {
-       expect!(match_response(expected, actual)).to_not(be_empty());
+       expect!(result).to_not(be_empty());
     }
 }
 
@@ -466,10 +476,11 @@ fn not_null_found_in_array_when_null_expected() {
     let actual = Response::from_json(&pact.find("actual").unwrap(), &PactSpecification::V2);
     println!("{:?}", actual);
     let pact_match = pact.find("match").unwrap();
+    let result = match_response(expected, actual);
     if pact_match.as_boolean().unwrap() {
-       expect!(match_response(expected, actual)).to(be_empty());
+       expect!(result).to(be_empty());
     } else {
-       expect!(match_response(expected, actual)).to_not(be_empty());
+       expect!(result).to_not(be_empty());
     }
 }
 
@@ -511,10 +522,11 @@ fn array_with_type_matcher_mismatch() {
     let actual = Response::from_json(&pact.find("actual").unwrap(), &PactSpecification::V2);
     println!("{:?}", actual);
     let pact_match = pact.find("match").unwrap();
+    let result = match_response(expected, actual);
     if pact_match.as_boolean().unwrap() {
-       expect!(match_response(expected, actual)).to(be_empty());
+       expect!(result).to(be_empty());
     } else {
-       expect!(match_response(expected, actual)).to_not(be_empty());
+       expect!(result).to_not(be_empty());
     }
 }
 
@@ -557,10 +569,11 @@ fn additional_property_with_type_matcher() {
     let actual = Response::from_json(&pact.find("actual").unwrap(), &PactSpecification::V2);
     println!("{:?}", actual);
     let pact_match = pact.find("match").unwrap();
+    let result = match_response(expected, actual);
     if pact_match.as_boolean().unwrap() {
-       expect!(match_response(expected, actual)).to(be_empty());
+       expect!(result).to(be_empty());
     } else {
-       expect!(match_response(expected, actual)).to_not(be_empty());
+       expect!(result).to_not(be_empty());
     }
 }
 
@@ -636,10 +649,11 @@ fn array_at_top_level_with_matchers() {
     let actual = Response::from_json(&pact.find("actual").unwrap(), &PactSpecification::V2);
     println!("{:?}", actual);
     let pact_match = pact.find("match").unwrap();
+    let result = match_response(expected, actual);
     if pact_match.as_boolean().unwrap() {
-       expect!(match_response(expected, actual)).to(be_empty());
+       expect!(result).to(be_empty());
     } else {
-       expect!(match_response(expected, actual)).to_not(be_empty());
+       expect!(result).to_not(be_empty());
     }
 }
 
@@ -674,10 +688,11 @@ fn null_found_at_key_where_not_null_expected() {
     let actual = Response::from_json(&pact.find("actual").unwrap(), &PactSpecification::V2);
     println!("{:?}", actual);
     let pact_match = pact.find("match").unwrap();
+    let result = match_response(expected, actual);
     if pact_match.as_boolean().unwrap() {
-       expect!(match_response(expected, actual)).to(be_empty());
+       expect!(result).to(be_empty());
     } else {
-       expect!(match_response(expected, actual)).to_not(be_empty());
+       expect!(result).to_not(be_empty());
     }
 }
 
@@ -712,10 +727,11 @@ fn different_value_found_at_key() {
     let actual = Response::from_json(&pact.find("actual").unwrap(), &PactSpecification::V2);
     println!("{:?}", actual);
     let pact_match = pact.find("match").unwrap();
+    let result = match_response(expected, actual);
     if pact_match.as_boolean().unwrap() {
-       expect!(match_response(expected, actual)).to(be_empty());
+       expect!(result).to(be_empty());
     } else {
-       expect!(match_response(expected, actual)).to_not(be_empty());
+       expect!(result).to_not(be_empty());
     }
 }
 
@@ -748,10 +764,11 @@ fn keys_out_of_order_match() {
     let actual = Response::from_json(&pact.find("actual").unwrap(), &PactSpecification::V2);
     println!("{:?}", actual);
     let pact_match = pact.find("match").unwrap();
+    let result = match_response(expected, actual);
     if pact_match.as_boolean().unwrap() {
-       expect!(match_response(expected, actual)).to(be_empty());
+       expect!(result).to(be_empty());
     } else {
-       expect!(match_response(expected, actual)).to_not(be_empty());
+       expect!(result).to_not(be_empty());
     }
 }
 
@@ -786,10 +803,11 @@ fn array_in_different_order() {
     let actual = Response::from_json(&pact.find("actual").unwrap(), &PactSpecification::V2);
     println!("{:?}", actual);
     let pact_match = pact.find("match").unwrap();
+    let result = match_response(expected, actual);
     if pact_match.as_boolean().unwrap() {
-       expect!(match_response(expected, actual)).to(be_empty());
+       expect!(result).to(be_empty());
     } else {
-       expect!(match_response(expected, actual)).to_not(be_empty());
+       expect!(result).to_not(be_empty());
     }
 }
 
@@ -824,10 +842,11 @@ fn missing_index() {
     let actual = Response::from_json(&pact.find("actual").unwrap(), &PactSpecification::V2);
     println!("{:?}", actual);
     let pact_match = pact.find("match").unwrap();
+    let result = match_response(expected, actual);
     if pact_match.as_boolean().unwrap() {
-       expect!(match_response(expected, actual)).to(be_empty());
+       expect!(result).to(be_empty());
     } else {
-       expect!(match_response(expected, actual)).to_not(be_empty());
+       expect!(result).to_not(be_empty());
     }
 }
 
@@ -884,10 +903,11 @@ fn deeply_nested_objects() {
     let actual = Response::from_json(&pact.find("actual").unwrap(), &PactSpecification::V2);
     println!("{:?}", actual);
     let pact_match = pact.find("match").unwrap();
+    let result = match_response(expected, actual);
     if pact_match.as_boolean().unwrap() {
-       expect!(match_response(expected, actual)).to(be_empty());
+       expect!(result).to(be_empty());
     } else {
-       expect!(match_response(expected, actual)).to_not(be_empty());
+       expect!(result).to_not(be_empty());
     }
 }
 
@@ -922,10 +942,11 @@ fn different_value_found_at_index() {
     let actual = Response::from_json(&pact.find("actual").unwrap(), &PactSpecification::V2);
     println!("{:?}", actual);
     let pact_match = pact.find("match").unwrap();
+    let result = match_response(expected, actual);
     if pact_match.as_boolean().unwrap() {
-       expect!(match_response(expected, actual)).to(be_empty());
+       expect!(result).to(be_empty());
     } else {
-       expect!(match_response(expected, actual)).to_not(be_empty());
+       expect!(result).to_not(be_empty());
     }
 }
 
@@ -960,10 +981,11 @@ fn not_null_found_at_key_when_null_expected() {
     let actual = Response::from_json(&pact.find("actual").unwrap(), &PactSpecification::V2);
     println!("{:?}", actual);
     let pact_match = pact.find("match").unwrap();
+    let result = match_response(expected, actual);
     if pact_match.as_boolean().unwrap() {
-       expect!(match_response(expected, actual)).to(be_empty());
+       expect!(result).to(be_empty());
     } else {
-       expect!(match_response(expected, actual)).to_not(be_empty());
+       expect!(result).to_not(be_empty());
     }
 }
 
@@ -998,10 +1020,11 @@ fn null_found_in_array_when_not_null_expected() {
     let actual = Response::from_json(&pact.find("actual").unwrap(), &PactSpecification::V2);
     println!("{:?}", actual);
     let pact_match = pact.find("match").unwrap();
+    let result = match_response(expected, actual);
     if pact_match.as_boolean().unwrap() {
-       expect!(match_response(expected, actual)).to(be_empty());
+       expect!(result).to(be_empty());
     } else {
-       expect!(match_response(expected, actual)).to_not(be_empty());
+       expect!(result).to_not(be_empty());
     }
 }
 
@@ -1036,10 +1059,11 @@ fn number_found_at_key_when_string_expected() {
     let actual = Response::from_json(&pact.find("actual").unwrap(), &PactSpecification::V2);
     println!("{:?}", actual);
     let pact_match = pact.find("match").unwrap();
+    let result = match_response(expected, actual);
     if pact_match.as_boolean().unwrap() {
-       expect!(match_response(expected, actual)).to(be_empty());
+       expect!(result).to(be_empty());
     } else {
-       expect!(match_response(expected, actual)).to_not(be_empty());
+       expect!(result).to_not(be_empty());
     }
 }
 
@@ -1074,10 +1098,11 @@ fn number_found_in_array_when_string_expected() {
     let actual = Response::from_json(&pact.find("actual").unwrap(), &PactSpecification::V2);
     println!("{:?}", actual);
     let pact_match = pact.find("match").unwrap();
+    let result = match_response(expected, actual);
     if pact_match.as_boolean().unwrap() {
-       expect!(match_response(expected, actual)).to(be_empty());
+       expect!(result).to(be_empty());
     } else {
-       expect!(match_response(expected, actual)).to_not(be_empty());
+       expect!(result).to_not(be_empty());
     }
 }
 
@@ -1117,10 +1142,11 @@ fn objects_in_array_first_matches() {
     let actual = Response::from_json(&pact.find("actual").unwrap(), &PactSpecification::V2);
     println!("{:?}", actual);
     let pact_match = pact.find("match").unwrap();
+    let result = match_response(expected, actual);
     if pact_match.as_boolean().unwrap() {
-       expect!(match_response(expected, actual)).to(be_empty());
+       expect!(result).to(be_empty());
     } else {
-       expect!(match_response(expected, actual)).to_not(be_empty());
+       expect!(result).to_not(be_empty());
     }
 }
 
@@ -1155,10 +1181,11 @@ fn objects_in_array_no_matches() {
     let actual = Response::from_json(&pact.find("actual").unwrap(), &PactSpecification::V2);
     println!("{:?}", actual);
     let pact_match = pact.find("match").unwrap();
+    let result = match_response(expected, actual);
     if pact_match.as_boolean().unwrap() {
-       expect!(match_response(expected, actual)).to(be_empty());
+       expect!(result).to(be_empty());
     } else {
-       expect!(match_response(expected, actual)).to_not(be_empty());
+       expect!(result).to_not(be_empty());
     }
 }
 
@@ -1192,10 +1219,11 @@ fn objects_in_array_second_matches() {
     let actual = Response::from_json(&pact.find("actual").unwrap(), &PactSpecification::V2);
     println!("{:?}", actual);
     let pact_match = pact.find("match").unwrap();
+    let result = match_response(expected, actual);
     if pact_match.as_boolean().unwrap() {
-       expect!(match_response(expected, actual)).to(be_empty());
+       expect!(result).to(be_empty());
     } else {
-       expect!(match_response(expected, actual)).to_not(be_empty());
+       expect!(result).to_not(be_empty());
     }
 }
 
@@ -1248,10 +1276,11 @@ fn array_at_top_level() {
     let actual = Response::from_json(&pact.find("actual").unwrap(), &PactSpecification::V2);
     println!("{:?}", actual);
     let pact_match = pact.find("match").unwrap();
+    let result = match_response(expected, actual);
     if pact_match.as_boolean().unwrap() {
-       expect!(match_response(expected, actual)).to(be_empty());
+       expect!(result).to(be_empty());
     } else {
-       expect!(match_response(expected, actual)).to_not(be_empty());
+       expect!(result).to_not(be_empty());
     }
 }
 
@@ -1296,10 +1325,11 @@ fn array_with_regex_matcher() {
     let actual = Response::from_json(&pact.find("actual").unwrap(), &PactSpecification::V2);
     println!("{:?}", actual);
     let pact_match = pact.find("match").unwrap();
+    let result = match_response(expected, actual);
     if pact_match.as_boolean().unwrap() {
-       expect!(match_response(expected, actual)).to(be_empty());
+       expect!(result).to(be_empty());
     } else {
-       expect!(match_response(expected, actual)).to_not(be_empty());
+       expect!(result).to_not(be_empty());
     }
 }
 
@@ -1334,10 +1364,11 @@ fn unexpected_index_with_not_null_value() {
     let actual = Response::from_json(&pact.find("actual").unwrap(), &PactSpecification::V2);
     println!("{:?}", actual);
     let pact_match = pact.find("match").unwrap();
+    let result = match_response(expected, actual);
     if pact_match.as_boolean().unwrap() {
-       expect!(match_response(expected, actual)).to(be_empty());
+       expect!(result).to(be_empty());
     } else {
-       expect!(match_response(expected, actual)).to_not(be_empty());
+       expect!(result).to_not(be_empty());
     }
 }
 
@@ -1372,10 +1403,11 @@ fn unexpected_index_with_null_value() {
     let actual = Response::from_json(&pact.find("actual").unwrap(), &PactSpecification::V2);
     println!("{:?}", actual);
     let pact_match = pact.find("match").unwrap();
+    let result = match_response(expected, actual);
     if pact_match.as_boolean().unwrap() {
-       expect!(match_response(expected, actual)).to(be_empty());
+       expect!(result).to(be_empty());
     } else {
-       expect!(match_response(expected, actual)).to_not(be_empty());
+       expect!(result).to_not(be_empty());
     }
 }
 
@@ -1411,10 +1443,11 @@ fn unexpected_key_with_not_null_value() {
     let actual = Response::from_json(&pact.find("actual").unwrap(), &PactSpecification::V2);
     println!("{:?}", actual);
     let pact_match = pact.find("match").unwrap();
+    let result = match_response(expected, actual);
     if pact_match.as_boolean().unwrap() {
-       expect!(match_response(expected, actual)).to(be_empty());
+       expect!(result).to(be_empty());
     } else {
-       expect!(match_response(expected, actual)).to_not(be_empty());
+       expect!(result).to_not(be_empty());
     }
 }
 
@@ -1450,10 +1483,11 @@ fn unexpected_key_with_null_value() {
     let actual = Response::from_json(&pact.find("actual").unwrap(), &PactSpecification::V2);
     println!("{:?}", actual);
     let pact_match = pact.find("match").unwrap();
+    let result = match_response(expected, actual);
     if pact_match.as_boolean().unwrap() {
-       expect!(match_response(expected, actual)).to(be_empty());
+       expect!(result).to(be_empty());
     } else {
-       expect!(match_response(expected, actual)).to_not(be_empty());
+       expect!(result).to_not(be_empty());
     }
 }
 
@@ -1488,10 +1522,11 @@ fn string_found_in_array_when_number_expected() {
     let actual = Response::from_json(&pact.find("actual").unwrap(), &PactSpecification::V2);
     println!("{:?}", actual);
     let pact_match = pact.find("match").unwrap();
+    let result = match_response(expected, actual);
     if pact_match.as_boolean().unwrap() {
-       expect!(match_response(expected, actual)).to(be_empty());
+       expect!(result).to(be_empty());
     } else {
-       expect!(match_response(expected, actual)).to_not(be_empty());
+       expect!(result).to_not(be_empty());
     }
 }
 
@@ -1523,10 +1558,11 @@ fn missing_body() {
     let actual = Response::from_json(&pact.find("actual").unwrap(), &PactSpecification::V2);
     println!("{:?}", actual);
     let pact_match = pact.find("match").unwrap();
+    let result = match_response(expected, actual);
     if pact_match.as_boolean().unwrap() {
-       expect!(match_response(expected, actual)).to(be_empty());
+       expect!(result).to(be_empty());
     } else {
-       expect!(match_response(expected, actual)).to_not(be_empty());
+       expect!(result).to_not(be_empty());
     }
 }
 
@@ -1553,10 +1589,11 @@ fn plain_text_that_does_not_match() {
     let actual = Response::from_json(&pact.find("actual").unwrap(), &PactSpecification::V2);
     println!("{:?}", actual);
     let pact_match = pact.find("match").unwrap();
+    let result = match_response(expected, actual);
     if pact_match.as_boolean().unwrap() {
-       expect!(match_response(expected, actual)).to(be_empty());
+       expect!(result).to(be_empty());
     } else {
-       expect!(match_response(expected, actual)).to_not(be_empty());
+       expect!(result).to_not(be_empty());
     }
 }
 
@@ -1583,10 +1620,11 @@ fn plain_text_that_matches() {
     let actual = Response::from_json(&pact.find("actual").unwrap(), &PactSpecification::V2);
     println!("{:?}", actual);
     let pact_match = pact.find("match").unwrap();
+    let result = match_response(expected, actual);
     if pact_match.as_boolean().unwrap() {
-       expect!(match_response(expected, actual)).to(be_empty());
+       expect!(result).to(be_empty());
     } else {
-       expect!(match_response(expected, actual)).to_not(be_empty());
+       expect!(result).to_not(be_empty());
     }
 }
 
@@ -1629,10 +1667,11 @@ fn additional_property_with_type_matcher_xml() {
     let actual = Response::from_json(&pact.find("actual").unwrap(), &PactSpecification::V2);
     println!("{:?}", actual);
     let pact_match = pact.find("match").unwrap();
+    let result = match_response(expected, actual);
     if pact_match.as_boolean().unwrap() {
-       expect!(match_response(expected, actual)).to(be_empty());
+       expect!(result).to(be_empty());
     } else {
-       expect!(match_response(expected, actual)).to_not(be_empty());
+       expect!(result).to_not(be_empty());
     }
 }
 
@@ -1659,10 +1698,11 @@ fn array_at_top_level_xml() {
     let actual = Response::from_json(&pact.find("actual").unwrap(), &PactSpecification::V2);
     println!("{:?}", actual);
     let pact_match = pact.find("match").unwrap();
+    let result = match_response(expected, actual);
     if pact_match.as_boolean().unwrap() {
-       expect!(match_response(expected, actual)).to(be_empty());
+       expect!(result).to(be_empty());
     } else {
-       expect!(match_response(expected, actual)).to_not(be_empty());
+       expect!(result).to_not(be_empty());
     }
 }
 
@@ -1738,10 +1778,11 @@ fn array_at_top_level_with_matchers_xml() {
     let actual = Response::from_json(&pact.find("actual").unwrap(), &PactSpecification::V2);
     println!("{:?}", actual);
     let pact_match = pact.find("match").unwrap();
+    let result = match_response(expected, actual);
     if pact_match.as_boolean().unwrap() {
-       expect!(match_response(expected, actual)).to(be_empty());
+       expect!(result).to(be_empty());
     } else {
-       expect!(match_response(expected, actual)).to_not(be_empty());
+       expect!(result).to_not(be_empty());
     }
 }
 
@@ -1768,10 +1809,11 @@ fn array_in_different_order_xml() {
     let actual = Response::from_json(&pact.find("actual").unwrap(), &PactSpecification::V2);
     println!("{:?}", actual);
     let pact_match = pact.find("match").unwrap();
+    let result = match_response(expected, actual);
     if pact_match.as_boolean().unwrap() {
-       expect!(match_response(expected, actual)).to(be_empty());
+       expect!(result).to(be_empty());
     } else {
-       expect!(match_response(expected, actual)).to_not(be_empty());
+       expect!(result).to_not(be_empty());
     }
 }
 
@@ -1816,10 +1858,11 @@ fn array_with_regex_matcher_xml() {
     let actual = Response::from_json(&pact.find("actual").unwrap(), &PactSpecification::V2);
     println!("{:?}", actual);
     let pact_match = pact.find("match").unwrap();
+    let result = match_response(expected, actual);
     if pact_match.as_boolean().unwrap() {
-       expect!(match_response(expected, actual)).to(be_empty());
+       expect!(result).to(be_empty());
     } else {
-       expect!(match_response(expected, actual)).to_not(be_empty());
+       expect!(result).to_not(be_empty());
     }
 }
 
@@ -1864,10 +1907,11 @@ fn array_with_type_matcher_xml() {
     let actual = Response::from_json(&pact.find("actual").unwrap(), &PactSpecification::V2);
     println!("{:?}", actual);
     let pact_match = pact.find("match").unwrap();
+    let result = match_response(expected, actual);
     if pact_match.as_boolean().unwrap() {
-       expect!(match_response(expected, actual)).to(be_empty());
+       expect!(result).to(be_empty());
     } else {
-       expect!(match_response(expected, actual)).to_not(be_empty());
+       expect!(result).to_not(be_empty());
     }
 }
 
@@ -1909,10 +1953,11 @@ fn array_with_type_matcher_mismatch_xml() {
     let actual = Response::from_json(&pact.find("actual").unwrap(), &PactSpecification::V2);
     println!("{:?}", actual);
     let pact_match = pact.find("match").unwrap();
+    let result = match_response(expected, actual);
     if pact_match.as_boolean().unwrap() {
-       expect!(match_response(expected, actual)).to(be_empty());
+       expect!(result).to(be_empty());
     } else {
-       expect!(match_response(expected, actual)).to_not(be_empty());
+       expect!(result).to_not(be_empty());
     }
 }
 
@@ -1969,10 +2014,11 @@ fn deeply_nested_objects_xml() {
     let actual = Response::from_json(&pact.find("actual").unwrap(), &PactSpecification::V2);
     println!("{:?}", actual);
     let pact_match = pact.find("match").unwrap();
+    let result = match_response(expected, actual);
     if pact_match.as_boolean().unwrap() {
-       expect!(match_response(expected, actual)).to(be_empty());
+       expect!(result).to(be_empty());
     } else {
-       expect!(match_response(expected, actual)).to_not(be_empty());
+       expect!(result).to_not(be_empty());
     }
 }
 
@@ -1999,10 +2045,11 @@ fn different_value_found_at_index_xml() {
     let actual = Response::from_json(&pact.find("actual").unwrap(), &PactSpecification::V2);
     println!("{:?}", actual);
     let pact_match = pact.find("match").unwrap();
+    let result = match_response(expected, actual);
     if pact_match.as_boolean().unwrap() {
-       expect!(match_response(expected, actual)).to(be_empty());
+       expect!(result).to(be_empty());
     } else {
-       expect!(match_response(expected, actual)).to_not(be_empty());
+       expect!(result).to_not(be_empty());
     }
 }
 
@@ -2029,10 +2076,11 @@ fn different_value_found_at_key_xml() {
     let actual = Response::from_json(&pact.find("actual").unwrap(), &PactSpecification::V2);
     println!("{:?}", actual);
     let pact_match = pact.find("match").unwrap();
+    let result = match_response(expected, actual);
     if pact_match.as_boolean().unwrap() {
-       expect!(match_response(expected, actual)).to(be_empty());
+       expect!(result).to(be_empty());
     } else {
-       expect!(match_response(expected, actual)).to_not(be_empty());
+       expect!(result).to_not(be_empty());
     }
 }
 
@@ -2065,10 +2113,11 @@ fn keys_out_of_order_match_xml() {
     let actual = Response::from_json(&pact.find("actual").unwrap(), &PactSpecification::V2);
     println!("{:?}", actual);
     let pact_match = pact.find("match").unwrap();
+    let result = match_response(expected, actual);
     if pact_match.as_boolean().unwrap() {
-       expect!(match_response(expected, actual)).to(be_empty());
+       expect!(result).to(be_empty());
     } else {
-       expect!(match_response(expected, actual)).to_not(be_empty());
+       expect!(result).to_not(be_empty());
     }
 }
 
@@ -2095,10 +2144,11 @@ fn matches_xml() {
     let actual = Response::from_json(&pact.find("actual").unwrap(), &PactSpecification::V2);
     println!("{:?}", actual);
     let pact_match = pact.find("match").unwrap();
+    let result = match_response(expected, actual);
     if pact_match.as_boolean().unwrap() {
-       expect!(match_response(expected, actual)).to(be_empty());
+       expect!(result).to(be_empty());
     } else {
-       expect!(match_response(expected, actual)).to_not(be_empty());
+       expect!(result).to_not(be_empty());
     }
 }
 
@@ -2140,10 +2190,11 @@ fn matches_with_regex_xml() {
     let actual = Response::from_json(&pact.find("actual").unwrap(), &PactSpecification::V2);
     println!("{:?}", actual);
     let pact_match = pact.find("match").unwrap();
+    let result = match_response(expected, actual);
     if pact_match.as_boolean().unwrap() {
-       expect!(match_response(expected, actual)).to(be_empty());
+       expect!(result).to(be_empty());
     } else {
-       expect!(match_response(expected, actual)).to_not(be_empty());
+       expect!(result).to_not(be_empty());
     }
 }
 
@@ -2186,10 +2237,11 @@ fn matches_with_type_xml() {
     let actual = Response::from_json(&pact.find("actual").unwrap(), &PactSpecification::V2);
     println!("{:?}", actual);
     let pact_match = pact.find("match").unwrap();
+    let result = match_response(expected, actual);
     if pact_match.as_boolean().unwrap() {
-       expect!(match_response(expected, actual)).to(be_empty());
+       expect!(result).to(be_empty());
     } else {
-       expect!(match_response(expected, actual)).to_not(be_empty());
+       expect!(result).to_not(be_empty());
     }
 }
 
@@ -2215,10 +2267,11 @@ fn missing_body_xml() {
     let actual = Response::from_json(&pact.find("actual").unwrap(), &PactSpecification::V2);
     println!("{:?}", actual);
     let pact_match = pact.find("match").unwrap();
+    let result = match_response(expected, actual);
     if pact_match.as_boolean().unwrap() {
-       expect!(match_response(expected, actual)).to(be_empty());
+       expect!(result).to(be_empty());
     } else {
-       expect!(match_response(expected, actual)).to_not(be_empty());
+       expect!(result).to_not(be_empty());
     }
 }
 
@@ -2245,10 +2298,11 @@ fn missing_index_xml() {
     let actual = Response::from_json(&pact.find("actual").unwrap(), &PactSpecification::V2);
     println!("{:?}", actual);
     let pact_match = pact.find("match").unwrap();
+    let result = match_response(expected, actual);
     if pact_match.as_boolean().unwrap() {
-       expect!(match_response(expected, actual)).to(be_empty());
+       expect!(result).to(be_empty());
     } else {
-       expect!(match_response(expected, actual)).to_not(be_empty());
+       expect!(result).to_not(be_empty());
     }
 }
 
@@ -2275,10 +2329,11 @@ fn missing_key_xml() {
     let actual = Response::from_json(&pact.find("actual").unwrap(), &PactSpecification::V2);
     println!("{:?}", actual);
     let pact_match = pact.find("match").unwrap();
+    let result = match_response(expected, actual);
     if pact_match.as_boolean().unwrap() {
-       expect!(match_response(expected, actual)).to(be_empty());
+       expect!(result).to(be_empty());
     } else {
-       expect!(match_response(expected, actual)).to_not(be_empty());
+       expect!(result).to_not(be_empty());
     }
 }
 
@@ -2303,10 +2358,11 @@ fn no_body_no_content_type_xml() {
     let actual = Response::from_json(&pact.find("actual").unwrap(), &PactSpecification::V2);
     println!("{:?}", actual);
     let pact_match = pact.find("match").unwrap();
+    let result = match_response(expected, actual);
     if pact_match.as_boolean().unwrap() {
-       expect!(match_response(expected, actual)).to(be_empty());
+       expect!(result).to(be_empty());
     } else {
-       expect!(match_response(expected, actual)).to_not(be_empty());
+       expect!(result).to_not(be_empty());
     }
 }
 
@@ -2341,10 +2397,11 @@ fn not_null_found_at_key_when_null_expected_xml() {
     let actual = Response::from_json(&pact.find("actual").unwrap(), &PactSpecification::V2);
     println!("{:?}", actual);
     let pact_match = pact.find("match").unwrap();
+    let result = match_response(expected, actual);
     if pact_match.as_boolean().unwrap() {
-       expect!(match_response(expected, actual)).to(be_empty());
+       expect!(result).to(be_empty());
     } else {
-       expect!(match_response(expected, actual)).to_not(be_empty());
+       expect!(result).to_not(be_empty());
     }
 }
 
@@ -2379,10 +2436,11 @@ fn not_null_found_in_array_when_null_expected_xml() {
     let actual = Response::from_json(&pact.find("actual").unwrap(), &PactSpecification::V2);
     println!("{:?}", actual);
     let pact_match = pact.find("match").unwrap();
+    let result = match_response(expected, actual);
     if pact_match.as_boolean().unwrap() {
-       expect!(match_response(expected, actual)).to(be_empty());
+       expect!(result).to(be_empty());
     } else {
-       expect!(match_response(expected, actual)).to_not(be_empty());
+       expect!(result).to_not(be_empty());
     }
 }
 
@@ -2417,10 +2475,11 @@ fn null_found_at_key_where_not_null_expected_xml() {
     let actual = Response::from_json(&pact.find("actual").unwrap(), &PactSpecification::V2);
     println!("{:?}", actual);
     let pact_match = pact.find("match").unwrap();
+    let result = match_response(expected, actual);
     if pact_match.as_boolean().unwrap() {
-       expect!(match_response(expected, actual)).to(be_empty());
+       expect!(result).to(be_empty());
     } else {
-       expect!(match_response(expected, actual)).to_not(be_empty());
+       expect!(result).to_not(be_empty());
     }
 }
 
@@ -2455,10 +2514,11 @@ fn null_found_in_array_when_not_null_expected_xml() {
     let actual = Response::from_json(&pact.find("actual").unwrap(), &PactSpecification::V2);
     println!("{:?}", actual);
     let pact_match = pact.find("match").unwrap();
+    let result = match_response(expected, actual);
     if pact_match.as_boolean().unwrap() {
-       expect!(match_response(expected, actual)).to(be_empty());
+       expect!(result).to(be_empty());
     } else {
-       expect!(match_response(expected, actual)).to_not(be_empty());
+       expect!(result).to_not(be_empty());
     }
 }
 
@@ -2493,10 +2553,11 @@ fn number_found_at_key_when_string_expected_xml() {
     let actual = Response::from_json(&pact.find("actual").unwrap(), &PactSpecification::V2);
     println!("{:?}", actual);
     let pact_match = pact.find("match").unwrap();
+    let result = match_response(expected, actual);
     if pact_match.as_boolean().unwrap() {
-       expect!(match_response(expected, actual)).to(be_empty());
+       expect!(result).to(be_empty());
     } else {
-       expect!(match_response(expected, actual)).to_not(be_empty());
+       expect!(result).to_not(be_empty());
     }
 }
 
@@ -2531,10 +2592,11 @@ fn number_found_in_array_when_string_expected_xml() {
     let actual = Response::from_json(&pact.find("actual").unwrap(), &PactSpecification::V2);
     println!("{:?}", actual);
     let pact_match = pact.find("match").unwrap();
+    let result = match_response(expected, actual);
     if pact_match.as_boolean().unwrap() {
-       expect!(match_response(expected, actual)).to(be_empty());
+       expect!(result).to(be_empty());
     } else {
-       expect!(match_response(expected, actual)).to_not(be_empty());
+       expect!(result).to_not(be_empty());
     }
 }
 
@@ -2574,10 +2636,11 @@ fn objects_in_array_first_matches_xml() {
     let actual = Response::from_json(&pact.find("actual").unwrap(), &PactSpecification::V2);
     println!("{:?}", actual);
     let pact_match = pact.find("match").unwrap();
+    let result = match_response(expected, actual);
     if pact_match.as_boolean().unwrap() {
-       expect!(match_response(expected, actual)).to(be_empty());
+       expect!(result).to(be_empty());
     } else {
-       expect!(match_response(expected, actual)).to_not(be_empty());
+       expect!(result).to_not(be_empty());
     }
 }
 
@@ -2612,10 +2675,11 @@ fn objects_in_array_no_matches_xml() {
     let actual = Response::from_json(&pact.find("actual").unwrap(), &PactSpecification::V2);
     println!("{:?}", actual);
     let pact_match = pact.find("match").unwrap();
+    let result = match_response(expected, actual);
     if pact_match.as_boolean().unwrap() {
-       expect!(match_response(expected, actual)).to(be_empty());
+       expect!(result).to(be_empty());
     } else {
-       expect!(match_response(expected, actual)).to_not(be_empty());
+       expect!(result).to_not(be_empty());
     }
 }
 
@@ -2649,10 +2713,11 @@ fn objects_in_array_second_matches_xml() {
     let actual = Response::from_json(&pact.find("actual").unwrap(), &PactSpecification::V2);
     println!("{:?}", actual);
     let pact_match = pact.find("match").unwrap();
+    let result = match_response(expected, actual);
     if pact_match.as_boolean().unwrap() {
-       expect!(match_response(expected, actual)).to(be_empty());
+       expect!(result).to(be_empty());
     } else {
-       expect!(match_response(expected, actual)).to_not(be_empty());
+       expect!(result).to_not(be_empty());
     }
 }
 
@@ -2700,10 +2765,11 @@ fn objects_in_array_type_matching_xml() {
     let actual = Response::from_json(&pact.find("actual").unwrap(), &PactSpecification::V2);
     println!("{:?}", actual);
     let pact_match = pact.find("match").unwrap();
+    let result = match_response(expected, actual);
     if pact_match.as_boolean().unwrap() {
-       expect!(match_response(expected, actual)).to(be_empty());
+       expect!(result).to(be_empty());
     } else {
-       expect!(match_response(expected, actual)).to_not(be_empty());
+       expect!(result).to_not(be_empty());
     }
 }
 
@@ -2745,10 +2811,11 @@ fn objects_in_array_with_type_mismatching_xml() {
     let actual = Response::from_json(&pact.find("actual").unwrap(), &PactSpecification::V2);
     println!("{:?}", actual);
     let pact_match = pact.find("match").unwrap();
+    let result = match_response(expected, actual);
     if pact_match.as_boolean().unwrap() {
-       expect!(match_response(expected, actual)).to(be_empty());
+       expect!(result).to(be_empty());
     } else {
-       expect!(match_response(expected, actual)).to_not(be_empty());
+       expect!(result).to_not(be_empty());
     }
 }
 
@@ -2775,10 +2842,11 @@ fn plain_text_that_does_not_match_xml() {
     let actual = Response::from_json(&pact.find("actual").unwrap(), &PactSpecification::V2);
     println!("{:?}", actual);
     let pact_match = pact.find("match").unwrap();
+    let result = match_response(expected, actual);
     if pact_match.as_boolean().unwrap() {
-       expect!(match_response(expected, actual)).to(be_empty());
+       expect!(result).to(be_empty());
     } else {
-       expect!(match_response(expected, actual)).to_not(be_empty());
+       expect!(result).to_not(be_empty());
     }
 }
 
@@ -2805,10 +2873,11 @@ fn plain_text_that_matches_xml() {
     let actual = Response::from_json(&pact.find("actual").unwrap(), &PactSpecification::V2);
     println!("{:?}", actual);
     let pact_match = pact.find("match").unwrap();
+    let result = match_response(expected, actual);
     if pact_match.as_boolean().unwrap() {
-       expect!(match_response(expected, actual)).to(be_empty());
+       expect!(result).to(be_empty());
     } else {
-       expect!(match_response(expected, actual)).to_not(be_empty());
+       expect!(result).to_not(be_empty());
     }
 }
 
@@ -2843,10 +2912,11 @@ fn property_name_is_different_case_xml() {
     let actual = Response::from_json(&pact.find("actual").unwrap(), &PactSpecification::V2);
     println!("{:?}", actual);
     let pact_match = pact.find("match").unwrap();
+    let result = match_response(expected, actual);
     if pact_match.as_boolean().unwrap() {
-       expect!(match_response(expected, actual)).to(be_empty());
+       expect!(result).to(be_empty());
     } else {
-       expect!(match_response(expected, actual)).to_not(be_empty());
+       expect!(result).to_not(be_empty());
     }
 }
 
@@ -2881,10 +2951,11 @@ fn string_found_at_key_when_number_expected_xml() {
     let actual = Response::from_json(&pact.find("actual").unwrap(), &PactSpecification::V2);
     println!("{:?}", actual);
     let pact_match = pact.find("match").unwrap();
+    let result = match_response(expected, actual);
     if pact_match.as_boolean().unwrap() {
-       expect!(match_response(expected, actual)).to(be_empty());
+       expect!(result).to(be_empty());
     } else {
-       expect!(match_response(expected, actual)).to_not(be_empty());
+       expect!(result).to_not(be_empty());
     }
 }
 
@@ -2919,112 +2990,28 @@ fn string_found_in_array_when_number_expected_xml() {
     let actual = Response::from_json(&pact.find("actual").unwrap(), &PactSpecification::V2);
     println!("{:?}", actual);
     let pact_match = pact.find("match").unwrap();
+    let result = match_response(expected, actual);
     if pact_match.as_boolean().unwrap() {
-       expect!(match_response(expected, actual)).to(be_empty());
+       expect!(result).to(be_empty());
     } else {
-       expect!(match_response(expected, actual)).to_not(be_empty());
+       expect!(result).to_not(be_empty());
     }
 }
 
 #[test]
-fn unexpected_index_with_not_null_value_xml() {
-    env_logger::init().unwrap_or(());
-    let pact = Json::from_str(r#"
-      {
-        "match": false,
-        "comment": "Unexpected favourite colour",
-        "expected" : {
-          "headers": {"Content-Type": "application/json"},
-          "body": {
-            "alligator":{
-              "favouriteColours": ["red","blue"]
-            }
-          }
-        },
-        "actual": {
-          "headers": {"Content-Type": "application/json"},
-          "body": {
-            "alligator":{
-              "favouriteColours": ["red","blue","taupe"]
-            }
-          }
-        }
-      }
-    "#).unwrap();
-
-    let expected = Response::from_json(&pact.find("expected").unwrap(), &PactSpecification::V2);
-    println!("{:?}", expected);
-    let actual = Response::from_json(&pact.find("actual").unwrap(), &PactSpecification::V2);
-    println!("{:?}", actual);
-    let pact_match = pact.find("match").unwrap();
-    if pact_match.as_boolean().unwrap() {
-       expect!(match_response(expected, actual)).to(be_empty());
-    } else {
-       expect!(match_response(expected, actual)).to_not(be_empty());
-    }
-}
-
-#[test]
-fn unexpected_index_with_null_value_xml() {
-    env_logger::init().unwrap_or(());
-    let pact = Json::from_str(r#"
-      {
-        "match": false,
-        "comment": "Unexpected favourite colour with null value",
-        "expected" : {
-          "headers": {"Content-Type": "application/json"},
-          "body": {
-            "alligator":{
-              "favouriteColours": ["red","blue"]
-            }
-          }
-        },
-        "actual": {
-          "headers": {"Content-Type": "application/json"},
-          "body": {
-            "alligator":{
-              "favouriteColours": ["red","blue", null]
-            }
-          }
-        }
-      }
-    "#).unwrap();
-
-    let expected = Response::from_json(&pact.find("expected").unwrap(), &PactSpecification::V2);
-    println!("{:?}", expected);
-    let actual = Response::from_json(&pact.find("actual").unwrap(), &PactSpecification::V2);
-    println!("{:?}", actual);
-    let pact_match = pact.find("match").unwrap();
-    if pact_match.as_boolean().unwrap() {
-       expect!(match_response(expected, actual)).to(be_empty());
-    } else {
-       expect!(match_response(expected, actual)).to_not(be_empty());
-    }
-}
-
-#[test]
-fn unexpected_key_with_not_null_value_xml() {
+fn unexpected_index_with_missing_value_xml() {
     env_logger::init().unwrap_or(());
     let pact = Json::from_str(r#"
       {
         "match": true,
-        "comment": "Unexpected phone number",
+        "comment": "XML Unexpected favourite colour with missing value",
         "expected" : {
-          "headers": {"Content-Type": "application/json"},
-          "body": {
-            "alligator":{
-              "name": "Mary"
-            }
-          }
+          "headers": {"Content-Type": "application/xml"},
+          "body": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><alligator><favouriteColours><favouriteColour>red</favouriteColour><favouriteColour>blue</favouriteColour></favouriteColours></alligator>"
         },
         "actual": {
-          "headers": {"Content-Type": "application/json"},
-          "body": {
-            "alligator":{
-              "name": "Mary",
-              "phoneNumber": "12345678"
-            }
-          }
+          "headers": {"Content-Type": "application/xml"},
+          "body": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><alligator><favouriteColours><favouriteColour>red</favouriteColour><favouriteColour>blue</favouriteColour><favouriteColour></favouriteColour></favouriteColours></alligator>"
         }
       }
     "#).unwrap();
@@ -3034,36 +3021,28 @@ fn unexpected_key_with_not_null_value_xml() {
     let actual = Response::from_json(&pact.find("actual").unwrap(), &PactSpecification::V2);
     println!("{:?}", actual);
     let pact_match = pact.find("match").unwrap();
+    let result = match_response(expected, actual);
     if pact_match.as_boolean().unwrap() {
-       expect!(match_response(expected, actual)).to(be_empty());
+       expect!(result).to(be_empty());
     } else {
-       expect!(match_response(expected, actual)).to_not(be_empty());
+       expect!(result).to_not(be_empty());
     }
 }
 
 #[test]
-fn unexpected_key_with_null_value_xml() {
+fn unexpected_key_with_empty_value_xml() {
     env_logger::init().unwrap_or(());
     let pact = Json::from_str(r#"
       {
         "match": true,
-        "comment": "Unexpected phone number with null value",
+        "comment": "XML Unexpected phone number with empty value",
         "expected" : {
-          "headers": {"Content-Type": "application/json"},
-          "body": {
-            "alligator":{
-              "name": "Mary"
-            }
-          }
+          "headers": {"Content-Type": "application/xml"},
+          "body": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><alligator name=\"Mary\"/>"
         },
         "actual": {
-          "headers": {"Content-Type": "application/json"},
-          "body": {
-            "alligator":{
-              "name": "Mary",
-              "phoneNumber": null
-            }
-          }
+          "headers": {"Content-Type": "application/xml"},
+          "body": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><alligator name=\"Mary\" phoneNumber=\"\"/>"
         }
       }
     "#).unwrap();
@@ -3073,9 +3052,72 @@ fn unexpected_key_with_null_value_xml() {
     let actual = Response::from_json(&pact.find("actual").unwrap(), &PactSpecification::V2);
     println!("{:?}", actual);
     let pact_match = pact.find("match").unwrap();
+    let result = match_response(expected, actual);
     if pact_match.as_boolean().unwrap() {
-       expect!(match_response(expected, actual)).to(be_empty());
+       expect!(result).to(be_empty());
     } else {
-       expect!(match_response(expected, actual)).to_not(be_empty());
+       expect!(result).to_not(be_empty());
+    }
+}
+
+#[test]
+fn unexpected_key_with_non_empty_value_xml() {
+    env_logger::init().unwrap_or(());
+    let pact = Json::from_str(r#"
+      {
+        "match": true,
+        "comment": "XML Unexpected phone number",
+        "expected" : {
+          "headers": {"Content-Type": "application/xml"},
+          "body": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><alligator name=\"Mary\"/>"
+        },
+        "actual": {
+          "headers": {"Content-Type": "application/xml"},
+          "body": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><alligator name=\"Mary\" phoneNumber=\"12345678\"/>"
+        }
+      }
+    "#).unwrap();
+
+    let expected = Response::from_json(&pact.find("expected").unwrap(), &PactSpecification::V2);
+    println!("{:?}", expected);
+    let actual = Response::from_json(&pact.find("actual").unwrap(), &PactSpecification::V2);
+    println!("{:?}", actual);
+    let pact_match = pact.find("match").unwrap();
+    let result = match_response(expected, actual);
+    if pact_match.as_boolean().unwrap() {
+       expect!(result).to(be_empty());
+    } else {
+       expect!(result).to_not(be_empty());
+    }
+}
+
+#[test]
+fn unexpected_index_with_non_empty_value_xml() {
+    env_logger::init().unwrap_or(());
+    let pact = Json::from_str(r#"
+      {
+        "match": true,
+        "comment": "XML Unexpected favourite colour",
+        "expected" : {
+          "headers": {"Content-Type": "application/xml"},
+          "body": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><alligator><favouriteColours><favouriteColour>red</favouriteColour><favouriteColour>blue</favouriteColour></favouriteColours></alligator>"
+        },
+        "actual": {
+          "headers": {"Content-Type": "application/xml"},
+          "body": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><alligator><favouriteColours><favouriteColour>red</favouriteColour><favouriteColour>blue</favouriteColour><favouriteColour>taupe</favouriteColour></favouriteColours></alligator>"
+        }
+      }
+    "#).unwrap();
+
+    let expected = Response::from_json(&pact.find("expected").unwrap(), &PactSpecification::V2);
+    println!("{:?}", expected);
+    let actual = Response::from_json(&pact.find("actual").unwrap(), &PactSpecification::V2);
+    println!("{:?}", actual);
+    let pact_match = pact.find("match").unwrap();
+    let result = match_response(expected, actual);
+    if pact_match.as_boolean().unwrap() {
+       expect!(result).to(be_empty());
+    } else {
+       expect!(result).to_not(be_empty());
     }
 }
