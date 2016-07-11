@@ -1982,22 +1982,14 @@ fn different_value_found_at_index_xml() {
     let pact = Json::from_str(r#"
       {
         "match": false,
-        "comment": "Incorrect favourite colour",
+        "comment": "XML Incorrect favourite colour",
         "expected" : {
-          "headers": {"Content-Type": "application/json"},
-          "body": {
-            "alligator":{
-              "favouriteColours": ["red","blue"]
-            }
-          }
+          "headers": {"Content-Type": "application/xml"},
+          "body": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><alligator><favouriteColours><favouriteColour>red</favouriteColour><favouriteColour>blue</favouriteColour></favouriteColours></alligator>"
         },
         "actual": {
-          "headers": {"Content-Type": "application/json"},
-          "body": {
-            "alligator":{
-              "favouriteColours": ["red","taupe"]
-            }
-          }
+          "headers": {"Content-Type": "application/xml"},
+          "body": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><alligator><favouriteColours><favouriteColour>red</favouriteColour><favouriteColour>purple</favouriteColour></favouriteColours></alligator>"
         }
       }
     "#).unwrap();
@@ -2020,22 +2012,14 @@ fn different_value_found_at_key_xml() {
     let pact = Json::from_str(r#"
       {
         "match": false,
-        "comment": "Incorrect value at alligator name",
+        "comment": "XML Incorrect value at alligator name",
         "expected" : {
-          "headers": {"Content-Type": "application/json"},
-          "body": {
-            "alligator":{
-              "name": "Mary"
-            }
-          }
+          "headers": {"Content-Type": "application/xml"},
+          "body": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><alligator name=\"Mary\"/>"
         },
         "actual": {
-          "headers": {"Content-Type": "application/json"},
-          "body": {
-            "alligator":{
-              "name": "Fred"
-            }
-          }
+          "headers": {"Content-Type": "application/xml"},
+          "body": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><alligator name=\"Fred\"/>"
         }
       }
     "#).unwrap();
@@ -2215,19 +2199,13 @@ fn missing_body_xml() {
     let pact = Json::from_str(r#"
       {
         "match": true,
-        "comment": "Missing body",
+        "comment": "XML Missing body",
         "expected" : {
-          "headers": {"Content-Type": "application/json"}
+          "headers": {"Content-Type": "application/xml"}
         },
         "actual": {
-          "headers": {"Content-Type": "application/json"},
-          "body": {
-            "alligator":{
-              "feet": 4,
-              "name": "Mary",
-              "favouriteColours": ["red","blue"]
-            }
-          }
+          "headers": {"Content-Type": "application/xml"},
+          "body": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><alligator name=\"Mary\"/>"
         }
       }
     "#).unwrap();
@@ -2310,18 +2288,12 @@ fn no_body_no_content_type_xml() {
     let pact = Json::from_str(r#"
       {
         "match": true,
-        "comment": "No body, no content-type",
+        "comment": "XML No body, no content-type",
         "expected" : {
         },
         "actual": {
-          "headers": {"Content-Type": "application/json"},
-          "body": {
-            "alligator":{
-              "feet": 4,
-              "name": "Mary",
-              "favouriteColours": ["red","blue"]
-            }
-          }
+          "headers": {"Content-Type": "application/xml"},
+          "body": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><alligator name=\"Mary\"/>"
         }
       }
     "#).unwrap();

@@ -2073,28 +2073,20 @@ fn different_value_found_at_index_xml() {
     let pact = Json::from_str(r#"
       {
         "match": false,
-        "comment": "Incorrect favourite colour",
+        "comment": "XML Incorrect favourite colour",
         "expected" : {
           "method": "POST",
           "path": "/",
           "query": "",
-          "headers": {"Content-Type": "application/json"},
-          "body": {
-            "alligator":{
-              "favouriteColours": ["red","blue"]
-            }
-          }
+          "headers": {"Content-Type": "application/xml"},
+          "body": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><alligator><favouriteColours><favouriteColour>red</favouriteColour><favouriteColour>blue</favouriteColour></favouriteColours></alligator>"
         },
         "actual": {
           "method": "POST",
           "path": "/",
           "query": "",
-          "headers": {"Content-Type": "application/json"},
-          "body": {
-            "alligator":{
-              "favouriteColours": ["red","taupe"]
-            }
-          }
+          "headers": {"Content-Type": "application/xml"},
+          "body": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><alligator><favouriteColours><favouriteColour>red</favouriteColour><favouriteColour>taupe</favouriteColour></favouriteColours></alligator>"
         }
       }
     "#).unwrap();
@@ -2117,28 +2109,20 @@ fn different_value_found_at_key_xml() {
     let pact = Json::from_str(r#"
       {
         "match": false,
-        "comment": "Incorrect value at alligator name",
+        "comment": "XML Incorrect value at alligator name",
         "expected" : {
           "method": "POST",
           "path": "/",
           "query": "",
-          "headers": {"Content-Type": "application/json"},
-          "body": {
-            "alligator":{
-              "name": "Mary"
-            }
-          }
+          "headers": {"Content-Type": "application/xml"},
+          "body": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><alligator name=\"Mary\"/>"
         },
         "actual": {
           "method": "POST",
           "path": "/",
           "query": "",
-          "headers": {"Content-Type": "application/json"},
-          "body": {
-            "alligator":{
-              "name": "Fred"
-            }
-          }
+          "headers": {"Content-Type": "application/xml"},
+          "body": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><alligator name=\"Fred\"/>"
         }
       }
     "#).unwrap();
@@ -2385,23 +2369,19 @@ fn no_body_xml() {
     let pact = Json::from_str(r#"
       {
         "match": true,
-        "comment": "Missing body",
+        "comment": "XML Missing body",
         "expected" : {
           "method": "POST",
           "path": "/",
           "query": "",
-          "headers": {"Content-Type": "application/json"}
+          "headers": {"Content-Type": "application/xml"}
         },
         "actual": {
           "method": "POST",
           "path": "/",
           "query": "",
-          "headers": {"Content-Type": "application/json"},
-          "body": {
-            "alligator": {
-              "age": 3
-            }
-          }
+          "headers": {"Content-Type": "application/xml"},
+          "body": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><alligator name=\"Mary\"/>"
         }
       }
     "#).unwrap();
@@ -2424,7 +2404,7 @@ fn no_body_no_content_type_xml() {
     let pact = Json::from_str(r#"
       {
         "match": true,
-        "comment": "No body, no content-type",
+        "comment": "XML No body, no content-type",
         "expected" : {
           "method": "POST",
           "path": "/",
@@ -2434,12 +2414,8 @@ fn no_body_no_content_type_xml() {
           "method": "POST",
           "path": "/",
           "query": "",
-          "headers": {"Content-Type": "application/json"},
-          "body": {
-            "alligator": {
-              "age": 3
-            }
-          }
+          "headers": {"Content-Type": "application/xml"},
+          "body": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><alligator name=\"Mary\"/>"
         }
       }
     "#).unwrap();
