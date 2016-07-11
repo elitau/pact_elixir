@@ -1642,40 +1642,14 @@ fn array_at_top_level_xml() {
     let pact = Json::from_str(r#"
       {
         "match": true,
-        "comment": "top level array matches",
+        "comment": "XML top level array matches",
         "expected": {
-          "headers": {"Content-Type": "application/json"},
-          "body": [
-            {
-              "dob": "06/10/2015",
-              "name": "Rogger the Dogger",
-              "id": 1014753708,
-              "timestamp": "2015-06-10T20:41:37"
-            },
-            {
-              "dob": "06/10/2015",
-              "name": "Cat in the Hat",
-              "id": 8858030303,
-              "timestamp": "2015-06-10T20:41:37"
-            }
-          ]
+          "headers": {"Content-Type": "application/xml"},
+          "body": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><people><rogger dob=\"06/10/2015\" name=\"Rogger the Dogger\" id=\"1014753708\" timestamp=\"2015-06-10T20:41:37\"/><cat dob=\"06/10/2015\" name=\"Cat in the Hat\" id=\"8858030303\" timestamp=\"2015-06-10T20:41:37\"/></people>"
         },
         "actual": {
-          "headers": {"Content-Type": "application/json"},
-          "body": [
-            {
-              "dob": "06/10/2015",
-              "name": "Rogger the Dogger",
-              "id": 1014753708,
-              "timestamp": "2015-06-10T20:41:37"
-            },
-            {
-              "dob": "06/10/2015",
-              "name": "Cat in the Hat",
-              "id": 8858030303,
-              "timestamp": "2015-06-10T20:41:37"
-            }
-          ]
+          "headers": {"Content-Type": "application/xml"},
+          "body": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><people><rogger dob=\"06/10/2015\" name=\"Rogger the Dogger\" id=\"1014753708\" timestamp=\"2015-06-10T20:41:37\"/><cat dob=\"06/10/2015\" name=\"Cat in the Hat\" id=\"8858030303\" timestamp=\"2015-06-10T20:41:37\"/></people>"
         }
       }
     "#).unwrap();
@@ -1777,22 +1751,14 @@ fn array_in_different_order_xml() {
     let pact = Json::from_str(r#"
       {
         "match": false,
-        "comment": "Favourite colours in wrong order",
+        "comment": "XML Favourite colours in wrong order",
         "expected" : {
-          "headers": {"Content-Type": "application/json"},
-          "body": {
-            "alligator":{
-              "favouriteColours": ["red","blue"]
-            }
-          }
+          "headers": {"Content-Type": "application/xml"},
+          "body": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><alligator><favouriteColours><red/><blue/></favouriteColours></alligator>"
         },
         "actual": {
-          "headers": {"Content-Type": "application/json"},
-          "body": {
-            "alligator":{
-              "favouriteColours": ["blue", "red"]
-            }
-          }
+          "headers": {"Content-Type": "application/xml"},
+          "body": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><alligator><favouriteColours><blue/><red/></favouriteColours></alligator>"
         }
       }
     "#).unwrap();
