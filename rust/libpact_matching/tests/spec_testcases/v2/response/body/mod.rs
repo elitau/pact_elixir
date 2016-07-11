@@ -1962,67 +1962,6 @@ fn array_with_type_matcher_mismatch_xml() {
 }
 
 #[test]
-fn deeply_nested_objects_xml() {
-    env_logger::init().unwrap_or(());
-    let pact = Json::from_str(r#"
-      {
-      	"match": true,
-      	"comment": "Comparisons should work even on nested objects",
-      	"expected" : {
-      		"headers": {"Content-Type": "application/json"},
-      		"body": {
-      			"object1": {
-      				"object2": {
-      					"object4": {
-      						"object5": {
-      							"name": "Mary",
-      							"friends": ["Fred", "John"]
-      						},
-      						"object6": {
-      							"phoneNumber": 1234567890
-      						}
-      					}
-      				}
-      			}
-      		}
-      	},
-      	"actual": {
-      		"headers": {"Content-Type": "application/json"},
-      		"body": {
-      			"object1":{
-      				"object2": {
-      					"object4":{
-      						"object5": {
-      							"name": "Mary",
-      							"friends": ["Fred", "John"],
-      							"gender": "F"
-      						},
-      						"object6": {
-      							"phoneNumber": 1234567890
-      						}
-      					}
-      				},
-      				"color": "red"
-      			}
-      		}
-      	}
-      }
-    "#).unwrap();
-
-    let expected = Response::from_json(&pact.find("expected").unwrap(), &PactSpecification::V2);
-    println!("{:?}", expected);
-    let actual = Response::from_json(&pact.find("actual").unwrap(), &PactSpecification::V2);
-    println!("{:?}", actual);
-    let pact_match = pact.find("match").unwrap();
-    let result = match_response(expected, actual);
-    if pact_match.as_boolean().unwrap() {
-       expect!(result).to(be_empty());
-    } else {
-       expect!(result).to_not(be_empty());
-    }
-}
-
-#[test]
 fn different_value_found_at_index_xml() {
     env_logger::init().unwrap_or(());
     let pact = Json::from_str(r#"
@@ -2067,43 +2006,6 @@ fn different_value_found_at_key_xml() {
         "actual": {
           "headers": {"Content-Type": "application/xml"},
           "body": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><alligator name=\"Fred\"/>"
-        }
-      }
-    "#).unwrap();
-
-    let expected = Response::from_json(&pact.find("expected").unwrap(), &PactSpecification::V2);
-    println!("{:?}", expected);
-    let actual = Response::from_json(&pact.find("actual").unwrap(), &PactSpecification::V2);
-    println!("{:?}", actual);
-    let pact_match = pact.find("match").unwrap();
-    let result = match_response(expected, actual);
-    if pact_match.as_boolean().unwrap() {
-       expect!(result).to(be_empty());
-    } else {
-       expect!(result).to_not(be_empty());
-    }
-}
-
-#[test]
-fn keys_out_of_order_match_xml() {
-    env_logger::init().unwrap_or(());
-    let pact = Json::from_str(r#"
-      {
-        "match": true,
-        "comment": "Favourite number and favourite colours out of order",
-        "expected" : {
-          "headers": {"Content-Type": "application/json"},
-          "body": {
-      		"favouriteNumber": 7,
-              "favouriteColours": ["red","blue"]
-          }
-        },
-        "actual": {
-          "headers": {"Content-Type": "application/json"},
-          "body": {
-              "favouriteColours": ["red","blue"],
-      		"favouriteNumber": 7
-          }
         }
       }
     "#).unwrap();
@@ -2367,27 +2269,19 @@ fn no_body_no_content_type_xml() {
 }
 
 #[test]
-fn not_null_found_at_key_when_null_expected_xml() {
+fn keys_out_of_order_match_xml() {
     env_logger::init().unwrap_or(());
     let pact = Json::from_str(r#"
       {
-        "match": false,
-        "comment": "Name should be null",
+        "match": true,
+        "comment": "XML Favourite number and favourite colours out of order",
         "expected" : {
-          "headers": {"Content-Type": "application/json"},
-          "body": {
-            "alligator":{
-              "name": null
-            }
-          }
+          "headers": {"Content-Type": "application/xml"},
+          "body": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><alligator favouriteNumber=\"7\" favouriteColours=\"red, blue\" />"
         },
         "actual": {
-          "headers": {"Content-Type": "application/json"},
-          "body": {
-            "alligator":{
-              "name": "Fred"
-            }
-          }
+          "headers": {"Content-Type": "application/xml"},
+          "body": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><alligator favouriteColours=\"red, blue\" favouriteNumber=\"7\" />"
         }
       }
     "#).unwrap();
@@ -2406,228 +2300,20 @@ fn not_null_found_at_key_when_null_expected_xml() {
 }
 
 #[test]
-fn not_null_found_in_array_when_null_expected_xml() {
+fn deeply_nested_objects_xml() {
     env_logger::init().unwrap_or(());
     let pact = Json::from_str(r#"
       {
-        "match": false,
-        "comment": "Favourite numbers expected to contain null, but not null found",
-        "expected" : {
-          "headers": {"Content-Type": "application/json"},
-          "body": {
-            "alligator":{
-              "favouriteNumbers": ["1",null,"3"]
-            }
-          }
-        },
-        "actual": {
-          "headers": {"Content-Type": "application/json"},
-          "body": {
-            "alligator":{
-              "favouriteNumbers": ["1","2","3"]
-            }
-          }
-        }
-      }
-    "#).unwrap();
-
-    let expected = Response::from_json(&pact.find("expected").unwrap(), &PactSpecification::V2);
-    println!("{:?}", expected);
-    let actual = Response::from_json(&pact.find("actual").unwrap(), &PactSpecification::V2);
-    println!("{:?}", actual);
-    let pact_match = pact.find("match").unwrap();
-    let result = match_response(expected, actual);
-    if pact_match.as_boolean().unwrap() {
-       expect!(result).to(be_empty());
-    } else {
-       expect!(result).to_not(be_empty());
-    }
-}
-
-#[test]
-fn null_found_at_key_where_not_null_expected_xml() {
-    env_logger::init().unwrap_or(());
-    let pact = Json::from_str(r#"
-      {
-        "match": false,
-        "comment": "Name should not be null",
-        "expected" : {
-          "headers": {"Content-Type": "application/json"},
-          "body": {
-            "alligator":{
-              "name": "Mary"
-            }
-          }
-        },
-        "actual": {
-          "headers": {"Content-Type": "application/json"},
-          "body": {
-            "alligator":{
-              "name": null
-            }
-          }
-        }
-      }
-    "#).unwrap();
-
-    let expected = Response::from_json(&pact.find("expected").unwrap(), &PactSpecification::V2);
-    println!("{:?}", expected);
-    let actual = Response::from_json(&pact.find("actual").unwrap(), &PactSpecification::V2);
-    println!("{:?}", actual);
-    let pact_match = pact.find("match").unwrap();
-    let result = match_response(expected, actual);
-    if pact_match.as_boolean().unwrap() {
-       expect!(result).to(be_empty());
-    } else {
-       expect!(result).to_not(be_empty());
-    }
-}
-
-#[test]
-fn null_found_in_array_when_not_null_expected_xml() {
-    env_logger::init().unwrap_or(());
-    let pact = Json::from_str(r#"
-      {
-        "match": false,
-        "comment": "Favourite numbers expected to be strings found a null",
-        "expected" : {
-          "headers": {"Content-Type": "application/json"},
-          "body": {
-            "alligator":{
-              "favouriteNumbers": ["1","2","3"]
-            }
-          }
-        },
-        "actual": {
-          "headers": {"Content-Type": "application/json"},
-          "body": {
-            "alligator":{
-              "favouriteNumbers": ["1",null,"3"]
-            }
-          }
-        }
-      }
-    "#).unwrap();
-
-    let expected = Response::from_json(&pact.find("expected").unwrap(), &PactSpecification::V2);
-    println!("{:?}", expected);
-    let actual = Response::from_json(&pact.find("actual").unwrap(), &PactSpecification::V2);
-    println!("{:?}", actual);
-    let pact_match = pact.find("match").unwrap();
-    let result = match_response(expected, actual);
-    if pact_match.as_boolean().unwrap() {
-       expect!(result).to(be_empty());
-    } else {
-       expect!(result).to_not(be_empty());
-    }
-}
-
-#[test]
-fn number_found_at_key_when_string_expected_xml() {
-    env_logger::init().unwrap_or(());
-    let pact = Json::from_str(r#"
-      {
-        "match": false,
-        "comment": "Number of feet expected to be string but was number",
-        "expected" : {
-          "headers": {"Content-Type": "application/json"},
-          "body": {
-            "alligator":{
-              "feet": "4"
-            }
-          }
-        },
-        "actual": {
-          "headers": {"Content-Type": "application/json"},
-          "body": {
-            "alligator":{
-              "feet": 4
-            }
-          }
-        }
-      }
-    "#).unwrap();
-
-    let expected = Response::from_json(&pact.find("expected").unwrap(), &PactSpecification::V2);
-    println!("{:?}", expected);
-    let actual = Response::from_json(&pact.find("actual").unwrap(), &PactSpecification::V2);
-    println!("{:?}", actual);
-    let pact_match = pact.find("match").unwrap();
-    let result = match_response(expected, actual);
-    if pact_match.as_boolean().unwrap() {
-       expect!(result).to(be_empty());
-    } else {
-       expect!(result).to_not(be_empty());
-    }
-}
-
-#[test]
-fn number_found_in_array_when_string_expected_xml() {
-    env_logger::init().unwrap_or(());
-    let pact = Json::from_str(r#"
-      {
-        "match": false,
-        "comment": "Favourite numbers expected to be strings found a number",
-        "expected" : {
-          "headers": {"Content-Type": "application/json"},
-          "body": {
-            "alligator":{
-              "favouriteNumbers": ["1","2","3"]
-            }
-          }
-        },
-        "actual": {
-          "headers": {"Content-Type": "application/json"},
-          "body": {
-            "alligator":{
-              "favouriteNumbers": ["1",2,"3"]
-            }
-          }
-        }
-      }
-    "#).unwrap();
-
-    let expected = Response::from_json(&pact.find("expected").unwrap(), &PactSpecification::V2);
-    println!("{:?}", expected);
-    let actual = Response::from_json(&pact.find("actual").unwrap(), &PactSpecification::V2);
-    println!("{:?}", actual);
-    let pact_match = pact.find("match").unwrap();
-    let result = match_response(expected, actual);
-    if pact_match.as_boolean().unwrap() {
-       expect!(result).to(be_empty());
-    } else {
-       expect!(result).to_not(be_empty());
-    }
-}
-
-#[test]
-fn objects_in_array_first_matches_xml() {
-    env_logger::init().unwrap_or(());
-    let pact = Json::from_str(r#"
-      {
-        "match": false,
-        "comment": "Properties match but unexpected element received",
-        "expected": {
-          "headers": {"Content-Type": "application/json"},
-          "body": [
-            {
-              "favouriteColor": "red"
-            }
-          ]
-        },
-        "actual": {
-          "headers": {"Content-Type": "application/json"},
-          "body": [
-            {
-              "favouriteColor": "red",
-              "favouriteNumber": 2
-            },
-            {
-              "favouriteColor": "blue",
-              "favouriteNumber": 2
-            }
-          ]
-        }
+      	"match": true,
+      	"comment": "XML Comparisons should work even on nested objects",
+      	"expected" : {
+      		"headers": {"Content-Type": "application/xml"},
+      		"body": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><object1><object2><object4><object5 name=\"Mary\"><friends><friend>Fred</friend><friend>John</friend></friends></object5><object6 phoneNumber=\"1234567890\"/></object4></object2></object1>"
+      	},
+      	"actual": {
+      		"headers": {"Content-Type": "application/xml"},
+      		"body": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><object1 color=\"red\"><object2><object4><object5 name=\"Mary\" gender=\"F\"><friends><friend>Fred</friend><friend>John</friend></friends></object5><object6 phoneNumber=\"1234567890\"/></object4></object2></object1>"
+      	}
       }
     "#).unwrap();
 
@@ -2650,22 +2336,14 @@ fn objects_in_array_no_matches_xml() {
     let pact = Json::from_str(r#"
       {
         "match": false,
-        "comment": "Array of objects, properties match on incorrect objects",
+        "comment": "XML Array of objects, properties match on incorrect objects",
         "expected" : {
-          "headers": {"Content-Type": "application/json"},
-          "body": [
-      		{"favouriteColor": "red"},
-      		{"favouriteNumber": 2}
-      	]
+          "headers": {"Content-Type": "application/xml"},
+          "body": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><person favouriteColour=\"red\" favouriteNumber=\"2\"/></people>"
         },
         "actual": {
-          "headers": {"Content-Type": "application/json"},
-          "body": [
-      		{"favouriteColor": "blue",
-      		"favouriteNumber": 4},
-      		{"favouriteColor": "red",
-      		"favouriteNumber": 2}
-      	]
+          "headers": {"Content-Type": "application/xml"},
+          "body": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><people><person favouriteColour=\"blue\" favouriteNumber=\"4\"/><person favouriteColour=\"red\" favouriteNumber=\"2\"/></people>"
         }
       }
     "#).unwrap();
@@ -2684,26 +2362,19 @@ fn objects_in_array_no_matches_xml() {
 }
 
 #[test]
-fn objects_in_array_second_matches_xml() {
+fn value_found_in_array_when_empty_expected_xml() {
     env_logger::init().unwrap_or(());
     let pact = Json::from_str(r#"
       {
         "match": false,
-        "comment": "Property of second object matches, but unexpected element recieved",
+        "comment": "XML Favourite numbers expected to contain empty, but non-empty found",
         "expected" : {
-          "headers": {"Content-Type": "application/json"},
-          "body": [
-      		{"favouriteColor": "red"}
-      	]
+          "headers": {"Content-Type": "application/xml"},
+          "body": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><alligator><favouriteNumbers><favouriteNumber>1</favouriteNumber><favouriteNumber></favouriteNumber><favouriteNumber>3</favouriteNumber></favouriteNumbers></alligator>"
         },
         "actual": {
-          "headers": {"Content-Type": "application/json"},
-          "body": [
-      		{"favouriteColor": "blue",
-      		"favouriteNumber": 4},
-      		{"favouriteColor": "red",
-      		"favouriteNumber": 2}
-      	]
+          "headers": {"Content-Type": "application/xml"},
+          "body": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><alligator><favouriteNumbers><favouriteNumber>1</favouriteNumber><favouriteNumber>2</favouriteNumber><favouriteNumber>3</favouriteNumber></favouriteNumbers></alligator>"
         }
       }
     "#).unwrap();
@@ -2820,19 +2491,19 @@ fn objects_in_array_with_type_mismatching_xml() {
 }
 
 #[test]
-fn plain_text_that_does_not_match_xml() {
+fn objects_in_array_first_matches_xml() {
     env_logger::init().unwrap_or(());
     let pact = Json::from_str(r#"
       {
         "match": false,
-        "comment": "Plain text that does not match",
-        "expected" : {
-          "headers": { "Content-Type": "text/plain" },
-          "body": "alligator named mary"
+        "comment": "XML Properties match but unexpected element received",
+        "expected": {
+          "headers": {"Content-Type": "application/xml"},
+          "body": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><people><person favouriteColour=\"red\"/></people>"
         },
         "actual": {
-          "headers": { "Content-Type": "text/plain" },
-          "body": "alligator named fred"
+          "headers": {"Content-Type": "application/xml"},
+          "body": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><people><person favouriteColour=\"blue\" favouriteNumber=\"4\"/><person favouriteColour=\"red\" favouriteNumber=\"2\"/></people>"
         }
       }
     "#).unwrap();
@@ -2851,19 +2522,19 @@ fn plain_text_that_does_not_match_xml() {
 }
 
 #[test]
-fn plain_text_that_matches_xml() {
+fn objects_in_array_second_matches_xml() {
     env_logger::init().unwrap_or(());
     let pact = Json::from_str(r#"
       {
-        "match": true,
-        "comment": "Plain text that matches",
+        "match": false,
+        "comment": "XML Property of second object matches, but unexpected element received",
         "expected" : {
-          "headers": { "Content-Type": "text/plain" },
-          "body": "alligator named mary"
+          "headers": {"Content-Type": "application/xml"},
+          "body": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><people><person favouriteColour=\"red\"/></people>"
         },
         "actual": {
-          "headers": { "Content-Type": "text/plain" },
-          "body": "alligator named mary"
+          "headers": {"Content-Type": "application/xml"},
+          "body": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><people><person favouriteColour=\"blue\" favouriteNumber=\"4\"/><person favouriteColour=\"red\" favouriteNumber=\"2\"/></people>"
         }
       }
     "#).unwrap();
@@ -2887,100 +2558,14 @@ fn property_name_is_different_case_xml() {
     let pact = Json::from_str(r#"
       {
         "match": false,
-        "comment": "Property names on objects are case sensitive",
+        "comment": "XML Property names on objects are case sensitive",
         "expected" : {
-          "headers": {"Content-Type": "application/json"},
-          "body": {
-            "alligator":{
-              "FavouriteColour": "red"
-            }
-          }
+          "headers": {"Content-Type": "application/xml"},
+          "body": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><alligator FavouriteColour=\"red\"/>"
         },
         "actual": {
           "headers": {"Content-Type": "application/json"},
-          "body": {
-            "alligator":{
-              "favouritecolour": "red"
-            }
-          }
-        }
-      }
-    "#).unwrap();
-
-    let expected = Response::from_json(&pact.find("expected").unwrap(), &PactSpecification::V2);
-    println!("{:?}", expected);
-    let actual = Response::from_json(&pact.find("actual").unwrap(), &PactSpecification::V2);
-    println!("{:?}", actual);
-    let pact_match = pact.find("match").unwrap();
-    let result = match_response(expected, actual);
-    if pact_match.as_boolean().unwrap() {
-       expect!(result).to(be_empty());
-    } else {
-       expect!(result).to_not(be_empty());
-    }
-}
-
-#[test]
-fn string_found_at_key_when_number_expected_xml() {
-    env_logger::init().unwrap_or(());
-    let pact = Json::from_str(r#"
-      {
-        "match": false,
-        "comment": "Number of feet expected to be number but was string",
-        "expected" : {
-          "headers": {"Content-Type": "application/json"},
-          "body": {
-            "alligator":{
-              "feet": 4
-            }
-          }
-        },
-        "actual": {
-          "headers": {"Content-Type": "application/json"},
-          "body": {
-            "alligator":{
-              "feet": "4"
-            }
-          }
-        }
-      }
-    "#).unwrap();
-
-    let expected = Response::from_json(&pact.find("expected").unwrap(), &PactSpecification::V2);
-    println!("{:?}", expected);
-    let actual = Response::from_json(&pact.find("actual").unwrap(), &PactSpecification::V2);
-    println!("{:?}", actual);
-    let pact_match = pact.find("match").unwrap();
-    let result = match_response(expected, actual);
-    if pact_match.as_boolean().unwrap() {
-       expect!(result).to(be_empty());
-    } else {
-       expect!(result).to_not(be_empty());
-    }
-}
-
-#[test]
-fn string_found_in_array_when_number_expected_xml() {
-    env_logger::init().unwrap_or(());
-    let pact = Json::from_str(r#"
-      {
-        "match": false,
-        "comment": "Favourite Numbers expected to be numbers, but 2 is a string",
-        "expected" : {
-          "headers": {"Content-Type": "application/json"},
-          "body": {
-            "alligator":{
-              "favouriteNumbers": [1,2,3]
-            }
-          }
-        },
-        "actual": {
-          "headers": {"Content-Type": "application/json"},
-          "body": {
-            "alligator":{
-              "favouriteNumbers": [1,"2",3]
-            }
-          }
+          "body": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><alligator favouritecolour=\"red\"/>"
         }
       }
     "#).unwrap();
