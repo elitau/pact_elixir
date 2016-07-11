@@ -1,6 +1,8 @@
 #[allow(unused_imports)]
 use pact_matching::models::*;
 #[allow(unused_imports)]
+use env_logger;
+#[allow(unused_imports)]
 use pact_matching::match_response;
 #[allow(unused_imports)]
 use rustc_serialize::json::Json;
@@ -9,13 +11,14 @@ use expectest::prelude::*;
 
 #[test]
 fn empty_headers() {
+    env_logger::init().unwrap_or(());
     let pact = Json::from_str(r#"
         {
         "match": true,
         "comment": "Empty headers match",
         "expected" : {
           "headers": {}
-
+      
         },
         "actual": {
           "headers": {}
@@ -37,6 +40,7 @@ fn empty_headers() {
 
 #[test]
 fn whitespace_after_comma_different() {
+    env_logger::init().unwrap_or(());
     let pact = Json::from_str(r#"
       {
         "match": true,
@@ -68,6 +72,7 @@ fn whitespace_after_comma_different() {
 
 #[test]
 fn unexpected_header_found() {
+    env_logger::init().unwrap_or(());
     let pact = Json::from_str(r#"
       {
         "match": true,
@@ -97,6 +102,7 @@ fn unexpected_header_found() {
 
 #[test]
 fn matches_with_regex() {
+    env_logger::init().unwrap_or(());
     let pact = Json::from_str(r#"
       {
         "match": true,
@@ -117,7 +123,7 @@ fn matches_with_regex() {
           }
         }
       }
-
+              
     "#).unwrap();
 
     let expected = Response::from_json(&pact.find("expected").unwrap(), &PactSpecification::V2);
@@ -134,6 +140,7 @@ fn matches_with_regex() {
 
 #[test]
 fn header_value_is_different_case() {
+    env_logger::init().unwrap_or(());
     let pact = Json::from_str(r#"
       {
         "match": false,
@@ -165,6 +172,7 @@ fn header_value_is_different_case() {
 
 #[test]
 fn order_of_comma_separated_header_values_different() {
+    env_logger::init().unwrap_or(());
     let pact = Json::from_str(r#"
       {
         "match": false,
@@ -196,6 +204,7 @@ fn order_of_comma_separated_header_values_different() {
 
 #[test]
 fn header_name_is_different_case() {
+    env_logger::init().unwrap_or(());
     let pact = Json::from_str(r#"
       {
         "match": true,
@@ -227,6 +236,7 @@ fn header_name_is_different_case() {
 
 #[test]
 fn matches() {
+    env_logger::init().unwrap_or(());
     let pact = Json::from_str(r#"
       {
         "match": true,

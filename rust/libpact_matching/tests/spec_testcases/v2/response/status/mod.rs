@@ -1,6 +1,8 @@
 #[allow(unused_imports)]
 use pact_matching::models::*;
 #[allow(unused_imports)]
+use env_logger;
+#[allow(unused_imports)]
 use pact_matching::match_response;
 #[allow(unused_imports)]
 use rustc_serialize::json::Json;
@@ -9,6 +11,7 @@ use expectest::prelude::*;
 
 #[test]
 fn different_status() {
+    env_logger::init().unwrap_or(());
     let pact = Json::from_str(r#"
       {
         "match": false,
@@ -36,6 +39,7 @@ fn different_status() {
 
 #[test]
 fn matches() {
+    env_logger::init().unwrap_or(());
     let pact = Json::from_str(r#"
       {
       	"match": true,

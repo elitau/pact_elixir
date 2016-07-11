@@ -1,6 +1,8 @@
 #[allow(unused_imports)]
 use pact_matching::models::*;
 #[allow(unused_imports)]
+use env_logger;
+#[allow(unused_imports)]
 use pact_matching::match_request;
 #[allow(unused_imports)]
 use rustc_serialize::json::Json;
@@ -9,6 +11,7 @@ use expectest::prelude::*;
 
 #[test]
 fn method_is_different_case() {
+    env_logger::init().unwrap_or(());
     let pact = Json::from_str(r#"
       {
         "match": true,
@@ -24,7 +27,7 @@ fn method_is_different_case() {
           "path": "/",
           "query": "",
           "headers": {}
-
+      
         }
       }
     "#).unwrap();
@@ -43,6 +46,7 @@ fn method_is_different_case() {
 
 #[test]
 fn different_method() {
+    env_logger::init().unwrap_or(());
     let pact = Json::from_str(r#"
       {
         "match": false,
@@ -58,7 +62,7 @@ fn different_method() {
           "path": "/",
           "query": "",
           "headers": {}
-
+      
         }
       }
     "#).unwrap();
@@ -77,6 +81,7 @@ fn different_method() {
 
 #[test]
 fn matches() {
+    env_logger::init().unwrap_or(());
     let pact = Json::from_str(r#"
       {
         "match": true,
@@ -92,7 +97,7 @@ fn matches() {
           "path": "/",
           "query": "",
           "headers": {}
-
+      
         }
       }
     "#).unwrap();

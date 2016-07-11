@@ -14,6 +14,8 @@ specs.eachFileRecurse(FileType.DIRECTORIES) { dir ->
   testFile.withPrintWriter { pw ->
     pw.println('#[allow(unused_imports)]')
     pw.println('use pact_matching::models::*;')
+    pw.println('#[allow(unused_imports)]')
+    pw.println('use env_logger;')
     if (requestResponsePath == 'request') {
       pw.println('#[allow(unused_imports)]')
       pw.println('use pact_matching::match_request;')
@@ -39,6 +41,7 @@ specs.eachFileRecurse(FileType.DIRECTORIES) { dir ->
       def testBody = """
         |#[test]
         |fn ${it.name.replaceAll(' ', '_').replaceAll('\\.json', '')}() {
+        |    env_logger::init().unwrap_or(());
         |    let pact = Json::from_str(r#"
       """
       it.text.eachLine { line ->

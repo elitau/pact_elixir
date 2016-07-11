@@ -1,6 +1,8 @@
 #[allow(unused_imports)]
 use pact_matching::models::*;
 #[allow(unused_imports)]
+use env_logger;
+#[allow(unused_imports)]
 use pact_matching::match_request;
 #[allow(unused_imports)]
 use rustc_serialize::json::Json;
@@ -9,6 +11,7 @@ use expectest::prelude::*;
 
 #[test]
 fn matches_with_equals_in_the_query_value() {
+    env_logger::init().unwrap_or(());
     let pact = Json::from_str(r#"
       {
         "match": true,
@@ -44,6 +47,7 @@ fn matches_with_equals_in_the_query_value() {
 
 #[test]
 fn same_parameter_multiple_times() {
+    env_logger::init().unwrap_or(());
     let pact = Json::from_str(r#"
       {
         "match": true,
@@ -78,6 +82,7 @@ fn same_parameter_multiple_times() {
 
 #[test]
 fn unexpected_param() {
+    env_logger::init().unwrap_or(());
     let pact = Json::from_str(r#"
       {
         "match": false,
@@ -113,6 +118,7 @@ fn unexpected_param() {
 
 #[test]
 fn different_order() {
+    env_logger::init().unwrap_or(());
     let pact = Json::from_str(r#"
       {
         "match": true,
@@ -148,6 +154,7 @@ fn different_order() {
 
 #[test]
 fn different_params() {
+    env_logger::init().unwrap_or(());
     let pact = Json::from_str(r#"
       {
         "match": false,
@@ -183,6 +190,7 @@ fn different_params() {
 
 #[test]
 fn matches() {
+    env_logger::init().unwrap_or(());
     let pact = Json::from_str(r#"
       {
         "match": true,
@@ -218,6 +226,7 @@ fn matches() {
 
 #[test]
 fn missing_params() {
+    env_logger::init().unwrap_or(());
     let pact = Json::from_str(r#"
       {
         "match": false,
@@ -253,6 +262,7 @@ fn missing_params() {
 
 #[test]
 fn same_parameter_different_values() {
+    env_logger::init().unwrap_or(());
     let pact = Json::from_str(r#"
       {
         "match": false,
@@ -288,6 +298,7 @@ fn same_parameter_different_values() {
 
 #[test]
 fn same_parameter_multiple_times_in_different_order() {
+    env_logger::init().unwrap_or(());
     let pact = Json::from_str(r#"
       {
         "match": false,
@@ -322,6 +333,7 @@ fn same_parameter_multiple_times_in_different_order() {
 
 #[test]
 fn trailing_ampersand() {
+    env_logger::init().unwrap_or(());
     let pact = Json::from_str(r#"
       {
         "match": true,

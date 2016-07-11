@@ -1,6 +1,8 @@
 #[allow(unused_imports)]
 use pact_matching::models::*;
 #[allow(unused_imports)]
+use env_logger;
+#[allow(unused_imports)]
 use pact_matching::match_request;
 #[allow(unused_imports)]
 use rustc_serialize::json::Json;
@@ -9,6 +11,7 @@ use expectest::prelude::*;
 
 #[test]
 fn empty_headers() {
+    env_logger::init().unwrap_or(());
     let pact = Json::from_str(r#"
       {
         "match": true,
@@ -43,6 +46,7 @@ fn empty_headers() {
 
 #[test]
 fn header_name_is_different_case() {
+    env_logger::init().unwrap_or(());
     let pact = Json::from_str(r#"
       {
         "match": true,
@@ -80,6 +84,7 @@ fn header_name_is_different_case() {
 
 #[test]
 fn header_value_is_different_case() {
+    env_logger::init().unwrap_or(());
     let pact = Json::from_str(r#"
       {
         "match": false,
@@ -117,6 +122,7 @@ fn header_value_is_different_case() {
 
 #[test]
 fn matches() {
+    env_logger::init().unwrap_or(());
     let pact = Json::from_str(r#"
       {
         "match": true,
@@ -156,6 +162,7 @@ fn matches() {
 
 #[test]
 fn order_of_comma_separated_header_values_different() {
+    env_logger::init().unwrap_or(());
     let pact = Json::from_str(r#"
       {
         "match": false,
@@ -193,6 +200,7 @@ fn order_of_comma_separated_header_values_different() {
 
 #[test]
 fn unexpected_header_found() {
+    env_logger::init().unwrap_or(());
     let pact = Json::from_str(r#"
       {
         "match": true,
@@ -228,6 +236,7 @@ fn unexpected_header_found() {
 
 #[test]
 fn whitespace_after_comma_different() {
+    env_logger::init().unwrap_or(());
     let pact = Json::from_str(r#"
       {
         "match": true,
