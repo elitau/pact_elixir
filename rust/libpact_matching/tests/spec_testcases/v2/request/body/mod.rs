@@ -918,53 +918,6 @@ fn unexpected_key_with_null_value() {
 }
 
 #[test]
-fn array_size_less_than_required() {
-    env_logger::init().unwrap_or(());
-    let pact = Json::from_str(r#"
-      {
-        "match": false,
-        "comment": "Empty array",
-        "expected" : {
-          "method": "POST",
-          "path": "/",
-          "query": "",
-          "headers": {"Content-Type": "application/json"},
-          "matchingRules": {
-            "$.body.animals": {"min": 1}
-          },
-          "body": {
-            "animals": [
-              {
-                "name" : "Fred"
-              }
-            ]
-          }
-        },
-        "actual": {
-          "method": "POST",
-          "path": "/",
-          "query": "",
-          "headers": {"Content-Type": "application/json"},
-          "body": {
-            "animals": []
-          }
-        }
-      }
-    "#).unwrap();
-
-    let expected = Request::from_json(&pact.find("expected").unwrap(), &PactSpecification::V2);
-    println!("{:?}", expected);
-    let actual = Request::from_json(&pact.find("actual").unwrap(), &PactSpecification::V2);
-    println!("{:?}", actual);
-    let pact_match = pact.find("match").unwrap();
-    if pact_match.as_boolean().unwrap() {
-       expect!(match_request(expected, actual)).to(be_empty());
-    } else {
-       expect!(match_request(expected, actual)).to_not(be_empty());
-    }
-}
-
-#[test]
 fn matches() {
     env_logger::init().unwrap_or(());
     let pact = Json::from_str(r#"
@@ -1674,90 +1627,30 @@ fn array_in_different_order_xml() {
 }
 
 #[test]
-fn array_size_less_than_required_xml() {
-    env_logger::init().unwrap_or(());
-    let pact = Json::from_str(r#"
-      {
-        "match": false,
-        "comment": "Empty array",
-        "expected" : {
-          "method": "POST",
-          "path": "/",
-          "query": "",
-          "headers": {"Content-Type": "application/json"},
-          "matchingRules": {
-            "$.body.animals": {"min": 1}
-          },
-          "body": {
-            "animals": [
-              {
-                "name" : "Fred"
-              }
-            ]
-          }
-        },
-        "actual": {
-          "method": "POST",
-          "path": "/",
-          "query": "",
-          "headers": {"Content-Type": "application/json"},
-          "body": {
-            "animals": []
-          }
-        }
-      }
-    "#).unwrap();
-
-    let expected = Request::from_json(&pact.find("expected").unwrap(), &PactSpecification::V2);
-    println!("{:?}", expected);
-    let actual = Request::from_json(&pact.find("actual").unwrap(), &PactSpecification::V2);
-    println!("{:?}", actual);
-    let pact_match = pact.find("match").unwrap();
-    if pact_match.as_boolean().unwrap() {
-       expect!(match_request(expected, actual)).to(be_empty());
-    } else {
-       expect!(match_request(expected, actual)).to_not(be_empty());
-    }
-}
-
-#[test]
 fn array_with_at_least_one_element_matching_by_example_xml() {
     env_logger::init().unwrap_or(());
     let pact = Json::from_str(r#"
       {
         "match": true,
-        "comment": "Types and regular expressions match",
+        "comment": "XML Types and regular expressions match",
         "expected" : {
           "method": "POST",
           "path": "/",
           "query": "",
-          "headers": {"Content-Type": "application/json"},
+          "headers": {"Content-Type": "application/xml"},
           "matchingRules": {
             "$.body.animals": {"min": 1, "match": "type"},
-            "$.body.animals[*].*": {"match": "type"}
+            "$.body.animals[0]": {"match": "type"},
+            "$.body.animals[1]": {"match": "type"}
           },
-          "body": {
-            "animals": [
-              {
-                "name" : "Fred"
-              }
-            ]
-          }
+          "body": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><animals><alligator name=\"Fred\"/></animals>"
         },
         "actual": {
           "method": "POST",
           "path": "/",
           "query": "",
-          "headers": {"Content-Type": "application/json"},
-          "body": {
-            "animals": [
-              {
-                "name" : "Mary"
-              },{
-                "name" : "Susan"
-              }
-            ]
-          }
+          "headers": {"Content-Type": "application/xml"},
+          "body": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><animals><alligator name=\"Mary\"/><alligator name=\"Susan\"/></animals>"
         }
       }
     "#).unwrap();
@@ -1775,227 +1668,30 @@ fn array_with_at_least_one_element_matching_by_example_xml() {
 }
 
 #[test]
-fn array_with_at_least_one_element_not_matching_example_type_xml() {
-    env_logger::init().unwrap_or(());
-    let pact = Json::from_str(r#"
-      {
-        "match": false,
-        "comment": "Wrong type for name key",
-        "expected" : {
-          "method": "POST",
-          "path": "/",
-          "query": "",
-          "headers": {"Content-Type": "application/json"},
-          "matchingRules": {
-            "$.body.animals": {"min": 1, "match": "type"},
-            "$.body.animals[*].*": {"match": "type"}
-          },
-          "body": {
-            "animals": [
-              {
-                "name" : "Fred"
-              }
-            ]
-          }
-        },
-        "actual": {
-          "method": "POST",
-          "path": "/",
-          "query": "",
-          "headers": {"Content-Type": "application/json"},
-          "body": {
-            "animals": [
-              {
-                "name" : "Mary"
-              },{
-                "name" : 1
-              }
-            ]
-          }
-        }
-      }
-    "#).unwrap();
-
-    let expected = Request::from_json(&pact.find("expected").unwrap(), &PactSpecification::V2);
-    println!("{:?}", expected);
-    let actual = Request::from_json(&pact.find("actual").unwrap(), &PactSpecification::V2);
-    println!("{:?}", actual);
-    let pact_match = pact.find("match").unwrap();
-    if pact_match.as_boolean().unwrap() {
-       expect!(match_request(expected, actual)).to(be_empty());
-    } else {
-       expect!(match_request(expected, actual)).to_not(be_empty());
-    }
-}
-
-#[test]
-fn array_with_nested_array_that_does_not_match_xml() {
-    env_logger::init().unwrap_or(());
-    let pact = Json::from_str(r#"
-      {
-        "match": false,
-        "comment": "Nested arrays do not match, age is wrong type",
-        "expected" : {
-          "method": "POST",
-          "path": "/",
-          "query": "",
-          "headers": {"Content-Type": "application/json"},
-          "matchingRules": {
-            "$.body.animals": {"min": 1, "match": "type"},
-            "$.body.animals[*].*": {"match": "type"},
-            "$.body.animals[*].children": {"min": 1},
-            "$.body.animals[*].children[*].*": {"match": "type"}
-          },
-          "body": {
-            "animals": [
-              {
-                "name" : "Fred",
-                "children": [
-                  {
-                    "age": 9
-                  }
-                ]
-              }
-            ]
-          }
-        },
-        "actual": {
-          "method": "POST",
-          "path": "/",
-          "query": "",
-          "headers": {"Content-Type": "application/json"},
-          "body": {
-            "animals": [
-              {
-                "name" : "Mary",
-                "children": [{"age": "9"}]
-              }
-            ]
-          }
-        }
-      }
-    "#).unwrap();
-
-    let expected = Request::from_json(&pact.find("expected").unwrap(), &PactSpecification::V2);
-    println!("{:?}", expected);
-    let actual = Request::from_json(&pact.find("actual").unwrap(), &PactSpecification::V2);
-    println!("{:?}", actual);
-    let pact_match = pact.find("match").unwrap();
-    if pact_match.as_boolean().unwrap() {
-       expect!(match_request(expected, actual)).to(be_empty());
-    } else {
-       expect!(match_request(expected, actual)).to_not(be_empty());
-    }
-}
-
-#[test]
-fn array_with_nested_array_that_matches_xml() {
+fn matches_with_regex_xml() {
     env_logger::init().unwrap_or(());
     let pact = Json::from_str(r#"
       {
         "match": true,
-        "comment": "Nested arrays match",
+        "comment": "XML Requests match with regex",
         "expected" : {
           "method": "POST",
           "path": "/",
           "query": "",
-          "headers": {"Content-Type": "application/json"},
+          "headers": {"Content-Type": "application/xml"},
           "matchingRules": {
-            "$.body.animals": {"min": 1, "match": "type"},
-            "$.body.animals[*].*": {"match": "type"},
-            "$.body.animals[*].children": {"min": 1, "match": "type"},
-            "$.body.animals[*].children[*].*": {"match": "type"}
+            "$.body.alligator['@name']": {"match": "regex", "regex": "\\w+"},
+            "$.body.alligator[0].favouriteColours[0].favouriteColour": {"match": "regex", "regex": "red|blue"},
+            "$.body.alligator[0].favouriteColours[1].favouriteColour": {"match": "regex", "regex": "red|blue"}
           },
-          "body": {
-            "animals": [
-              {
-                "name" : "Fred",
-                "children": [
-                  {
-                    "age": 9
-                  }
-                ]
-              }
-            ]
-          }
+          "body": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><alligator name=\"Mary\" feet=\"4\"><favouriteColours><favouriteColour>red</favouriteColour><favouriteColour>blue</favouriteColour></favouriteColours></alligator>"
         },
         "actual": {
           "method": "POST",
           "path": "/",
           "query": "",
-          "headers": {"Content-Type": "application/json"},
-          "body": {
-            "animals": [
-              {
-                "name" : "Mary",
-                "children": [
-                  {"age": 3},
-                  {"age": 5},
-                  {"age": 5456}
-                ]
-              },{
-                "name" : "Jo",
-                "children": [
-                  {"age": 0}
-                ]
-              }
-            ]
-          }
-        }
-      }
-    "#).unwrap();
-
-    let expected = Request::from_json(&pact.find("expected").unwrap(), &PactSpecification::V2);
-    println!("{:?}", expected);
-    let actual = Request::from_json(&pact.find("actual").unwrap(), &PactSpecification::V2);
-    println!("{:?}", actual);
-    let pact_match = pact.find("match").unwrap();
-    if pact_match.as_boolean().unwrap() {
-       expect!(match_request(expected, actual)).to(be_empty());
-    } else {
-       expect!(match_request(expected, actual)).to_not(be_empty());
-    }
-}
-
-#[test]
-fn array_with_regular_expression_in_element_xml() {
-    env_logger::init().unwrap_or(());
-    let pact = Json::from_str(r#"
-      {
-        "match": true,
-        "comment": "Types and regular expressions match",
-        "expected" : {
-          "method": "POST",
-          "path": "/",
-          "query": "",
-          "headers": {"Content-Type": "application/json"},
-          "matchingRules": {
-            "$.body.animals": {"min": 1, "match": "type"},
-            "$.body.animals[*].*": {"match": "type"},
-            "$.body.animals[*].phoneNumber": {"match": "regex", "regex": "\\d+"}
-          },
-          "body": {
-            "animals": [
-              {
-                "phoneNumber": "0415674567"
-              }
-            ]
-          }
-        },
-        "actual": {
-          "method": "POST",
-          "path": "/",
-          "query": "",
-          "headers": {"Content-Type": "application/json"},
-          "body": {
-            "animals": [
-              {
-                "phoneNumber": "333"
-              },{
-                "phoneNumber": "983479823479283478923"
-              }
-            ]
-          }
+          "headers": {"Content-Type": "application/xml"},
+          "body": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><alligator name=\"Harry\" feet=\"4\"><favouriteColours><favouriteColour>blue</favouriteColour><favouriteColour>red</favouriteColour></favouriteColours></alligator>"
         }
       }
     "#).unwrap();
@@ -2023,34 +1719,60 @@ fn array_with_regular_expression_that_does_not_match_in_element_xml() {
           "method": "POST",
           "path": "/",
           "query": "",
-          "headers": {"Content-Type": "application/json"},
+          "headers": {"Content-Type": "application/xml"},
           "matchingRules": {
             "$.body.animals": {"min": 1, "match": "type"},
-            "$.body.animals[*].*": {"match": "type"},
-            "$.body.animals[*].phoneNumber": {"match": "regex", "regex": "\\d+"}
+            "$.body.animals.0": {"match": "type"},
+            "$.body.animals.1": {"match": "type"},
+            "$.body.animals[*].alligator['@phoneNumber']": {"match": "regex", "regex": "\\d+"}
           },
-          "body": {
-            "animals": [
-              {
-                "phoneNumber": "0415674567"
-              }
-            ]
-          }
+          "body": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><animals><alligator phoneNumber=\"0415674567\"/></animals>"
         },
         "actual": {
           "method": "POST",
           "path": "/",
           "query": "",
-          "headers": {"Content-Type": "application/json"},
-          "body": {
-            "animals": [
-              {
-                "phoneNumber": "333"
-              },{
-                "phoneNumber": "abc"
-              }
-            ]
-          }
+          "headers": {"Content-Type": "application/xml"},
+          "body": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><animals><alligator phoneNumber=\"123\"/><alligator phoneNumber=\"abc\"/></animals>"
+        }
+      }
+    "#).unwrap();
+
+    let expected = Request::from_json(&pact.find("expected").unwrap(), &PactSpecification::V2);
+    println!("{:?}", expected);
+    let actual = Request::from_json(&pact.find("actual").unwrap(), &PactSpecification::V2);
+    println!("{:?}", actual);
+    let pact_match = pact.find("match").unwrap();
+    if pact_match.as_boolean().unwrap() {
+       expect!(match_request(expected, actual)).to(be_empty());
+    } else {
+       expect!(match_request(expected, actual)).to_not(be_empty());
+    }
+}
+
+#[test]
+fn matches_with_regex_with_bracket_notation_xml() {
+    env_logger::init().unwrap_or(());
+    let pact = Json::from_str(r#"
+      {
+        "match": true,
+        "comment": "XML Requests match with regex",
+        "expected" : {
+          "method": "POST",
+          "path": "/",
+          "query": "",
+          "headers": {"Content-Type": "application/xml"},
+          "matchingRules": {
+            "$.body['two']['@str']": {"match": "regex", "regex": "\\w+"}
+          },
+          "body": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><two str=\"jildrdmxddnVzcQZfjCA\"/>"
+        },
+        "actual": {
+          "method": "POST",
+          "path": "/",
+          "query": "",
+          "headers": {"Content-Type": "application/xml"},
+          "body": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><two str=\"saldfhksajdhffdskkjh\"/>"
         }
       }
     "#).unwrap();
@@ -2123,158 +1845,6 @@ fn different_value_found_at_key_xml() {
           "query": "",
           "headers": {"Content-Type": "application/xml"},
           "body": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><alligator name=\"Fred\"/>"
-        }
-      }
-    "#).unwrap();
-
-    let expected = Request::from_json(&pact.find("expected").unwrap(), &PactSpecification::V2);
-    println!("{:?}", expected);
-    let actual = Request::from_json(&pact.find("actual").unwrap(), &PactSpecification::V2);
-    println!("{:?}", actual);
-    let pact_match = pact.find("match").unwrap();
-    if pact_match.as_boolean().unwrap() {
-       expect!(match_request(expected, actual)).to(be_empty());
-    } else {
-       expect!(match_request(expected, actual)).to_not(be_empty());
-    }
-}
-
-#[test]
-fn matches_with_regex_xml() {
-    env_logger::init().unwrap_or(());
-    let pact = Json::from_str(r#"
-      {
-        "match": true,
-        "comment": "Requests match with regex",
-        "expected" : {
-          "method": "POST",
-          "path": "/",
-          "query": "",
-          "headers": {"Content-Type": "application/json"},
-          "matchingRules": {
-            "$.body.alligator.name": {"match": "regex", "regex": "\\w+"},
-            "$.body.alligator.favouriteColours[0]": {"match": "regex", "regex": "red|blue"},
-            "$.body.alligator.favouriteColours[1]": {"match": "regex", "regex": "red|blue"}
-          },
-          "body": {
-            "alligator":{
-              "name": "Mary",
-              "feet": 4,
-              "favouriteColours": ["red","blue"]
-            }
-          }
-        },
-        "actual": {
-          "method": "POST",
-          "path": "/",
-          "query": "",
-          "headers": {"Content-Type": "application/json"},
-          "body": {
-            "alligator":{
-              "feet": 4,
-              "name": "Harry",
-              "favouriteColours": ["blue", "red"]
-            }
-          }
-        }
-      }
-    "#).unwrap();
-
-    let expected = Request::from_json(&pact.find("expected").unwrap(), &PactSpecification::V2);
-    println!("{:?}", expected);
-    let actual = Request::from_json(&pact.find("actual").unwrap(), &PactSpecification::V2);
-    println!("{:?}", actual);
-    let pact_match = pact.find("match").unwrap();
-    if pact_match.as_boolean().unwrap() {
-       expect!(match_request(expected, actual)).to(be_empty());
-    } else {
-       expect!(match_request(expected, actual)).to_not(be_empty());
-    }
-}
-
-#[test]
-fn matches_with_regex_with_bracket_notation_xml() {
-    env_logger::init().unwrap_or(());
-    let pact = Json::from_str(r#"
-      {
-        "match": true,
-        "comment": "Requests match with regex",
-        "expected" : {
-          "method": "POST",
-          "path": "/",
-          "query": "",
-          "headers": {"Content-Type": "application/json"},
-          "matchingRules": {
-            "$.body['2'].str": {"match": "regex", "regex": "\\w+"}
-          },
-          "body": {
-            "2" : {
-              "str" : "jildrdmxddnVzcQZfjCA"
-            }
-          }
-        },
-        "actual": {
-          "method": "POST",
-          "path": "/",
-          "query": "",
-          "headers": {"Content-Type": "application/json"},
-          "body": {
-            "2" : {
-              "str" : "saldfhksajdhffdskkjh"
-            }
-          }
-        }
-      }
-    "#).unwrap();
-
-    let expected = Request::from_json(&pact.find("expected").unwrap(), &PactSpecification::V2);
-    println!("{:?}", expected);
-    let actual = Request::from_json(&pact.find("actual").unwrap(), &PactSpecification::V2);
-    println!("{:?}", actual);
-    let pact_match = pact.find("match").unwrap();
-    if pact_match.as_boolean().unwrap() {
-       expect!(match_request(expected, actual)).to(be_empty());
-    } else {
-       expect!(match_request(expected, actual)).to_not(be_empty());
-    }
-}
-
-#[test]
-fn matches_with_type_xml() {
-    env_logger::init().unwrap_or(());
-    let pact = Json::from_str(r#"
-      {
-        "match": true,
-        "comment": "Requests match with same type",
-        "expected" : {
-          "method": "POST",
-          "path": "/",
-          "query": "",
-          "headers": {"Content-Type": "application/json"},
-          "matchingRules": {
-            "$.body.alligator.name": {"match": "type"},
-            "$.body.alligator.feet": {"match": "type"}
-          },
-          "body": {
-            "alligator":{
-              "name": "Mary",
-              "feet": 4,
-              "favouriteColours": ["red","blue"]
-            }
-          }
-        },
-        "actual": {
-          "method": "POST",
-          "path": "/",
-          "query": "",
-          "headers": {"Content-Type": "application/json"},
-          "body": {
-            "alligator":{
-              "feet": 5,
-              "name": "Harry the very hungry alligator with an extra foot",
-              "favouriteColours": ["red","blue"]
-            }
-          }
         }
       }
     "#).unwrap();
@@ -2433,6 +2003,45 @@ fn no_body_no_content_type_xml() {
 }
 
 #[test]
+fn array_size_less_than_required_xml() {
+    env_logger::init().unwrap_or(());
+    let pact = Json::from_str(r#"
+      {
+        "match": false,
+        "comment": "XML Array must have at least 2 elements",
+        "expected" : {
+          "method": "POST",
+          "path": "/",
+          "query": "",
+          "headers": {"Content-Type": "application/xml"},
+          "matchingRules": {
+            "$.body.animals": {"min": 2}
+          },
+          "body": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><animals><alligator name=\"Mary\"/></animals>"
+        },
+        "actual": {
+          "method": "POST",
+          "path": "/",
+          "query": "",
+          "headers": {"Content-Type": "application/xml"},
+          "body": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><animals><alligator name=\"Mary\"/></animals>"
+        }
+      }
+    "#).unwrap();
+
+    let expected = Request::from_json(&pact.find("expected").unwrap(), &PactSpecification::V2);
+    println!("{:?}", expected);
+    let actual = Request::from_json(&pact.find("actual").unwrap(), &PactSpecification::V2);
+    println!("{:?}", actual);
+    let pact_match = pact.find("match").unwrap();
+    if pact_match.as_boolean().unwrap() {
+       expect!(match_request(expected, actual)).to(be_empty());
+    } else {
+       expect!(match_request(expected, actual)).to_not(be_empty());
+    }
+}
+
+#[test]
 fn not_empty_found_at_key_when_empty_expected_xml() {
     env_logger::init().unwrap_or(());
     let pact = Json::from_str(r#"
@@ -2452,6 +2061,48 @@ fn not_empty_found_at_key_when_empty_expected_xml() {
           "query": "",
           "headers": {"Content-Type": "application/xml"},
           "body": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><alligator name=\"Mary\"/>"
+        }
+      }
+    "#).unwrap();
+
+    let expected = Request::from_json(&pact.find("expected").unwrap(), &PactSpecification::V2);
+    println!("{:?}", expected);
+    let actual = Request::from_json(&pact.find("actual").unwrap(), &PactSpecification::V2);
+    println!("{:?}", actual);
+    let pact_match = pact.find("match").unwrap();
+    if pact_match.as_boolean().unwrap() {
+       expect!(match_request(expected, actual)).to(be_empty());
+    } else {
+       expect!(match_request(expected, actual)).to_not(be_empty());
+    }
+}
+
+#[test]
+fn array_with_regular_expression_in_element_xml() {
+    env_logger::init().unwrap_or(());
+    let pact = Json::from_str(r#"
+      {
+        "match": true,
+        "comment": "XML Types and regular expressions match",
+        "expected" : {
+          "method": "POST",
+          "path": "/",
+          "query": "",
+          "headers": {"Content-Type": "application/xml"},
+          "matchingRules": {
+            "$.body.animals": {"min": 1, "match": "type"},
+            "$.body.animals.0": {"match": "type"},
+            "$.body.animals.1": {"match": "type"},
+            "$.body.animals[*]['@phoneNumber']": {"match": "regex", "regex": "\\d+"}
+          },
+          "body": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><animals><alligator phoneNumber=\"0415674567\"/></animals>"
+        },
+        "actual": {
+          "method": "POST",
+          "path": "/",
+          "query": "",
+          "headers": {"Content-Type": "application/xml"},
+          "body": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><animals><alligator phoneNumber=\"333\"/><alligator phoneNumber=\"983479823479283478923\"/></animals>"
         }
       }
     "#).unwrap();
@@ -2668,6 +2319,57 @@ fn unexpected_key_with_non_empty_value_xml() {
           "query": "",
           "headers": {"Content-Type": "application/xml"},
           "body": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><alligator name=\"Mary\" phoneNumber=\"12345678\"/>"
+        }
+      }
+    "#).unwrap();
+
+    let expected = Request::from_json(&pact.find("expected").unwrap(), &PactSpecification::V2);
+    println!("{:?}", expected);
+    let actual = Request::from_json(&pact.find("actual").unwrap(), &PactSpecification::V2);
+    println!("{:?}", actual);
+    let pact_match = pact.find("match").unwrap();
+    if pact_match.as_boolean().unwrap() {
+       expect!(match_request(expected, actual)).to(be_empty());
+    } else {
+       expect!(match_request(expected, actual)).to_not(be_empty());
+    }
+}
+
+#[test]
+fn array_size_less_than_required() {
+    env_logger::init().unwrap_or(());
+    let pact = Json::from_str(r#"
+      {
+        "match": false,
+        "comment": "Array must have at least 2 elements",
+        "expected" : {
+          "method": "POST",
+          "path": "/",
+          "query": "",
+          "headers": {"Content-Type": "application/json"},
+          "matchingRules": {
+            "$.body.animals": {"min": 2}
+          },
+          "body": {
+            "animals": [
+              {
+                "name" : "Fred"
+              }
+            ]
+          }
+        },
+        "actual": {
+          "method": "POST",
+          "path": "/",
+          "query": "",
+          "headers": {"Content-Type": "application/json"},
+          "body": {
+            "animals": [
+              {
+                "name" : "Fred"
+              }
+            ]
+          }
         }
       }
     "#).unwrap();

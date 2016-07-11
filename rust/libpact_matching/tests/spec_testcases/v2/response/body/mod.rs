@@ -1629,37 +1629,24 @@ fn plain_text_that_matches() {
 }
 
 #[test]
-fn additional_property_with_type_matcher_xml() {
+fn matches_with_regex_xml() {
     env_logger::init().unwrap_or(());
     let pact = Json::from_str(r#"
       {
         "match": true,
-        "comment": "additional property with type matcher wildcards",
-        "expected": {
-          "headers": {},
-          "body" : {
-            "myPerson": {
-              "name": "Any name",
-              "age": 10
-            }
+        "comment": "XML Requests match with regex",
+        "expected" : {
+          "headers": {"Content-Type": "application/xml"},
+          "matchingRules": {
+            "$.body.alligator['@name']": {"match": "regex", "regex": "\\w+"}
           },
-          "matchingRules" : {
-            "$.body.myPerson.*" : {
-              "match": "type"
-            }
-          }
+          "body": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><alligator name=\"Mary\" feet=\"4\" favouriteNumber=\"7\" favouriteColours=\"red, blue\" />"
         },
         "actual": {
-          "headers": {},
-          "body": {
-            "myPerson": {
-              "name": "Jon Peterson",
-              "age": 39,
-              "nationality": "Australian"
-            }
-          }    
+          "headers": {"Content-Type": "application/xml"},
+          "body": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><alligator name=\"Harry\" feet=\"4\" favouriteNumber=\"7\" favouriteColours=\"red, blue\" />"
         }
-      }   
+      }
     "#).unwrap();
 
     let expected = Response::from_json(&pact.find("expected").unwrap(), &PactSpecification::V2);
@@ -1689,86 +1676,6 @@ fn array_at_top_level_xml() {
         "actual": {
           "headers": {"Content-Type": "application/xml"},
           "body": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><people><rogger dob=\"06/10/2015\" name=\"Rogger the Dogger\" id=\"1014753708\" timestamp=\"2015-06-10T20:41:37\"/><cat dob=\"06/10/2015\" name=\"Cat in the Hat\" id=\"8858030303\" timestamp=\"2015-06-10T20:41:37\"/></people>"
-        }
-      }
-    "#).unwrap();
-
-    let expected = Response::from_json(&pact.find("expected").unwrap(), &PactSpecification::V2);
-    println!("{:?}", expected);
-    let actual = Response::from_json(&pact.find("actual").unwrap(), &PactSpecification::V2);
-    println!("{:?}", actual);
-    let pact_match = pact.find("match").unwrap();
-    let result = match_response(expected, actual);
-    if pact_match.as_boolean().unwrap() {
-       expect!(result).to(be_empty());
-    } else {
-       expect!(result).to_not(be_empty());
-    }
-}
-
-#[test]
-fn array_at_top_level_with_matchers_xml() {
-    env_logger::init().unwrap_or(());
-    let pact = Json::from_str(r#"
-      {
-        "match": true,
-        "comment": "top level array matches",
-        "expected": {
-          "headers": {"Content-Type": "application/json"},
-          "body" : [ {
-            "dob" : "06/11/2015",
-            "name" : "Rogger the Dogger",
-            "id" : 3380634027,
-            "timestamp" : "2015-06-11T13:17:29"
-          }, {
-            "dob" : "06/11/2015",
-            "name" : "Cat in the Hat",
-            "id" : 1284270029,
-            "timestamp" : "2015-06-11T13:17:29"
-          } ],
-          "matchingRules" : {
-            "$.body[0].id" : {
-              "match" : "type"
-            },
-            "$.body[1].id" : {
-              "match" : "type"
-            },
-            "$.body[0].name" : {
-              "match" : "type"
-            },
-            "$.body[1].name" : {
-              "match" : "type"
-            },
-            "$.body[1].dob" : {
-              "match": "regex", "regex" : "\\d{2}/\\d{2}/\\d{4}"
-            },
-            "$.body[1].timestamp" : {
-              "match": "regex", "regex" : "\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}"
-            },
-            "$.body[0].timestamp" : {
-              "match": "regex", "regex" : "\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}"
-            },
-            "$.body[0].dob" : {
-              "match": "regex", "regex" : "\\d{2}/\\d{2}/\\d{4}"
-            }
-          }
-        },
-        "actual": {
-          "headers": {"Content-Type": "application/json"},
-          "body": [
-            {
-              "dob": "11/06/2015",
-              "name": "Bob The Builder",
-              "id": 1234567890,
-              "timestamp": "2000-06-10T20:41:37"
-            },
-            {
-              "dob": "12/10/2000",
-              "name": "Slinky Malinky",
-              "id": 6677889900,
-              "timestamp": "2015-06-10T22:98:78"
-            }
-          ]
         }
       }
     "#).unwrap();
@@ -1818,55 +1725,6 @@ fn array_in_different_order_xml() {
 }
 
 #[test]
-fn array_with_regex_matcher_xml() {
-    env_logger::init().unwrap_or(());
-    let pact = Json::from_str(r#"
-      {
-        "match": true,
-        "comment": "array with regex matcher",
-        "expected": {
-          "headers": {},
-          "body" : {
-            "myDates": [
-              "29/10/2015"
-            ]
-          },
-          "matchingRules" : {
-            "$.body.myDates": {
-              "match": "type"
-            },
-            "$.body.myDates[*]" : {
-              "match": "regex", "regex" : "\\d{2}/\\d{2}/\\d{4}"
-            }
-          }
-        },
-        "actual": {
-          "headers": {},
-          "body": {
-            "myDates": [
-              "01/11/2010",
-              "15/12/2014",
-              "30/06/2015"
-            ]
-          }    
-        }
-      }   
-    "#).unwrap();
-
-    let expected = Response::from_json(&pact.find("expected").unwrap(), &PactSpecification::V2);
-    println!("{:?}", expected);
-    let actual = Response::from_json(&pact.find("actual").unwrap(), &PactSpecification::V2);
-    println!("{:?}", actual);
-    let pact_match = pact.find("match").unwrap();
-    let result = match_response(expected, actual);
-    if pact_match.as_boolean().unwrap() {
-       expect!(result).to(be_empty());
-    } else {
-       expect!(result).to_not(be_empty());
-    }
-}
-
-#[test]
 fn array_with_type_matcher_xml() {
     env_logger::init().unwrap_or(());
     let pact = Json::from_str(r#"
@@ -1875,31 +1733,21 @@ fn array_with_type_matcher_xml() {
         "comment": "array with type matcher",
         "expected": {
           "headers": {},
-          "body" : {
-            "myDates": [
-              10
-            ]
-          },
+          "body" : "<?xml version=\"1.0\" encoding=\"UTF-8\"?><people><person>Fred</person></people>",
           "matchingRules" : {
-            "$.body.myDates" : {
+            "$.body.people" : {
               "match": "type"
             },
-            "$.body.myDates[*]" : {
+            "$.body.people[*]" : {
               "match": "type"
             }
           }
         },
         "actual": {
           "headers": {},
-          "body": {
-            "myDates": [
-              20,
-              5,
-              1910
-            ]
-          }    
+          "body": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><people><person>Fred</person><person>George</person><person>Cat</person></people>"
         }
-      }   
+      }
     "#).unwrap();
 
     let expected = Response::from_json(&pact.find("expected").unwrap(), &PactSpecification::V2);
@@ -1921,31 +1769,21 @@ fn array_with_type_matcher_mismatch_xml() {
     let pact = Json::from_str(r#"
       {
         "match": false,
-        "comment": "array with type matcher mismatch",
+        "comment": "XML array with type matcher mismatch",
         "expected": {
           "headers": {},
-          "body" : {
-            "myDates": [
-              10
-            ]
-          },
+          "body" : "<?xml version=\"1.0\" encoding=\"UTF-8\"?><people><person>Fred</person></people>",
           "matchingRules" : {
-            "$.body.myDates[*]" : {
+            "$.body.people" : {
               "match": "type"
             }
           }
         },
         "actual": {
           "headers": {},
-          "body": {
-            "myDates": [
-              20,
-              5,
-              "100299"
-            ]
-          }    
+          "body": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><people><person>Fred</person><person>Fred</person><cat>Fred</cat></people>"
         }
-      }   
+      }
     "#).unwrap();
 
     let expected = Response::from_json(&pact.find("expected").unwrap(), &PactSpecification::V2);
@@ -2037,99 +1875,6 @@ fn matches_xml() {
         "actual": {
           "headers": {"Content-Type": "application/xml"},
           "body": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><alligator feet=\"4\" name=\"Mary\"><favouriteColours><favouriteColour>red</favouriteColour><favouriteColour>blue</favouriteColour></favouriteColours></alligator>"
-        }
-      }
-    "#).unwrap();
-
-    let expected = Response::from_json(&pact.find("expected").unwrap(), &PactSpecification::V2);
-    println!("{:?}", expected);
-    let actual = Response::from_json(&pact.find("actual").unwrap(), &PactSpecification::V2);
-    println!("{:?}", actual);
-    let pact_match = pact.find("match").unwrap();
-    let result = match_response(expected, actual);
-    if pact_match.as_boolean().unwrap() {
-       expect!(result).to(be_empty());
-    } else {
-       expect!(result).to_not(be_empty());
-    }
-}
-
-#[test]
-fn matches_with_regex_xml() {
-    env_logger::init().unwrap_or(());
-    let pact = Json::from_str(r#"
-      {
-        "match": true,
-        "comment": "Requests match with regex",
-        "expected" : {
-          "headers": {"Content-Type": "application/json"},
-          "matchingRules": {
-            "$.body.alligator.name": {"match": "regex", "regex": "\\w+"}
-          },
-          "body": {
-            "alligator":{
-              "name": "Mary",
-              "feet": 4,
-              "favouriteColours": ["red","blue"]
-            }
-          }
-        },
-        "actual": {
-          "headers": {"Content-Type": "application/json"},
-          "body": {
-            "alligator":{
-              "feet": 4,
-              "name": "Harry",
-              "favouriteColours": ["red","blue"]
-            }
-          }
-        }
-      }
-    "#).unwrap();
-
-    let expected = Response::from_json(&pact.find("expected").unwrap(), &PactSpecification::V2);
-    println!("{:?}", expected);
-    let actual = Response::from_json(&pact.find("actual").unwrap(), &PactSpecification::V2);
-    println!("{:?}", actual);
-    let pact_match = pact.find("match").unwrap();
-    let result = match_response(expected, actual);
-    if pact_match.as_boolean().unwrap() {
-       expect!(result).to(be_empty());
-    } else {
-       expect!(result).to_not(be_empty());
-    }
-}
-
-#[test]
-fn matches_with_type_xml() {
-    env_logger::init().unwrap_or(());
-    let pact = Json::from_str(r#"
-      {
-        "match": true,
-        "comment": "Response match with same type",
-        "expected" : {
-          "headers": {"Content-Type": "application/json"},
-          "matchingRules": {
-            "$.body.alligator.name": {"match": "type"},
-            "$.body.alligator.feet": {"match": "type"}
-          },
-          "body": {
-            "alligator":{
-              "name": "Mary",
-              "feet": 4,
-              "favouriteColours": ["red","blue"]
-            }
-          }
-        },
-        "actual": {
-          "headers": {"Content-Type": "application/json"},
-          "body": {
-            "alligator":{
-              "feet": 5,
-              "name": "Harry the very hungry alligator with an extra foot",
-              "favouriteColours": ["red","blue"]
-            }
-          }
         }
       }
     "#).unwrap();
@@ -2331,6 +2076,51 @@ fn deeply_nested_objects_xml() {
 }
 
 #[test]
+fn array_at_top_level_with_matchers_xml() {
+    env_logger::init().unwrap_or(());
+    let pact = Json::from_str(r#"
+      {
+        "match": true,
+        "comment": "XML top level array matches",
+        "expected": {
+          "headers": {"Content-Type": "application/xml"},
+          "body" : "<?xml version=\"1.0\" encoding=\"UTF-8\"?><people><person dob=\"06/10/2015\" name=\"Rogger the Dogger\" id=\"1014753708\" timestamp=\"2015-06-10T20:41:37\"/><cat dob=\"06/10/2015\" name=\"Cat in the Hat\" id=\"8858030303\" timestamp=\"2015-06-10T20:41:37\"/></people>",
+          "matchingRules" : {
+            "$.body.people[*].*['@id']" : {
+              "match" : "type"
+            },
+            "$.body.people[*].*['@name']" : {
+              "match" : "type"
+            },
+            "$.body.people[*].*['@dob']" : {
+              "match": "regex", "regex" : "\\d{2}/\\d{2}/\\d{4}"
+            },
+            "$.body.people[*].*['@timestamp']" : {
+              "match": "regex", "regex" : "\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}"
+            }
+          }
+        },
+        "actual": {
+          "headers": {"Content-Type": "application/xml"},
+          "body": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><people><person dob=\"11/06/2015\" name=\"Bob The Builder\" id=\"1234567890\" timestamp=\"2000-06-10T20:41:37\"/><cat dob=\"12/10/2000\" name=\"Slinky Malinky\" id=\"6677889900\" timestamp=\"2015-06-10T22:98:78\"/></people>"
+        }
+      }
+    "#).unwrap();
+
+    let expected = Response::from_json(&pact.find("expected").unwrap(), &PactSpecification::V2);
+    println!("{:?}", expected);
+    let actual = Response::from_json(&pact.find("actual").unwrap(), &PactSpecification::V2);
+    println!("{:?}", actual);
+    let pact_match = pact.find("match").unwrap();
+    let result = match_response(expected, actual);
+    if pact_match.as_boolean().unwrap() {
+       expect!(result).to(be_empty());
+    } else {
+       expect!(result).to_not(be_empty());
+    }
+}
+
+#[test]
 fn objects_in_array_no_matches_xml() {
     env_logger::init().unwrap_or(());
     let pact = Json::from_str(r#"
@@ -2398,13 +2188,10 @@ fn objects_in_array_type_matching_xml() {
     let pact = Json::from_str(r#"
       {
         "match": true,
-        "comment": "objects in array type matching",
+        "comment": "XML objects in array type matching",
         "expected": {
           "headers": {},
-          "body": [{
-            "name": "John Smith",
-            "age": 50
-          }],
+          "body": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><people><person name=\"John Smith\" age=\"50\"/></people>",
           "matchingRules": {
             "$.body": {
               "match": "type"
@@ -2419,14 +2206,7 @@ fn objects_in_array_type_matching_xml() {
         },
         "actual": {
           "headers": {},
-          "body": [{
-            "name": "Peter Peterson",
-            "age": 22,
-            "gender": "Male"
-          }, {
-            "name": "John Johnston",
-            "age": 64
-          }]
+          "body": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><people><person name=\"Peter Peterson\" age=\"22\" gender=\"Male\"/><person name=\"John Johnston\" age=\"64\"/></people>"
         }
       }
     "#).unwrap();
@@ -2453,10 +2233,7 @@ fn objects_in_array_with_type_mismatching_xml() {
         "comment": "objects in array with type mismatching",
         "expected": {
           "headers": {},
-          "body": [{
-            "Name": "John Smith",
-            "Age": 50
-          }],
+          "body": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><people><person name=\"John Smith\" age=\"50\"/></people>",
           "matchingRules": {
             "$.body[*]": {
               "match": "type"
@@ -2468,11 +2245,7 @@ fn objects_in_array_with_type_mismatching_xml() {
         },
         "actual": {
           "headers": {},
-          "body": [{
-            "name": "Peter Peterson",
-            "age": 22,
-            "gender": "Male"
-          }, {}]
+          "body": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><people><person name=\"Peter Peterson\" age=\"22\" gender=\"Male\"/><person/></people>"
         }
       }
     "#).unwrap();
@@ -2535,6 +2308,45 @@ fn objects_in_array_second_matches_xml() {
         "actual": {
           "headers": {"Content-Type": "application/xml"},
           "body": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><people><person favouriteColour=\"blue\" favouriteNumber=\"4\"/><person favouriteColour=\"red\" favouriteNumber=\"2\"/></people>"
+        }
+      }
+    "#).unwrap();
+
+    let expected = Response::from_json(&pact.find("expected").unwrap(), &PactSpecification::V2);
+    println!("{:?}", expected);
+    let actual = Response::from_json(&pact.find("actual").unwrap(), &PactSpecification::V2);
+    println!("{:?}", actual);
+    let pact_match = pact.find("match").unwrap();
+    let result = match_response(expected, actual);
+    if pact_match.as_boolean().unwrap() {
+       expect!(result).to(be_empty());
+    } else {
+       expect!(result).to_not(be_empty());
+    }
+}
+
+#[test]
+fn array_with_regex_matcher_xml() {
+    env_logger::init().unwrap_or(());
+    let pact = Json::from_str(r#"
+      {
+        "match": true,
+        "comment": "XML array with regex matcher",
+        "expected": {
+          "headers": {},
+          "body" : "<?xml version=\"1.0\" encoding=\"UTF-8\"?><myDates><date>29/10/2015</date></myDates>",
+          "matchingRules" : {
+            "$.body.myDates": {
+              "match": "type"
+            },
+            "$.body.myDates[*].date['#text']" : {
+              "match": "regex", "regex" : "\\d{2}/\\d{2}/\\d{4}"
+            }
+          }
+        },
+        "actual": {
+          "headers": {},
+          "body": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><myDates><date>01/11/2010</date><date>15/12/2014</date><date>30/06/2015</date></myDates>"
         }
       }
     "#).unwrap();

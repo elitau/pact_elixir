@@ -1,6 +1,5 @@
 use models::Matchers;
 use path_exp::*;
-use std::fmt::Display;
 use itertools::Itertools;
 use regex::Regex;
 
@@ -24,6 +23,7 @@ fn matches_token(path_fragment: &String, path_token: &PathToken) -> u32 {
 fn calc_path_weight(path_exp: String, path: &Vec<String>) -> u32 {
     let weight = match parse_path_exp(path_exp.clone()) {
         Ok(path_tokens) => {
+            debug!("Calculatint weight for path tokens '{:?}' and path '{:?}'", path_tokens, path);
             if path.len() >= path_tokens.len() {
                 path_tokens.iter().zip(path.iter())
                     .fold(1, |acc, (token, fragment)| acc * matches_token(fragment, token))
@@ -36,7 +36,7 @@ fn calc_path_weight(path_exp: String, path: &Vec<String>) -> u32 {
             0
         }
     };
-    debug!("Calculated weight {} for path '{}' and '{}'", weight, path_exp, path.iter().join("."));
+    debug!("Calculated weight {} for path '{}' and '{:?}'", weight, path_exp, path);
     weight
 }
 
@@ -76,21 +76,7 @@ impl Matches<String> for String {
                    Err(format!("Expected '{}' to match '{}'", actual, regex))
                }
            },
-           Matcher::TypeMatcher => Ok(()),
-           Matcher::MinTypeMatcher(min) => {
-               if actual.len() < min {
-                   Err(format!("Expected '{}' to have a minimum length of {}", actual, min))
-               } else {
-                   Ok(())
-               }
-           },
-           Matcher::MaxTypeMatcher(max) => {
-               if actual.len() > max {
-                   Err(format!("Expected '{}' to have a maximum length of {}", actual, max))
-               } else {
-                   Ok(())
-               }
-           },
+           Matcher::TypeMatcher | Matcher::MinTypeMatcher(_) | Matcher::MaxTypeMatcher(_) => Ok(()),
            Matcher::EqualityMatcher => {
                if self == actual {
                    Ok(())
@@ -308,7 +294,7 @@ fn select_best_matcher(path: &Vec<String>, matchers: &Matchers) -> Result<Matche
 }
 
 pub fn match_values<E, A>(path: &Vec<String>, matchers: Matchers, expected: &E, actual: &A) -> Result<(), String>
-    where E: Matches<A> + Display, A: Display {
+    where E: Matches<A> {
     let matcher = select_best_matcher(path, &matchers);
     match matcher {
         Err(err) => Err(format!("Matcher for path '{}' is invalid - {}", path.iter().join("."), err)),
@@ -516,7 +502,7 @@ mod tests {
         let matcher = Matcher::MinTypeMatcher(3);
         expect!(s!("100").matches(&s!("100"), &matcher)).to(be_ok());
         expect!(s!("100").matches(&s!("10a"), &matcher)).to(be_ok());
-        expect!(s!("100").matches(&s!("10"), &matcher)).to(be_err());
+        expect!(s!("100").matches(&s!("10"), &matcher)).to(be_ok());
         expect!(s!("100").matches(&100, &matcher)).to(be_err());
         expect!(100.matches(&200, &matcher)).to(be_ok());
         expect!(100.matches(&100.1, &matcher)).to(be_err());
@@ -528,7 +514,7 @@ mod tests {
         let matcher = Matcher::MaxTypeMatcher(3);
         expect!(s!("100").matches(&s!("100"), &matcher)).to(be_ok());
         expect!(s!("100").matches(&s!("10a"), &matcher)).to(be_ok());
-        expect!(s!("100").matches(&s!("1000"), &matcher)).to(be_err());
+        expect!(s!("100").matches(&s!("1000"), &matcher)).to(be_ok());
         expect!(s!("100").matches(&100, &matcher)).to(be_err());
         expect!(100.matches(&200, &matcher)).to(be_ok());
         expect!(100.matches(&100.1, &matcher)).to(be_err());

@@ -14,6 +14,7 @@ extern crate semver;
 extern crate rand;
 extern crate sxd_document;
 
+
 /// Simple macro to convert a string slice to a `String` struct.
 #[macro_export]
 macro_rules! s {
@@ -546,6 +547,8 @@ pub fn match_response(expected: models::Response, actual: models::Response) -> V
 extern crate expectest;
 #[cfg(test)]
 extern crate quickcheck;
+#[cfg(test)]
+extern crate env_logger;
 
 #[cfg(test)]
 mod tests;
