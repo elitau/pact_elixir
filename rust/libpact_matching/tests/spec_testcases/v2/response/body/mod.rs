@@ -2286,20 +2286,12 @@ fn missing_index_xml() {
         "match": false,
         "comment": "Missing favorite colour",
         "expected" : {
-          "headers": {"Content-Type": "application/json"},
-          "body": {
-            "alligator":{
-              "favouriteColours": ["red","blue"]
-            }
-          }
+          "headers": {"Content-Type": "application/xml"},
+          "body": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><alligator><favouriteColours><favouriteColour>red</favouriteColour><favouriteColour>blue</favouriteColour></favouriteColours></alligator>"
         },
         "actual": {
-          "headers": {"Content-Type": "application/json"},
-          "body": {
-            "alligator": {
-              "favouriteColours": ["red"]
-            }
-          }
+          "headers": {"Content-Type": "application/xml"},
+          "body": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><alligator><favouriteColours><favouriteColour>red</favouriteColour></favouriteColours></alligator>"
         }
       }
     "#).unwrap();
@@ -2322,23 +2314,14 @@ fn missing_key_xml() {
     let pact = Json::from_str(r#"
       {
         "match": false,
-        "comment": "Missing key alligator name",
+        "comment": "XML Missing key alligator name",
         "expected" : {
-          "headers": {"Content-Type": "application/json"},
-          "body": {
-            "alligator":{
-              "name": "Mary",
-              "age": 3
-            }
-          }
+          "headers": {"Content-Type": "application/xml"},
+          "body": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><alligator name=\"Mary\" age=\"3\"></alligator>"
         },
         "actual": {
-          "headers": {"Content-Type": "application/json"},
-          "body": {
-            "alligator": {
-              "age": 3
-            }
-          }
+          "headers": {"Content-Type": "application/xml"},
+          "body": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><alligator age=\"3\"></alligator>"
         }
       }
     "#).unwrap();
