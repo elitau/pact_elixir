@@ -5,15 +5,16 @@
 //!
 //! To use it, add it to your dependencies in your cargo manifest and add an extern crate definition for it.
 //!
-//! This crate provides two functions: `match_request` and `match_response`. These functions take an expected and actual request or response
-//! model from the `models` module, and return a vector of mismatches.
+//! This crate provides two functions: [`match_request`](fn.match_request.html) and [`match_response`](fn.match_response.html).
+//! These functions take an expected and actual request or response
+//! model from the [`models`)(models/index.html) module, and return a vector of mismatches.
 //!
-//! To compare any incoming request, it first needs to be converted to a `models::Request` and then can be compared. Same for
+//! To compare any incoming request, it first needs to be converted to a [`models::Request`](models/struct.Request.html) and then can be compared. Same for
 //! any response.
 //!
 //! ## Reading and writing Pact files
 //!
-//! The `Pact` struct in the `models` module has methods to read and write pact JSON files. It supports all the specification
+//! The [`Pact`](models/struct.Pact.html) struct in the [`models`)(models/index.html) module has methods to read and write pact JSON files. It supports all the specification
 //! versions up to V2, but will converted a V1 and V1.1 spec file to a V2 format.
 //!
 //! ## Matching request and response parts
