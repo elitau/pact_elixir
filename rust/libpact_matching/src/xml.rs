@@ -287,7 +287,7 @@ mod tests {
     }
 
     #[test]
-    fn match_xml_handles_invalid_actual_json() {
+    fn match_xml_handles_invalid_actual_xml() {
         let mut mismatches = vec![];
         let expected = s!(r#"<?xml version="1.0" encoding="UTF-8"?> <blah/>"#);
         let actual = s!(r#"{json: "is bad"}"#);
