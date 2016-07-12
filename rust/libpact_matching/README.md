@@ -230,7 +230,8 @@ The actual and expected methods are compared as case-insensitive strings.
 
 Pact supports extending the matching rules on each type of object (Request or Response) with a `matchingRules` element in the pact file.
 This is a map of JSON path strings to a matcher. When an item is being compared, if there is an entry in the matching
-rules that corresponds to the path to the item, the comparison will be delegated to the defined matcher.
+rules that corresponds to the path to the item, the comparison will be delegated to the defined matcher. Note that the
+matching rules cascade, so a rule can be specified on a value and will apply to all children of that value.
 
 ## Matcher Path expressions
 
@@ -322,3 +323,15 @@ The expressions will have the following weightings:
 | $.body.\*.level[\*].id | $(2).body(2).*(1).level(2)[*(1)].id(2) | 8 |
 
 So for the item with id 102, the matcher with path `$.body.item1.level[1].id` and weighting 64 will be selected.
+
+## Supported matchers
+
+The following matchers are supported:
+
+| matcher | example configuration | description |
+| Equality | `{ "match": "equality" }` | This is the default matcher, and relies on the equals operator |
+| Regex | `{ "match": "regex", "regex": "\\d+" }` | This executes a regular expression match against the string representation of a values. |
+| Type | `{ "match": "type" }` | This executes a type based match against the values, that is, they are equal if they are the same type. |
+| MinType | `{ "match": "type", "min": 2 }` | This executes a type based match against the values, that is, they are equal if they are the same type. In addition, if the values represent a collection, the length of the actual value is compared against the minimum. |
+| MaxType | `{ "match": "type", "max": 10 }` | This executes a type based match against the values, that is, they are equal if they are the same type. In addition, if the values represent a collection, the length of the actual value is compared against the maximum. |
+
