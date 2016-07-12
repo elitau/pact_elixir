@@ -11,7 +11,7 @@ To use it, add it to your dependencies in your cargo manifest and add an extern 
 
 ```toml
 [dependencies]
-pact_matching = "^0.2.0"
+pact_matching = "0.2.0"
 ```
 
 ```rust
@@ -335,4 +335,3 @@ The following matchers are supported:
 | Type | `{ "match": "type" }` | This executes a type based match against the values, that is, they are equal if they are the same type. |
 | MinType | `{ "match": "type", "min": 2 }` | This executes a type based match against the values, that is, they are equal if they are the same type. In addition, if the values represent a collection, the length of the actual value is compared against the minimum. |
 | MaxType | `{ "match": "type", "max": 10 }` | This executes a type based match against the values, that is, they are equal if they are the same type. In addition, if the values represent a collection, the length of the actual value is compared against the maximum. |
-
