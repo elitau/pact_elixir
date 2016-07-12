@@ -5,15 +5,6 @@
 //!
 //! To use it, add it to your dependencies in your cargo manifest and add an extern crate definition for it.
 //!
-//! ```toml
-//! [dependencies]
-//! pact_matching = "0.2.0"
-//! ```
-//!
-//!```rust
-//! extern crate pact_matching;
-//! ```
-//!
 //! This crate provides two functions: `match_request` and `match_response`. These functions take an expected and actual request or response
 //! model from the `models` module, and return a vector of mismatches.
 //!
@@ -241,7 +232,7 @@
 //!
 //! So the expression `$.body.item1.level[2].id` will match the highlighted item in the following body:
 //!
-//! ```js
+//! ```js,ignore
 //! {
 //!   "item1": {
 //!     "level": [
@@ -279,7 +270,7 @@
 //!
 //! So for the body with highlighted item:
 //!
-//! ```js
+//! ```js,ignore
 //! {
 //!   "item1": {
 //!     "level": [
@@ -332,7 +323,7 @@
 //! | MinType | `{ "match": "type", "min": 2 }` | This executes a type based match against the values, that is, they are equal if they are the same type. In addition, if the values represent a collection, the length of the actual value is compared against the minimum. |
 //! | MaxType | `{ "match": "type", "max": 10 }` | This executes a type based match against the values, that is, they are equal if they are the same type. In addition, if the values represent a collection, the length of the actual value is compared against the maximum. |
 //!
-//!
+
 #![warn(missing_docs)]
 
 extern crate rustc_serialize;
