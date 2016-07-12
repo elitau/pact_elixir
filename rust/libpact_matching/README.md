@@ -329,6 +329,7 @@ So for the item with id 102, the matcher with path `$.body.item1.level[1].id` an
 The following matchers are supported:
 
 | matcher | example configuration | description |
+|---------|-----------------------|-------------|
 | Equality | `{ "match": "equality" }` | This is the default matcher, and relies on the equals operator |
 | Regex | `{ "match": "regex", "regex": "\\d+" }` | This executes a regular expression match against the string representation of a values. |
 | Type | `{ "match": "type" }` | This executes a type based match against the values, that is, they are equal if they are the same type. |
