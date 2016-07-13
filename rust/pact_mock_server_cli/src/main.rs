@@ -1,6 +1,6 @@
 //! The `pact_mock_server` crate provides the CLI for the pact mock server for mocking HTTP requests
-//! and generating responses based on a pact file. It implements the V1.1 Pact specification
-//! (https://github.com/pact-foundation/pact-specification/tree/version-1.1).
+//! and generating responses based on a pact file. It implements the V2 Pact specification
+//! (https://github.com/pact-foundation/pact-specification/tree/version-2).
 
 #![warn(missing_docs)]
 
@@ -53,7 +53,7 @@ mod shutdown;
 
 fn print_version() {
     println!("\npact mock server version  : v{}", crate_version!());
-    println!("pact specification version: v{}", PactSpecification::V1.version_str());
+    println!("pact specification version: v{}", PactSpecification::V2.version_str());
 }
 
 fn setup_loggers(level: &str, command: &str, output: Option<&str>) -> Result<(), io::Error> {
