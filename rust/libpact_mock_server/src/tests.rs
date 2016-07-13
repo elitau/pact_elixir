@@ -103,3 +103,57 @@ fn match_request_returns_the_most_appropriate_mismatch_for_multiple_requests() {
         vec![Mismatch::BodyMismatch { path: s!("/"), expected: Some(s!("This is a body")), actual: None,
         mismatch: s!("Expected body \'This is a body\' but was missing") }])));
 }
+
+#[test]
+fn match_request_supports_v2_matchers() {
+    let request = Request { method: s!("GET"), path: s!("/"), query: None,
+        headers: Some(hashmap!{ s!("Content-Type") => s!("application/json") }), body: OptionalBody::Present(
+            s!(r#"
+            {
+                "a": 100,
+                "b": "one hundred"
+            }
+            "#)
+        ), matching_rules: None };
+    let response = Response { status: 200, headers: None, body: OptionalBody::Missing, matching_rules: None };
+    let expected_request = Request { method: s!("GET"), path: s!("/"), query: None,
+        headers: Some(hashmap!{ s!("Content-Type") => s!("application/json") }),
+        body: OptionalBody::Present(
+            s!(r#"
+            {
+                "a": 1000,
+                "b": "One Thousand"
+            }
+            "#)
+        ), matching_rules: Some(hashmap!{
+            s!("$.body.*") => hashmap!{ s!("match") => s!("type") }
+        }) };
+    let interaction = Interaction { description: s!("test"), provider_state: None,
+        request: expected_request, response: response.clone() };
+    let result = match_request(&request, &vec![interaction.clone()]);
+    expect!(result).to(be_equal_to(MatchResult::RequestMatch(interaction)));
+}
+
+#[test]
+fn match_request_supports_v2_matchers_with_xml() {
+    let request = Request { method: s!("GET"), path: s!("/"), query: None,
+        headers: Some(hashmap!{ s!("Content-Type") => s!("application/xml") }), body: OptionalBody::Present(
+            s!(r#"<?xml version="1.0" encoding="UTF-8"?>
+            <foo>hello<bar/>world</foo>
+            "#)
+        ), matching_rules: None };
+    let response = Response { status: 200, headers: None, body: OptionalBody::Missing, matching_rules: None };
+    let expected_request = Request { method: s!("GET"), path: s!("/"), query: None,
+        headers: Some(hashmap!{ s!("Content-Type") => s!("application/xml") }),
+        body: OptionalBody::Present(
+            s!(r#"<?xml version="1.0" encoding="UTF-8"?>
+            <foo>hello<bar/>mars </foo>
+            "#)
+        ), matching_rules: Some(hashmap!{
+            s!("$.body.foo['#text']") => hashmap!{ s!("match") => s!("regex"), s!("regex") => s!("[a-z]+") }
+        }) };
+    let interaction = Interaction { description: s!("test"), provider_state: None,
+        request: expected_request, response: response.clone() };
+    let result = match_request(&request, &vec![interaction.clone()]);
+    expect!(result).to(be_equal_to(MatchResult::RequestMatch(interaction)));
+}
