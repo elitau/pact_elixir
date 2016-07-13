@@ -20,3 +20,8 @@ node_modules/
 *.iml
 logs/
 
+c/consumer-verification/src/.deps
+c/consumer-verification/src/consumer-verification
+c/consumer-verification/stamp-h1
+autom4te.cache/
+*~
