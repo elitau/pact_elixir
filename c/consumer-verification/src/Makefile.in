@@ -249,7 +249,7 @@ top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 consumer_verification_SOURCES = main.c
 AM_CPPFLAGS = ${libcurl_CFLAGS}
-consumer_verification_LDADD = ${libcurl_LIBS}
+consumer_verification_LDADD = ${libcurl_LIBS} -ldl
 all: all-am
 
 .SUFFIXES:
