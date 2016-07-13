@@ -88,7 +88,8 @@ PRE_UNINSTALL = :
 POST_UNINSTALL = :
 subdir = .
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
-am__aclocal_m4_deps = $(top_srcdir)/configure.ac
+am__aclocal_m4_deps = $(top_srcdir)/libcurl.m4 \
+	$(top_srcdir)/configure.ac
 am__configure_deps = $(am__aclocal_m4_deps) $(CONFIGURE_DEPENDENCIES) \
 	$(ACLOCAL_M4)
 DIST_COMMON = $(srcdir)/Makefile.am $(top_srcdir)/configure \
@@ -253,6 +254,8 @@ INSTALL_PROGRAM = ${INSTALL}
 INSTALL_SCRIPT = ${INSTALL}
 INSTALL_STRIP_PROGRAM = $(install_sh) -c -s
 LDFLAGS = 
+LIBCURL = -L/usr/lib/x86_64-linux-gnu -lcurl
+LIBCURL_CPPFLAGS = 
 LIBOBJS = 
 LIBS = 
 LTLIBOBJS = 
@@ -271,6 +274,7 @@ SET_MAKE =
 SHELL = /bin/bash
 STRIP = 
 VERSION = 0.0.0
+_libcurl_config = 
 abs_builddir = /home/ronald/Development/Projects/Pact/pact-reference/c/consumer-verification
 abs_srcdir = /home/ronald/Development/Projects/Pact/pact-reference/c/consumer-verification
 abs_top_builddir = /home/ronald/Development/Projects/Pact/pact-reference/c/consumer-verification

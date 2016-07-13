@@ -89,7 +89,8 @@ POST_UNINSTALL = :
 bin_PROGRAMS = consumer-verification$(EXEEXT)
 subdir = src
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
-am__aclocal_m4_deps = $(top_srcdir)/configure.ac
+am__aclocal_m4_deps = $(top_srcdir)/libcurl.m4 \
+	$(top_srcdir)/configure.ac
 am__configure_deps = $(am__aclocal_m4_deps) $(CONFIGURE_DEPENDENCIES) \
 	$(ACLOCAL_M4)
 DIST_COMMON = $(srcdir)/Makefile.am $(am__DIST_COMMON)
@@ -101,7 +102,7 @@ am__installdirs = "$(DESTDIR)$(bindir)"
 PROGRAMS = $(bin_PROGRAMS)
 am_consumer_verification_OBJECTS = main.$(OBJEXT)
 consumer_verification_OBJECTS = $(am_consumer_verification_OBJECTS)
-consumer_verification_LDADD = $(LDADD)
+consumer_verification_DEPENDENCIES =
 AM_V_P = $(am__v_P_$(V))
 am__v_P_ = $(am__v_P_$(AM_DEFAULT_VERBOSITY))
 am__v_P_0 = false
@@ -182,6 +183,8 @@ INSTALL_PROGRAM = ${INSTALL}
 INSTALL_SCRIPT = ${INSTALL}
 INSTALL_STRIP_PROGRAM = $(install_sh) -c -s
 LDFLAGS = 
+LIBCURL = -L/usr/lib/x86_64-linux-gnu -lcurl
+LIBCURL_CPPFLAGS = 
 LIBOBJS = 
 LIBS = 
 LTLIBOBJS = 
@@ -200,6 +203,7 @@ SET_MAKE =
 SHELL = /bin/bash
 STRIP = 
 VERSION = 0.0.0
+_libcurl_config = 
 abs_builddir = /home/ronald/Development/Projects/Pact/pact-reference/c/consumer-verification/src
 abs_srcdir = /home/ronald/Development/Projects/Pact/pact-reference/c/consumer-verification/src
 abs_top_builddir = /home/ronald/Development/Projects/Pact/pact-reference/c/consumer-verification
@@ -244,6 +248,8 @@ top_build_prefix = ../
 top_builddir = ..
 top_srcdir = ..
 consumer_verification_SOURCES = main.c
+AM_CPPFLAGS = ${libcurl_CFLAGS}
+consumer_verification_LDADD = ${libcurl_LIBS}
 all: all-am
 
 .SUFFIXES:

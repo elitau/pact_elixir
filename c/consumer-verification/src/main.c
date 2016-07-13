@@ -1,5 +1,6 @@
 #include <config.h>
 #include <stdio.h>
+#include <curl/curl.h>
 
 int main (void) {
   puts ("Hello World!");
