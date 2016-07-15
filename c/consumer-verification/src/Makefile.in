@@ -102,7 +102,8 @@ am__installdirs = "$(DESTDIR)$(bindir)"
 PROGRAMS = $(bin_PROGRAMS)
 am_consumer_verification_OBJECTS = main.$(OBJEXT)
 consumer_verification_OBJECTS = $(am_consumer_verification_OBJECTS)
-consumer_verification_DEPENDENCIES =
+am__DEPENDENCIES_1 =
+consumer_verification_DEPENDENCIES = $(am__DEPENDENCIES_1)
 AM_V_P = $(am__v_P_@AM_V@)
 am__v_P_ = $(am__v_P_@AM_DEFAULT_V@)
 am__v_P_0 = false
@@ -248,8 +249,8 @@ top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 consumer_verification_SOURCES = main.c
-AM_CPPFLAGS = ${libcurl_CFLAGS}
-consumer_verification_LDADD = ${libcurl_LIBS} -ldl
+AM_CPPFLAGS = ${LIBCURL_CPPFLAGS}
+consumer_verification_LDADD = ${LIBCURL} -ldl
 all: all-am
 
 .SUFFIXES:

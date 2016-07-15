@@ -34,27 +34,65 @@ char *slurp_file(char *filename) {
   }
 }
 
+/*
+Definitions of the exported functions from the pact mock server library
+*/
 typedef int32_t (*lib_create_mock_server)(char *, int32_t);
 typedef int32_t (*lib_mock_server_matched)(int32_t);
 typedef int32_t (*lib_cleanup_mock_server)(int32_t);
 
+/* Execute the basic test against the provider server */
+void execute_basic_test(int port) {
+  CURLcode code = curl_global_init(CURL_GLOBAL_ALL);
+  CURL *curl = curl_easy_init();
+  if (curl) {
+    char url[64];
+    sprintf(url, "http://localhost:%d/mallory?name=ron&status=good", port);
+    printf("Executing request against %s\n", url);
+    curl_easy_setopt(curl, CURLOPT_URL, url);
+    curl_easy_setopt(curl, CURLOPT_VERBOSE, 1L);
+    CURLcode res = curl_easy_perform(curl);
+    if (res != CURLE_OK) {
+      puts("\nRequest failed");
+    }
+    puts("\n");
+    curl_easy_cleanup(curl);
+  } else {
+    puts("Could not initialise the curl library.");
+  }
+}
+
+/*
+  Run a basic test sing the simple_pact.js file
+*/
 void basic(char *executable, char *mock_server_lib) {
+  /* Load the pact file into memory */
   char *pactfile = append_filename(executable, "simple_pact.js");
   char *pact = slurp_file(pactfile);
   if (pact) {
+    /* Get a handle to the pact mock server library*/
     void *handle = dlopen(mock_server_lib, RTLD_NOW | RTLD_GLOBAL);
     if (handle) {
+      /* We have a handle, so lookup the functions we need */
       lib_create_mock_server create_mock_server = dlsym(handle, "create_mock_server");
       lib_mock_server_matched mock_server_matched = dlsym(handle, "mock_server_matched");
       lib_cleanup_mock_server cleanup_mock_server = dlsym(handle, "cleanup_mock_server");
       if (create_mock_server) {
+        /* Create the mock server from the pact file. The mock server port will be returned */
         int port = create_mock_server(pact, 0);
         printf("Mock server started on port %d\n", port);
+
+        /* Now we execute out test against the mock server */
+        execute_basic_test(port);
+
+        /* Check the result */
         if (mock_server_matched(port)) {
-          puts("Mock server matched OK");
+          puts("OK: Mock server verified all requests, as expected");
         } else {
-          puts("Mock server did not match all requests");
+          puts("FAILED: Mock server did not match all requests!!");
         }
+
+        /* Lastly, we need to shutdown and cleanup the mock server */
         cleanup_mock_server(port);
       } else {
         puts("Could not find 'create_mock_server' function in shared library");
