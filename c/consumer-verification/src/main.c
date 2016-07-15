@@ -117,10 +117,11 @@ void basic_test(char *executable) {
   free(pactfile);
 }
 
+char *error_data = "{\"complete\": {\"body\":123457}, \"body\": [1,2,3]}\n";
+
 size_t error_test_read_callback(char *buffer, size_t size, size_t nitems, void *instream) {
-  printf("error_test_read_callback: %zd, %zd\n", size, nitems);
-  sprintf(buffer, "{}\n");
-  return 3;
+  strcpy(buffer, error_data);
+  return strlen(error_data);
 }
 
 /* Execute the error test against the provider server, where we expect validations to fail */
@@ -133,7 +134,7 @@ void execute_error_test(int port) {
     curl_easy_setopt(curl, CURLOPT_URL, url);
     curl_easy_setopt(curl, CURLOPT_VERBOSE, 1L);
     curl_easy_setopt(curl, CURLOPT_UPLOAD, 1L);
-    curl_easy_setopt(curl, CURLOPT_INFILESIZE, 3L);
+    curl_easy_setopt(curl, CURLOPT_INFILESIZE, strlen(error_data));
 
     struct curl_slist *list = NULL;
     list = curl_slist_append(list, "Content-Type: application/json");
@@ -189,8 +190,8 @@ void error_test(char *executable) {
 int main (int argc, char **argv) {
   puts("This is " PACKAGE_STRING ".");
 
-  if (argc < 3 || (strcmp(argv[1], "basic") != 0 && strcmp(argv[1], "error") != 0 && strcmp(argv[1], "v2") != 0)) {
-    puts("You need to specify the test to run: basic, error, v2 and the path to the rust DLL");
+  if (argc < 3 || (strcmp(argv[1], "basic") != 0 && strcmp(argv[1], "error") != 0)) {
+    puts("You need to specify the test to run: basic, error and the path to the rust DLL");
     return 1;
   }
 
