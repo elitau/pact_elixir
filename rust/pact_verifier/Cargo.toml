@@ -1,0 +1,33 @@
+[package]
+name = "pact_verifier"
+version = "0.2.1"
+authors = ["Ronald Holshausen <uglyog@gmail.com>"]
+description = "Pact-Rust support library that implements in provider verification functions"
+documentation = "http://www.pact.io/reference/rust/pact_verifier-docs-0.2.1/pact_verifier/"
+homepage = "http://www.pact.io"
+repository = "https://github.com/pact-foundation/pact-reference/blob/master/rust/pact_verifier"
+readme = "README.md"
+keywords = ["testing", "pact", "cdc"]
+license = "MIT"
+
+[dependencies]
+libc = "^0.2.9"
+rustc-serialize = "^0.3"
+pact_matching = "^0.2.0"
+# pact_matching = { path = "../libpact_matching" }
+p-macro = "^0.2.0"
+log = "^0.3.5"
+maplit = "^0.1.3"
+lazy_static = "^0.1.15"
+itertools = "^0.4.15"
+
+[dependencies.hyper]
+version = "^0.9.7"
+default-features = false
+
+[lib]
+crate-type = ["dylib", "rlib", "staticlib"]
+
+[dev-dependencies]
+quickcheck = "^0.2"
+expectest = "^0.5.1"
