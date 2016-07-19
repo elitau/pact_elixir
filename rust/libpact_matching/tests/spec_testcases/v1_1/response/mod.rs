@@ -6,6 +6,6 @@ use pact_matching::match_response;
 use rustc_serialize::json::Json;
 #[allow(unused_imports)]
 use expectest::prelude::*;
+mod body;
 mod headers;
 mod status;
-mod body;
