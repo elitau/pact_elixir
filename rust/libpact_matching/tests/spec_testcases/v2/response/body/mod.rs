@@ -2518,3 +2518,225 @@ fn value_found_in_array_when_empty_expected_xml() {
        expect!(result).to_not(be_empty());
     }
 }
+
+#[test]
+fn empty_body_no_content_type() {
+    env_logger::init().unwrap_or(());
+    let pact = Json::from_str(r#"
+      {
+        "match": true,
+        "comment": "Empty body, no content-type",
+        "expected" : {
+          "body": ""
+        },
+        "actual": {
+          "headers": {"Content-Type": "application/json"},
+          "body": ""
+        }
+      }
+    "#).unwrap();
+
+    let expected = Response::from_json(&pact.find("expected").unwrap(), &PactSpecification::V2);
+    println!("{:?}", expected);
+    let actual = Response::from_json(&pact.find("actual").unwrap(), &PactSpecification::V2);
+    println!("{:?}", actual);
+    let pact_match = pact.find("match").unwrap();
+    let result = match_response(expected, actual);
+    if pact_match.as_boolean().unwrap() {
+       expect!(result).to(be_empty());
+    } else {
+       expect!(result).to_not(be_empty());
+    }
+}
+
+#[test]
+fn empty_body() {
+    env_logger::init().unwrap_or(());
+    let pact = Json::from_str(r#"
+      {
+        "match": true,
+        "comment": "Empty body",
+        "expected" : {
+          "headers": {"Content-Type": "application/json"},
+          "body": ""
+        },
+        "actual": {
+          "headers": {"Content-Type": "application/json"},
+          "body": ""
+        }
+      }
+    "#).unwrap();
+
+    let expected = Response::from_json(&pact.find("expected").unwrap(), &PactSpecification::V2);
+    println!("{:?}", expected);
+    let actual = Response::from_json(&pact.find("actual").unwrap(), &PactSpecification::V2);
+    println!("{:?}", actual);
+    let pact_match = pact.find("match").unwrap();
+    let result = match_response(expected, actual);
+    if pact_match.as_boolean().unwrap() {
+       expect!(result).to(be_empty());
+    } else {
+       expect!(result).to_not(be_empty());
+    }
+}
+
+#[test]
+fn missing_body_found_when_empty_expected() {
+    env_logger::init().unwrap_or(());
+    let pact = Json::from_str(r#"
+      {
+        "match": true,
+        "comment": "Missing body found, when an empty body was expected",
+        "expected" : {
+          "body": null
+        },
+        "actual": {
+        }
+      }
+    "#).unwrap();
+
+    let expected = Response::from_json(&pact.find("expected").unwrap(), &PactSpecification::V2);
+    println!("{:?}", expected);
+    let actual = Response::from_json(&pact.find("actual").unwrap(), &PactSpecification::V2);
+    println!("{:?}", actual);
+    let pact_match = pact.find("match").unwrap();
+    let result = match_response(expected, actual);
+    if pact_match.as_boolean().unwrap() {
+       expect!(result).to(be_empty());
+    } else {
+       expect!(result).to_not(be_empty());
+    }
+}
+
+#[test]
+fn missing_body_no_content_type() {
+    env_logger::init().unwrap_or(());
+    let pact = Json::from_str(r#"
+      {
+        "match": true,
+        "comment": "Missing body, no content-type",
+        "expected" : {
+        },
+        "actual": {
+          "headers": {"Content-Type": "application/json"},
+          "body": {
+            "alligator":{
+              "feet": 4,
+              "name": "Mary",
+              "favouriteColours": ["red","blue"]
+            }
+          }
+        }
+      }
+    "#).unwrap();
+
+    let expected = Response::from_json(&pact.find("expected").unwrap(), &PactSpecification::V2);
+    println!("{:?}", expected);
+    let actual = Response::from_json(&pact.find("actual").unwrap(), &PactSpecification::V2);
+    println!("{:?}", actual);
+    let pact_match = pact.find("match").unwrap();
+    let result = match_response(expected, actual);
+    if pact_match.as_boolean().unwrap() {
+       expect!(result).to(be_empty());
+    } else {
+       expect!(result).to_not(be_empty());
+    }
+}
+
+#[test]
+fn non_empty_body_found_when_empty_expected() {
+    env_logger::init().unwrap_or(());
+    let pact = Json::from_str(r#"
+      {
+        "match": false,
+        "comment": "Non empty body found, when an empty body was expected",
+        "expected" : {
+          "headers": {"Content-Type": "application/json"},
+          "body": null
+        },
+        "actual": {
+          "headers": {"Content-Type": "application/json"},
+          "body": {
+            "alligator":{
+              "feet": 4,
+              "name": "Mary",
+              "favouriteColours": ["red","blue"]
+            }
+          }
+        }
+      }
+    "#).unwrap();
+
+    let expected = Response::from_json(&pact.find("expected").unwrap(), &PactSpecification::V2);
+    println!("{:?}", expected);
+    let actual = Response::from_json(&pact.find("actual").unwrap(), &PactSpecification::V2);
+    println!("{:?}", actual);
+    let pact_match = pact.find("match").unwrap();
+    let result = match_response(expected, actual);
+    if pact_match.as_boolean().unwrap() {
+       expect!(result).to(be_empty());
+    } else {
+       expect!(result).to_not(be_empty());
+    }
+}
+
+#[test]
+fn null_body_no_content_type() {
+    env_logger::init().unwrap_or(());
+    let pact = Json::from_str(r#"
+      {
+        "match": true,
+        "comment": "NULL body, no content-type",
+        "expected" : {
+          "body": null
+        },
+        "actual": {
+          "headers": {"Content-Type": "application/json"},
+          "body": null
+        }
+      }
+    "#).unwrap();
+
+    let expected = Response::from_json(&pact.find("expected").unwrap(), &PactSpecification::V2);
+    println!("{:?}", expected);
+    let actual = Response::from_json(&pact.find("actual").unwrap(), &PactSpecification::V2);
+    println!("{:?}", actual);
+    let pact_match = pact.find("match").unwrap();
+    let result = match_response(expected, actual);
+    if pact_match.as_boolean().unwrap() {
+       expect!(result).to(be_empty());
+    } else {
+       expect!(result).to_not(be_empty());
+    }
+}
+
+#[test]
+fn null_body() {
+    env_logger::init().unwrap_or(());
+    let pact = Json::from_str(r#"
+      {
+        "match": true,
+        "comment": "NULL body",
+        "expected" : {
+          "headers": {"Content-Type": "application/json"},
+          "body": null
+        },
+        "actual": {
+          "headers": {"Content-Type": "application/json"},
+          "body": null
+        }
+      }
+    "#).unwrap();
+
+    let expected = Response::from_json(&pact.find("expected").unwrap(), &PactSpecification::V2);
+    println!("{:?}", expected);
+    let actual = Response::from_json(&pact.find("actual").unwrap(), &PactSpecification::V2);
+    println!("{:?}", actual);
+    let pact_match = pact.find("match").unwrap();
+    let result = match_response(expected, actual);
+    if pact_match.as_boolean().unwrap() {
+       expect!(result).to(be_empty());
+    } else {
+       expect!(result).to_not(be_empty());
+    }
+}

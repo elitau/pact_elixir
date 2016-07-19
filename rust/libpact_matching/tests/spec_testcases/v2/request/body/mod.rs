@@ -2421,3 +2421,295 @@ fn value_found_in_array_when_empty_expected_xml() {
        expect!(match_request(expected, actual)).to_not(be_empty());
     }
 }
+
+#[test]
+fn empty_body_no_content_type() {
+    env_logger::init().unwrap_or(());
+    let pact = Json::from_str(r#"
+      {
+        "match": true,
+        "comment": "Empty body, no content-type",
+        "expected" : {
+          "method": "POST",
+          "path": "/",
+          "query": "",
+          "body": ""
+        },
+        "actual": {
+          "method": "POST",
+          "path": "/",
+          "query": "",
+          "headers": {"Content-Type": "application/json"},
+          "body": ""
+        }
+      }
+    "#).unwrap();
+
+    let expected = Request::from_json(&pact.find("expected").unwrap(), &PactSpecification::V2);
+    println!("{:?}", expected);
+    let actual = Request::from_json(&pact.find("actual").unwrap(), &PactSpecification::V2);
+    println!("{:?}", actual);
+    let pact_match = pact.find("match").unwrap();
+    if pact_match.as_boolean().unwrap() {
+       expect!(match_request(expected, actual)).to(be_empty());
+    } else {
+       expect!(match_request(expected, actual)).to_not(be_empty());
+    }
+}
+
+#[test]
+fn empty_body() {
+    env_logger::init().unwrap_or(());
+    let pact = Json::from_str(r#"
+      {
+        "match": true,
+        "comment": "Empty body",
+        "expected" : {
+          "method": "POST",
+          "path": "/",
+          "query": "",
+          "headers": {"Content-Type": "application/json"},
+          "body": ""
+        },
+        "actual": {
+          "method": "POST",
+          "path": "/",
+          "query": "",
+          "headers": {"Content-Type": "application/json"},
+          "body": ""
+        }
+      }
+    "#).unwrap();
+
+    let expected = Request::from_json(&pact.find("expected").unwrap(), &PactSpecification::V2);
+    println!("{:?}", expected);
+    let actual = Request::from_json(&pact.find("actual").unwrap(), &PactSpecification::V2);
+    println!("{:?}", actual);
+    let pact_match = pact.find("match").unwrap();
+    if pact_match.as_boolean().unwrap() {
+       expect!(match_request(expected, actual)).to(be_empty());
+    } else {
+       expect!(match_request(expected, actual)).to_not(be_empty());
+    }
+}
+
+#[test]
+fn missing_body_found_when_empty_expected() {
+    env_logger::init().unwrap_or(());
+    let pact = Json::from_str(r#"
+      {
+        "match": true,
+        "comment": "Missing body found, when an empty body was expected",
+        "expected" : {
+          "method": "POST",
+          "path": "/",
+          "query": "",
+          "body": null
+        },
+        "actual": {
+          "method": "POST",
+          "path": "/",
+          "query": ""
+        }
+      }
+    "#).unwrap();
+
+    let expected = Request::from_json(&pact.find("expected").unwrap(), &PactSpecification::V2);
+    println!("{:?}", expected);
+    let actual = Request::from_json(&pact.find("actual").unwrap(), &PactSpecification::V2);
+    println!("{:?}", actual);
+    let pact_match = pact.find("match").unwrap();
+    if pact_match.as_boolean().unwrap() {
+       expect!(match_request(expected, actual)).to(be_empty());
+    } else {
+       expect!(match_request(expected, actual)).to_not(be_empty());
+    }
+}
+
+#[test]
+fn missing_body_no_content_type() {
+    env_logger::init().unwrap_or(());
+    let pact = Json::from_str(r#"
+      {
+        "match": true,
+        "comment": "Missing body, no content-type",
+        "expected" : {
+          "method": "POST",
+          "path": "/",
+          "query": ""
+        },
+        "actual": {
+          "method": "POST",
+          "path": "/",
+          "query": "",
+          "headers": {"Content-Type": "application/json"},
+          "body": {
+            "alligator": {
+              "age": 3
+            }
+          }
+        }
+      }
+    "#).unwrap();
+
+    let expected = Request::from_json(&pact.find("expected").unwrap(), &PactSpecification::V2);
+    println!("{:?}", expected);
+    let actual = Request::from_json(&pact.find("actual").unwrap(), &PactSpecification::V2);
+    println!("{:?}", actual);
+    let pact_match = pact.find("match").unwrap();
+    if pact_match.as_boolean().unwrap() {
+       expect!(match_request(expected, actual)).to(be_empty());
+    } else {
+       expect!(match_request(expected, actual)).to_not(be_empty());
+    }
+}
+
+#[test]
+fn missing_body() {
+    env_logger::init().unwrap_or(());
+    let pact = Json::from_str(r#"
+      {
+        "match": true,
+        "comment": "Missing body",
+        "expected" : {
+          "method": "POST",
+          "path": "/",
+          "query": "",
+          "headers": {"Content-Type": "application/json"}
+        },
+        "actual": {
+          "method": "POST",
+          "path": "/",
+          "query": "",
+          "headers": {"Content-Type": "application/json"},
+          "body": {
+            "alligator": {
+              "age": 3
+            }
+          }
+        }
+      }
+    "#).unwrap();
+
+    let expected = Request::from_json(&pact.find("expected").unwrap(), &PactSpecification::V2);
+    println!("{:?}", expected);
+    let actual = Request::from_json(&pact.find("actual").unwrap(), &PactSpecification::V2);
+    println!("{:?}", actual);
+    let pact_match = pact.find("match").unwrap();
+    if pact_match.as_boolean().unwrap() {
+       expect!(match_request(expected, actual)).to(be_empty());
+    } else {
+       expect!(match_request(expected, actual)).to_not(be_empty());
+    }
+}
+
+#[test]
+fn non_empty_body_found_when_empty_expected() {
+    env_logger::init().unwrap_or(());
+    let pact = Json::from_str(r#"
+      {
+        "match": false,
+        "comment": "Non empty body found, when an empty body was expected",
+        "expected" : {
+          "method": "POST",
+          "path": "/",
+          "query": "",
+          "headers": {"Content-Type": "application/json"},
+          "body": null
+        },
+        "actual": {
+          "method": "POST",
+          "path": "/",
+          "query": "",
+          "headers": {"Content-Type": "application/json"},
+          "body": {
+            "alligator": {
+              "age": 3
+            }
+          }
+        }
+      }
+    "#).unwrap();
+
+    let expected = Request::from_json(&pact.find("expected").unwrap(), &PactSpecification::V2);
+    println!("{:?}", expected);
+    let actual = Request::from_json(&pact.find("actual").unwrap(), &PactSpecification::V2);
+    println!("{:?}", actual);
+    let pact_match = pact.find("match").unwrap();
+    if pact_match.as_boolean().unwrap() {
+       expect!(match_request(expected, actual)).to(be_empty());
+    } else {
+       expect!(match_request(expected, actual)).to_not(be_empty());
+    }
+}
+
+#[test]
+fn null_body_no_content_type() {
+    env_logger::init().unwrap_or(());
+    let pact = Json::from_str(r#"
+      {
+        "match": true,
+        "comment": "NULL body, no content-type",
+        "expected" : {
+          "method": "POST",
+          "path": "/",
+          "query": "",
+          "body": null
+        },
+        "actual": {
+          "method": "POST",
+          "path": "/",
+          "query": "",
+          "headers": {"Content-Type": "application/json"},
+          "body": null
+        }
+      }
+    "#).unwrap();
+
+    let expected = Request::from_json(&pact.find("expected").unwrap(), &PactSpecification::V2);
+    println!("{:?}", expected);
+    let actual = Request::from_json(&pact.find("actual").unwrap(), &PactSpecification::V2);
+    println!("{:?}", actual);
+    let pact_match = pact.find("match").unwrap();
+    if pact_match.as_boolean().unwrap() {
+       expect!(match_request(expected, actual)).to(be_empty());
+    } else {
+       expect!(match_request(expected, actual)).to_not(be_empty());
+    }
+}
+
+#[test]
+fn null_body() {
+    env_logger::init().unwrap_or(());
+    let pact = Json::from_str(r#"
+      {
+        "match": true,
+        "comment": "NULL body",
+        "expected" : {
+          "method": "POST",
+          "path": "/",
+          "query": "",
+          "headers": {"Content-Type": "application/json"},
+          "body": null
+        },
+        "actual": {
+          "method": "POST",
+          "path": "/",
+          "query": "",
+          "headers": {"Content-Type": "application/json"},
+          "body": null
+        }
+      }
+    "#).unwrap();
+
+    let expected = Request::from_json(&pact.find("expected").unwrap(), &PactSpecification::V2);
+    println!("{:?}", expected);
+    let actual = Request::from_json(&pact.find("actual").unwrap(), &PactSpecification::V2);
+    println!("{:?}", actual);
+    let pact_match = pact.find("match").unwrap();
+    if pact_match.as_boolean().unwrap() {
+       expect!(match_request(expected, actual)).to(be_empty());
+    } else {
+       expect!(match_request(expected, actual)).to_not(be_empty());
+    }
+}
