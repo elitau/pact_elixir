@@ -4,9 +4,9 @@ const http = require('http');
 const net = require('net');
 const url = require('url');
 
-var dll = '../../../rust/libpact_mock_server/target/debug/libpact_mock_server';
+var dll = '../../rust/libpact_mock_server/target/debug/libpact_mock_server';
 var lib = ffi.Library(path.join(__dirname, dll), {
-  create_mock_server: ['int32', ['string']],
+  create_mock_server: ['int32', ['string', 'int32']],
   mock_server_matched: ['bool', ['int32']],
   cleanup_mock_server: ['bool', ['int32']]
 });
@@ -45,7 +45,7 @@ var pact = "{\n" +
   "}\n" +
 "}\n";
 
-var port = lib.create_mock_server(pact);
+var port = lib.create_mock_server(pact, 0);
 console.log("Mock server port=" + port);
 
 var options = {

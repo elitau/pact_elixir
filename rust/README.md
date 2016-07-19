@@ -24,3 +24,12 @@ library.
 This module provides a command line executable that provides a standalone pact mock server and commands for controlling
 the mock servers. It uses the [libpact_mock_server](libpact_mock_server) and [libpact_matching](libpact_matching)
 libraries.
+
+## [pact_verifier](pact_verifier)
+
+This library provides support for verifying a provider against pact files.
+
+## [pact_verifier_cli](pact_verifier_cli)
+
+Command line excutable that uses the [pact_verifier](pact_verifier) to be able to verify a running provider against
+pact files.
