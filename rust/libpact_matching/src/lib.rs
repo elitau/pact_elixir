@@ -816,7 +816,13 @@ pub fn match_body(expected: &models::HttpPart, actual: &models::HttpPart, config
                     mismatch: format!("Expected empty body but received '{}'", b.clone()),
                     path: s!("/")});
             },
+            (&models::OptionalBody::Empty, &models::OptionalBody::Present(ref b)) => {
+                mismatches.push(Mismatch::BodyMismatch { expected: None, actual: Some(b.clone()),
+                    mismatch: format!("Expected empty body but received '{}'", b.clone()),
+                    path: s!("/")});
+            },
             (&models::OptionalBody::Null, _) => (),
+            (&models::OptionalBody::Empty, _) => (),
             (e, &models::OptionalBody::Missing) => {
                 mismatches.push(Mismatch::BodyMismatch { expected: Some(e.value()), actual: None,
                     mismatch: format!("Expected body '{}' but was missing", e.value()),
