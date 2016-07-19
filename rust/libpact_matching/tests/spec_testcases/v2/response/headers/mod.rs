@@ -40,20 +40,20 @@ fn empty_headers() {
 }
 
 #[test]
-fn whitespace_after_comma_different() {
+fn header_name_is_different_case() {
     env_logger::init().unwrap_or(());
     let pact = Json::from_str(r#"
       {
         "match": true,
-        "comment": "Whitespace between comma separated headers does not matter",
+        "comment": "Header name is case insensitive",
         "expected" : {
           "headers": {
-            "Accept": "alligators,hippos"
+            "Accept": "alligators"
           }
         },
         "actual": {
           "headers": {
-            "Accept": "alligators, hippos"
+            "ACCEPT": "alligators"
           }
         }
       }
@@ -73,18 +73,20 @@ fn whitespace_after_comma_different() {
 }
 
 #[test]
-fn unexpected_header_found() {
+fn header_value_is_different_case() {
     env_logger::init().unwrap_or(());
     let pact = Json::from_str(r#"
       {
-        "match": true,
-        "comment": "Extra headers allowed",
+        "match": false,
+        "comment": "Headers values are case sensitive",
         "expected" : {
-          "headers": {}
+          "headers": {
+            "Accept": "alligators"
+          }
         },
         "actual": {
           "headers": {
-            "Accept": "alligators"
+            "Accept": "Alligators"
           }
         }
       }
@@ -143,20 +145,22 @@ fn matches_with_regex() {
 }
 
 #[test]
-fn header_value_is_different_case() {
+fn matches() {
     env_logger::init().unwrap_or(());
     let pact = Json::from_str(r#"
       {
-        "match": false,
-        "comment": "Headers values are case sensitive",
+        "match": true,
+        "comment": "Headers match",
         "expected" : {
           "headers": {
-            "Accept": "alligators"
+            "Accept": "alligators",
+            "Content-Type": "hippos"
           }
         },
         "actual": {
           "headers": {
-            "Accept": "Alligators"
+            "Content-Type": "hippos",
+            "Accept": "alligators"
           }
         }
       }
@@ -209,20 +213,18 @@ fn order_of_comma_separated_header_values_different() {
 }
 
 #[test]
-fn header_name_is_different_case() {
+fn unexpected_header_found() {
     env_logger::init().unwrap_or(());
     let pact = Json::from_str(r#"
       {
         "match": true,
-        "comment": "Header name is case insensitive",
+        "comment": "Extra headers allowed",
         "expected" : {
-          "headers": {
-            "Accept": "alligators"
-          }
+          "headers": {}
         },
         "actual": {
           "headers": {
-            "ACCEPT": "alligators"
+            "Accept": "alligators"
           }
         }
       }
@@ -242,22 +244,20 @@ fn header_name_is_different_case() {
 }
 
 #[test]
-fn matches() {
+fn whitespace_after_comma_different() {
     env_logger::init().unwrap_or(());
     let pact = Json::from_str(r#"
       {
         "match": true,
-        "comment": "Headers match",
+        "comment": "Whitespace between comma separated headers does not matter",
         "expected" : {
           "headers": {
-            "Accept": "alligators",
-            "Content-Type": "hippos"
+            "Accept": "alligators,hippos"
           }
         },
         "actual": {
           "headers": {
-            "Content-Type": "hippos",
-            "Accept": "alligators"
+            "Accept": "alligators, hippos"
           }
         }
       }
