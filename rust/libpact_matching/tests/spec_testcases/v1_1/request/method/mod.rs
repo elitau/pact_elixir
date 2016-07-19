@@ -10,41 +10,6 @@ use rustc_serialize::json::Json;
 use expectest::prelude::*;
 
 #[test]
-fn method_is_different_case() {
-    env_logger::init().unwrap_or(());
-    let pact = Json::from_str(r#"
-      {
-        "match": true,
-        "comment": "Methods case does not matter",
-        "expected" : {
-          "method": "POST",
-          "path": "/",
-          "query": "",
-          "headers": {}
-        },
-        "actual": {
-          "method": "post",
-          "path": "/",
-          "query": "",
-          "headers": {}
-      
-        }
-      }
-    "#).unwrap();
-
-    let expected = Request::from_json(&pact.find("expected").unwrap(), &PactSpecification::V1_1);
-    println!("{:?}", expected);
-    let actual = Request::from_json(&pact.find("actual").unwrap(), &PactSpecification::V1_1);
-    println!("{:?}", actual);
-    let pact_match = pact.find("match").unwrap();
-    if pact_match.as_boolean().unwrap() {
-       expect!(match_request(expected, actual)).to(be_empty());
-    } else {
-       expect!(match_request(expected, actual)).to_not(be_empty());
-    }
-}
-
-#[test]
 fn different_method() {
     env_logger::init().unwrap_or(());
     let pact = Json::from_str(r#"
@@ -94,6 +59,41 @@ fn matches() {
         },
         "actual": {
           "method": "POST",
+          "path": "/",
+          "query": "",
+          "headers": {}
+      
+        }
+      }
+    "#).unwrap();
+
+    let expected = Request::from_json(&pact.find("expected").unwrap(), &PactSpecification::V1_1);
+    println!("{:?}", expected);
+    let actual = Request::from_json(&pact.find("actual").unwrap(), &PactSpecification::V1_1);
+    println!("{:?}", actual);
+    let pact_match = pact.find("match").unwrap();
+    if pact_match.as_boolean().unwrap() {
+       expect!(match_request(expected, actual)).to(be_empty());
+    } else {
+       expect!(match_request(expected, actual)).to_not(be_empty());
+    }
+}
+
+#[test]
+fn method_is_different_case() {
+    env_logger::init().unwrap_or(());
+    let pact = Json::from_str(r#"
+      {
+        "match": true,
+        "comment": "Methods case does not matter",
+        "expected" : {
+          "method": "POST",
+          "path": "/",
+          "query": "",
+          "headers": {}
+        },
+        "actual": {
+          "method": "post",
           "path": "/",
           "query": "",
           "headers": {}

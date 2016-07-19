@@ -46,78 +46,6 @@ fn empty_path_found_when_forward_slash_expected() {
 }
 
 #[test]
-fn matches() {
-    env_logger::init().unwrap_or(());
-    let pact = Json::from_str(r#"
-      {
-        "match": true,
-        "comment": "Paths match",
-        "expected" : {
-          "method": "POST",
-          "path": "/path/to/something",
-          "query": "",
-          "headers": {}
-      
-        },
-        "actual": {
-          "method": "POST",
-          "path": "/path/to/something",
-          "query": "",
-          "headers": {}
-      
-        }
-      }
-    "#).unwrap();
-
-    let expected = Request::from_json(&pact.find("expected").unwrap(), &PactSpecification::V2);
-    println!("{:?}", expected);
-    let actual = Request::from_json(&pact.find("actual").unwrap(), &PactSpecification::V2);
-    println!("{:?}", actual);
-    let pact_match = pact.find("match").unwrap();
-    if pact_match.as_boolean().unwrap() {
-       expect!(match_request(expected, actual)).to(be_empty());
-    } else {
-       expect!(match_request(expected, actual)).to_not(be_empty());
-    }
-}
-
-#[test]
-fn unexpected_trailing_slash_in_path() {
-    env_logger::init().unwrap_or(());
-    let pact = Json::from_str(r#"
-      {
-        "match": false,
-        "comment": "Path has unexpected trailing slash, trailing slashes can matter",
-        "expected" : {
-          "method": "POST",
-          "path": "/path/to/something",
-          "query": "",
-          "headers": {}
-      
-        },
-        "actual": {
-          "method": "POST",
-          "path": "/path/to/something/",
-          "query": "",
-          "headers": {}
-      
-        }
-      }
-    "#).unwrap();
-
-    let expected = Request::from_json(&pact.find("expected").unwrap(), &PactSpecification::V2);
-    println!("{:?}", expected);
-    let actual = Request::from_json(&pact.find("actual").unwrap(), &PactSpecification::V2);
-    println!("{:?}", actual);
-    let pact_match = pact.find("match").unwrap();
-    if pact_match.as_boolean().unwrap() {
-       expect!(match_request(expected, actual)).to(be_empty());
-    } else {
-       expect!(match_request(expected, actual)).to_not(be_empty());
-    }
-}
-
-#[test]
 fn forward_slash_found_when_empty_path_expected() {
     env_logger::init().unwrap_or(());
     let pact = Json::from_str(r#"
@@ -190,6 +118,42 @@ fn incorrect_path() {
 }
 
 #[test]
+fn matches() {
+    env_logger::init().unwrap_or(());
+    let pact = Json::from_str(r#"
+      {
+        "match": true,
+        "comment": "Paths match",
+        "expected" : {
+          "method": "POST",
+          "path": "/path/to/something",
+          "query": "",
+          "headers": {}
+      
+        },
+        "actual": {
+          "method": "POST",
+          "path": "/path/to/something",
+          "query": "",
+          "headers": {}
+      
+        }
+      }
+    "#).unwrap();
+
+    let expected = Request::from_json(&pact.find("expected").unwrap(), &PactSpecification::V2);
+    println!("{:?}", expected);
+    let actual = Request::from_json(&pact.find("actual").unwrap(), &PactSpecification::V2);
+    println!("{:?}", actual);
+    let pact_match = pact.find("match").unwrap();
+    if pact_match.as_boolean().unwrap() {
+       expect!(match_request(expected, actual)).to(be_empty());
+    } else {
+       expect!(match_request(expected, actual)).to_not(be_empty());
+    }
+}
+
+#[test]
 fn missing_trailing_slash_in_path() {
     env_logger::init().unwrap_or(());
     let pact = Json::from_str(r#"
@@ -206,6 +170,42 @@ fn missing_trailing_slash_in_path() {
         "actual": {
           "method": "POST",
           "path": "/path/to/something",
+          "query": "",
+          "headers": {}
+      
+        }
+      }
+    "#).unwrap();
+
+    let expected = Request::from_json(&pact.find("expected").unwrap(), &PactSpecification::V2);
+    println!("{:?}", expected);
+    let actual = Request::from_json(&pact.find("actual").unwrap(), &PactSpecification::V2);
+    println!("{:?}", actual);
+    let pact_match = pact.find("match").unwrap();
+    if pact_match.as_boolean().unwrap() {
+       expect!(match_request(expected, actual)).to(be_empty());
+    } else {
+       expect!(match_request(expected, actual)).to_not(be_empty());
+    }
+}
+
+#[test]
+fn unexpected_trailing_slash_in_path() {
+    env_logger::init().unwrap_or(());
+    let pact = Json::from_str(r#"
+      {
+        "match": false,
+        "comment": "Path has unexpected trailing slash, trailing slashes can matter",
+        "expected" : {
+          "method": "POST",
+          "path": "/path/to/something",
+          "query": "",
+          "headers": {}
+      
+        },
+        "actual": {
+          "method": "POST",
+          "path": "/path/to/something/",
           "query": "",
           "headers": {}
       
