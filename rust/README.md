@@ -4,7 +4,7 @@
 
 This is the project for a reference implementation of Pact in Rust. It implements the [V1 Pact specification](https://github.com/pact-foundation/pact-specification/tree/version-1).
 
-There are 3 main modules to this implementation:
+There are 5 main modules to this implementation:
 
 ## [libpact_matching](libpact_matching)
 
