@@ -278,7 +278,8 @@ fn body_from_json(request: &Json) -> OptionalBody {
     }
 }
 
-fn build_query_string(query: HashMap<String, Vec<String>>) -> String {
+/// Converts a query string map into a query string
+pub fn build_query_string(query: HashMap<String, Vec<String>>) -> String {
     query.into_iter()
         .sorted_by(|a, b| Ord::cmp(&a.0, &b.0))
         .iter()
