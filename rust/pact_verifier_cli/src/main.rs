@@ -9,14 +9,24 @@
 #[macro_use] extern crate log;
 #[macro_use] extern crate maplit;
 #[macro_use] extern crate pact_matching;
+extern crate pact_verifier;
+extern crate simplelog;
+extern crate rand;
 
 #[cfg(test)]
 #[macro_use(expect)]
 extern crate expectest;
 
+#[cfg(test)]
+extern crate quickcheck;
+
 use std::env;
-use clap::{Arg, App, SubCommand, AppSettings, ErrorKind, ArgMatches};
+use clap::{Arg, App, AppSettings, ErrorKind};
 use pact_matching::models::PactSpecification;
+use pact_verifier::*;
+use log::LogLevelFilter;
+use simplelog::TermLogger;
+use std::str::FromStr;
 
 fn main() {
     match handle_command_args() {
@@ -30,6 +40,10 @@ fn print_version() {
     println!("pact specification version: v{}", PactSpecification::V1.version_str());
 }
 
+fn integer_value(v: String) -> Result<(), String> {
+    v.parse::<u16>().map(|_| ()).map_err(|e| format!("'{}' is not a valid port value: {}", v, e) )
+}
+
 fn handle_command_args() -> Result<(), i32> {
     let args: Vec<String> = env::args().collect();
     let program = args[0].clone();
@@ -40,123 +54,52 @@ fn handle_command_args() -> Result<(), i32> {
         .about("Standalone Pact verifier")
         .version_short("v")
         .setting(AppSettings::ArgRequiredElseHelp)
-        .setting(AppSettings::SubcommandRequired)
-        .setting(AppSettings::GlobalVersion)
-        .setting(AppSettings::VersionlessSubcommands)
         .setting(AppSettings::ColoredHelp)
-        // .arg(Arg::with_name("port")
-        //     .short("p")
-        //     .long("port")
-        //     .takes_value(true)
-        //     .use_delimiter(false)
-        //     .global(true)
-        //     .help("port the master mock server runs on (defaults to 8080)"))
-        // .arg(Arg::with_name("host")
-        //     .short("h")
-        //     .long("host")
-        //     .takes_value(true)
-        //     .use_delimiter(false)
-        //     .global(true)
-        //     .help("hostname the master mock server runs on (defaults to localhost)"))
-        // .arg(Arg::with_name("loglevel")
-        //     .short("l")
-        //     .long("loglevel")
-        //     .takes_value(true)
-        //     .use_delimiter(false)
-        //     .global(true)
-        //     .possible_values(&["error", "warn", "info", "debug", "trace", "none"])
-        //     .help("Log level for mock servers to write to the log file (defaults to info)"))
-        // .subcommand(SubCommand::with_name("start")
-        //         .about("Starts the master mock server")
-        //         .setting(AppSettings::ColoredHelp)
-        //         .arg(Arg::with_name("output")
-        //               .short("o")
-        //               .long("output")
-        //               .takes_value(true)
-        //               .use_delimiter(false)
-        //               .help("the directory where to write files to (defaults to current directory)")))
-        // .subcommand(SubCommand::with_name("list")
-        //         .about("Lists all the running mock servers")
-        //         .setting(AppSettings::ColoredHelp))
-        // .subcommand(SubCommand::with_name("create")
-        //         .about("Creates a new mock server from a pact file")
-        //         .arg(Arg::with_name("file")
-        //             .short("f")
-        //             .long("file")
-        //             .takes_value(true)
-        //             .use_delimiter(false)
-        //             .required(true)
-        //             .help("the pact file to define the mock server"))
-        //         .setting(AppSettings::ColoredHelp))
-        // .subcommand(SubCommand::with_name("verify")
-        //         .about("Verify the mock server by id or port number, and generate a pact file if all ok")
-        //         .arg(Arg::with_name("mock-server-id")
-        //             .short("i")
-        //             .long("mock-server-id")
-        //             .takes_value(true)
-        //             .use_delimiter(false)
-        //             .required_unless("mock-server-port")
-        //             .conflicts_with("mock-server-port")
-        //             .help("the ID of the mock server")
-        //             .validator(uuid_value))
-        //         .arg(Arg::with_name("mock-server-port")
-        //             .short("m")
-        //             .long("mock-server-port")
-        //             .takes_value(true)
-        //             .use_delimiter(false)
-        //             .required_unless("mock-server-host")
-        //             .help("the port number of the mock server")
-        //             .validator(integer_value))
-        //         .setting(AppSettings::ColoredHelp))
-        // .subcommand(SubCommand::with_name("shutdown")
-        //         .about("Shutdown the mock server by id or port number, releasing all its resources")
-        //         .arg(Arg::with_name("mock-server-id")
-        //             .short("i")
-        //             .long("mock-server-id")
-        //             .takes_value(true)
-        //             .use_delimiter(false)
-        //             .required_unless("mock-server-port")
-        //             .conflicts_with("mock-server-port")
-        //             .help("the ID of the mock server")
-        //             .validator(uuid_value))
-        //         .arg(Arg::with_name("mock-server-port")
-        //             .short("m")
-        //             .long("mock-server-port")
-        //             .takes_value(true)
-        //             .use_delimiter(false)
-        //             .required_unless("mock-server-host")
-        //             .help("the port number of the mock server")
-        //             .validator(integer_value))
-        //         .setting(AppSettings::ColoredHelp))
+        .arg(Arg::with_name("loglevel")
+            .short("l")
+            .long("loglevel")
+            .takes_value(true)
+            .use_delimiter(false)
+            .possible_values(&["error", "warn", "info", "debug", "trace", "none"])
+            .help("Log level (defaults to info)"))
+        .arg(Arg::with_name("file")
+            .short("f")
+            .long("file")
+            .required(true)
+            .takes_value(true)
+            .use_delimiter(false)
+            .help("Pact file to verify"))
+        .arg(Arg::with_name("hostname")
+            .short("h")
+            .long("hostname")
+            .takes_value(true)
+            .use_delimiter(false)
+            .help("Provider hostname (defaults to localhost)"))
+        .arg(Arg::with_name("port")
+            .short("p")
+            .long("port")
+            .takes_value(true)
+            .use_delimiter(false)
+            .help("Provider port (defaults to 8080)")
+            .validator(integer_value))
         ;
 
     let matches = app.get_matches_safe();
     match matches {
         Ok(ref matches) => {
-            // let log_level = lookup_global_option("loglevel", matches);
-            // if let Err(err) = setup_loggers(log_level.unwrap_or("info"),
-            //     matches.subcommand_name().unwrap(),
-            //     matches.subcommand().1.unwrap().value_of("output")) {
-            //     display_error(format!("Could not setup loggers: {}", err), matches);
-            // }
-            // let port = lookup_global_option("port", matches).unwrap_or("8080");
-            // let host = lookup_global_option("host", matches).unwrap_or("localhost");
-            // match port.parse::<u16>() {
-            //     Ok(p) => {
-            //         match matches.subcommand() {
-            //             ("start", Some(sub_matches)) => {
-            //                 server::start_server(p, sub_matches.value_of("output").map(|s| s.to_owned()))
-            //             },
-            //             ("list", Some(sub_matches)) => list::list_mock_servers(host, p, sub_matches),
-            //             ("create", Some(sub_matches)) => create_mock::create_mock_server(host, p, sub_matches),
-            //             ("verify", Some(sub_matches)) => verify::verify_mock_server(host, p, sub_matches),
-            //             ("shutdown", Some(sub_matches)) => shutdown::shutdown_mock_server(host, p, sub_matches),
-            //             _ => Err(3)
-            //         }
-            //     },
-            //     Err(_) => display_error(format!("{} is not a valid port number", port), matches)
-            // }
-            Ok(())
+            let level = matches.value_of("loglevel").unwrap_or("info");
+            let log_level = match level {
+                "none" => LogLevelFilter::Off,
+                _ => LogLevelFilter::from_str(level).unwrap()
+            };
+            TermLogger::init(log_level).unwrap();
+            let provider = ProviderInfo {
+                host: s!(matches.value_of("hostname").unwrap_or("localhost")),
+                port: matches.value_of("port").unwrap_or("8080").parse::<u16>().unwrap(),
+                .. ProviderInfo::default()
+            };
+            verify_provider(&provider, PactSource::File(s!(matches.value_of("file").unwrap())))
+                .map_err(|_| 2)
         },
         Err(ref err) => {
             match err.kind {
@@ -175,5 +118,34 @@ fn handle_command_args() -> Result<(), i32> {
                 }
             }
         }
+    }
+}
+
+#[cfg(test)]
+mod test {
+
+    use quickcheck::{TestResult, quickcheck};
+    use rand::Rng;
+    use super::integer_value;
+    use expectest::prelude::*;
+
+    #[test]
+    fn validates_integer_value() {
+        fn prop(s: String) -> TestResult {
+            let mut rng = ::rand::thread_rng();
+            if rng.gen() && s.chars().any(|ch| !ch.is_numeric()) {
+                TestResult::discard()
+            } else {
+                let validation = integer_value(s.clone());
+                match validation {
+                    Ok(_) => TestResult::from_bool(!s.is_empty() && s.chars().all(|ch| ch.is_numeric() )),
+                    Err(_) => TestResult::from_bool(s.is_empty() || s.chars().find(|ch| !ch.is_numeric() ).is_some())
+                }
+            }
+        }
+        quickcheck(prop as fn(_) -> _);
+
+        expect!(integer_value(s!("1234"))).to(be_ok());
+        expect!(integer_value(s!("1234x"))).to(be_err());
     }
 }
