@@ -61,7 +61,7 @@ fn handle_command_args() -> Result<(), i32> {
             .takes_value(true)
             .use_delimiter(false)
             .possible_values(&["error", "warn", "info", "debug", "trace", "none"])
-            .help("Log level (defaults to info)"))
+            .help("Log level (defaults to warn)"))
         .arg(Arg::with_name("file")
             .short("f")
             .long("file")
@@ -87,7 +87,7 @@ fn handle_command_args() -> Result<(), i32> {
     let matches = app.get_matches_safe();
     match matches {
         Ok(ref matches) => {
-            let level = matches.value_of("loglevel").unwrap_or("info");
+            let level = matches.value_of("loglevel").unwrap_or("warn");
             let log_level = match level {
                 "none" => LogLevelFilter::Off,
                 _ => LogLevelFilter::from_str(level).unwrap()

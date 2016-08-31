@@ -3,6 +3,7 @@ use pact_matching::models::*;
 use std::io;
 use std::str::FromStr;
 use std::collections::hash_map::HashMap;
+use std::io::Read;
 use hyper::client::{Client, RequestBuilder};
 use hyper::client::response::Response as HyperResponse;
 use hyper::error::Error;
@@ -62,13 +63,45 @@ fn make_request(provider: &ProviderInfo, request: &Request, client: &Client) -> 
     }
 }
 
+fn extract_headers(headers: &Headers) -> Option<HashMap<String, String>> {
+    if headers.len() > 0 {
+        Some(headers.iter().map(|h| (s!(h.name()), h.value_string()) ).collect())
+    } else {
+        None
+    }
+}
+
+fn extract_body(response: &mut HyperResponse) -> OptionalBody {
+    let mut buffer = String::new();
+    match response.read_to_string(&mut buffer) {
+        Ok(size) => if size > 0 {
+                OptionalBody::Present(buffer)
+            } else {
+                OptionalBody::Empty
+            },
+        Err(err) => {
+            warn!("Failed to read request body: {}", err);
+            OptionalBody::Empty
+        }
+    }
+}
+
+fn hyper_response_to_pact_response(response: &mut HyperResponse) -> Response {
+    Response {
+        status: response.status.to_u16(),
+        headers: extract_headers(&response.headers),
+        body: extract_body(response),
+        matching_rules: None
+    }
+}
+
 pub fn make_provider_request(provider: &ProviderInfo, request: &Request) -> Result<Response, Error> {
     debug!("Sending {:?} to provider", request);
     let client = Client::new();
     match make_request(provider, request, &client) {
-        Ok(response) => {
+        Ok(ref mut response) => {
             debug!("Received response: {:?}", response);
-            Ok(Response::default_response())
+            Ok(hyper_response_to_pact_response(response))
         },
         Err(err) => {
             debug!("Request failed: {}", err);
