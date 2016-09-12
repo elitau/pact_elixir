@@ -21,7 +21,7 @@ extern crate expectest;
 extern crate quickcheck;
 
 use std::env;
-use clap::{Arg, App, AppSettings, ErrorKind};
+use clap::{Arg, App, AppSettings, ErrorKind, ArgMatches};
 use pact_matching::models::PactSpecification;
 use pact_verifier::*;
 use log::LogLevelFilter;
@@ -42,6 +42,19 @@ fn print_version() {
 
 fn integer_value(v: String) -> Result<(), String> {
     v.parse::<u16>().map(|_| ()).map_err(|e| format!("'{}' is not a valid port value: {}", v, e) )
+}
+
+fn pact_source(matches: &ArgMatches) -> Vec<PactSource> {
+    let mut sources = vec![];
+    match matches.values_of("file") {
+        Some(values) => sources.extend(values.map(|v| PactSource::File(s!(v))).collect::<Vec<PactSource>>()),
+        None => ()
+    };
+    match matches.values_of("dir") {
+        Some(values) => sources.extend(values.map(|v| PactSource::Dir(s!(v))).collect::<Vec<PactSource>>()),
+        None => ()
+    };
+    sources
 }
 
 fn handle_command_args() -> Result<(), i32> {
@@ -65,10 +78,23 @@ fn handle_command_args() -> Result<(), i32> {
         .arg(Arg::with_name("file")
             .short("f")
             .long("file")
-            .required(true)
+            .required_unless_one(&["dir"])
             .takes_value(true)
             .use_delimiter(false)
-            .help("Pact file to verify"))
+            .multiple(true)
+            .number_of_values(1)
+            .empty_values(false)
+            .help("Pact file to verify (can be repeated)"))
+        .arg(Arg::with_name("dir")
+            .short("d")
+            .long("dir")
+            .required_unless_one(&["file"])
+            .takes_value(true)
+            .use_delimiter(false)
+            .multiple(true)
+            .number_of_values(1)
+            .empty_values(false)
+            .help("Directory of pact files to verify (can be repeated)"))
         .arg(Arg::with_name("hostname")
             .short("h")
             .long("hostname")
@@ -98,8 +124,12 @@ fn handle_command_args() -> Result<(), i32> {
                 port: matches.value_of("port").unwrap_or("8080").parse::<u16>().unwrap(),
                 .. ProviderInfo::default()
             };
-            verify_provider(&provider, PactSource::File(s!(matches.value_of("file").unwrap())))
-                .map_err(|_| 2)
+            let source = pact_source(matches);
+            if verify_provider(&provider, source) {
+                Ok(())
+            } else {
+                Err(2)
+            }
         },
         Err(ref err) => {
             match err.kind {

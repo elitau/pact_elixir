@@ -187,6 +187,32 @@ impl Mismatch {
             Mismatch::BodyMismatch { .. } => s!("BodyMismatch")
         }
     }
+
+    /// Returns a summary string for this mismatch
+    pub fn summary(&self) -> String {
+        match *self {
+            Mismatch::MethodMismatch { expected: ref e, .. } => format!("is a {} request", e),
+            Mismatch::PathMismatch { expected: ref e, .. } => format!("to path '{}'", e),
+            Mismatch::StatusMismatch { expected: ref e, .. } => format!("has status code {}", e),
+            Mismatch::QueryMismatch { ref parameter, expected: ref e, .. } => format!("includes parameter '{}' with value '{}'", parameter, e),
+            Mismatch::HeaderMismatch { ref key, expected: ref e, .. } => format!("includes header '{}' with value '{}'", key, e),
+            Mismatch::BodyTypeMismatch { .. } => s!("has a matching body"),
+            Mismatch::BodyMismatch { .. } => s!("has a matching body")
+        }
+    }
+
+    /// Returns a formated string for this mismatch
+    pub fn description(&self) -> String {
+        match *self {
+            Mismatch::MethodMismatch { expected: ref e, actual: ref a } => format!("expected {} but was {}", e, a),
+            Mismatch::PathMismatch { expected: ref e, actual: ref a } => format!("expected '{}' but was '{}'", e, a),
+            Mismatch::StatusMismatch { expected: ref e, actual: ref a } => format!("expected {} but was {}", e, a),
+            Mismatch::QueryMismatch { ref mismatch, .. } => mismatch.clone(),
+            Mismatch::HeaderMismatch { ref mismatch, .. } => mismatch.clone(),
+            Mismatch::BodyTypeMismatch {  expected: ref e, actual: ref a } => format!("expected a '{}' body but was '{}'", e, a),
+            Mismatch::BodyMismatch { ref path, ref mismatch, .. } => format!("{} -> {}", path, mismatch)
+        }
+    }
 }
 
 impl PartialEq for Mismatch {

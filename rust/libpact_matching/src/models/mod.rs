@@ -595,7 +595,7 @@ fn parse_interactions(pact_json: &Json, spec_version: PactSpecification) -> Vec<
     }
 }
 
-fn determin_spec_version(metadata: &BTreeMap<String, BTreeMap<String, String>>) -> PactSpecification {
+fn determin_spec_version(file: &Path, metadata: &BTreeMap<String, BTreeMap<String, String>>) -> PactSpecification {
     match metadata.get("pact-specification") {
         Some(spec) => {
             match spec.get("version") {
@@ -603,23 +603,23 @@ fn determin_spec_version(metadata: &BTreeMap<String, BTreeMap<String, String>>) 
                     Ok(ver) => match ver.major {
                         1 => PactSpecification::V1,
                         _ => {
-                            warn!("Unsupported specification version '{}' found in the metadata in the pact file, will try load it as a V1 specification", ver);
+                            warn!("Unsupported specification version '{}' found in the metadata in the pact file {:?}, will try load it as a V1 specification", ver, file);
                             PactSpecification::Unknown
                         }
                     },
                     Err(err) => {
-                        warn!("Could not parse specification version '{}' found in the metadata in the pact file, assuming V1 specification - {}", ver, err);
+                        warn!("Could not parse specification version '{}' found in the metadata in the pact file {:?}, assuming V1 specification - {}", ver, file, err);
                         PactSpecification::Unknown
                     }
                 },
                 None => {
-                    warn!("No specification version found in the metadata in the pact file, assuming V1 specification");
+                    warn!("No specification version found in the metadata in the pact file {:?}, assuming V1 specification", file);
                     PactSpecification::V1
                 }
             }
         },
         None => {
-            warn!("No metadata found in pact file, assuming V1 specification");
+            warn!("No metadata found in pact file {:?}, assuming V1 specification", file);
             PactSpecification::V1
         }
     }
@@ -628,9 +628,9 @@ fn determin_spec_version(metadata: &BTreeMap<String, BTreeMap<String, String>>) 
 impl Pact {
 
     /// Creates a `Pact` from a `Json` struct.
-    pub fn from_json(pact_json: &Json) -> Pact {
+    pub fn from_json(file: &Path, pact_json: &Json) -> Pact {
         let metadata = parse_meta_data(pact_json);
-        let spec_version = determin_spec_version(&metadata);
+        let spec_version = determin_spec_version(file, &metadata);
 
         let consumer = match pact_json.find("consumer") {
             Some(v) => Consumer::from_json(v),
@@ -719,7 +719,7 @@ impl Pact {
         let mut f = try!(File::open(file));
         let pact_json = Json::from_reader(&mut f);
         match pact_json {
-            Ok(ref json) => Ok(Pact::from_json(json)),
+            Ok(ref json) => Ok(Pact::from_json(file, json)),
             Err(err) => Err(Error::new(ErrorKind::Other, format!("Failed to parse Pact JSON - {}", err)))
         }
     }
