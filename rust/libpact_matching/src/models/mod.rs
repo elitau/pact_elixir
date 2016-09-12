@@ -15,6 +15,7 @@ use std::fs::File;
 use std::path::Path;
 use std::cmp::Ordering;
 use std::hash::{Hash, Hasher};
+use hyper::client::Client;
 
 /// Version of the library
 pub const VERSION: Option<&'static str> = option_env!("CARGO_PKG_VERSION");
@@ -595,7 +596,7 @@ fn parse_interactions(pact_json: &Json, spec_version: PactSpecification) -> Vec<
     }
 }
 
-fn determin_spec_version(file: &Path, metadata: &BTreeMap<String, BTreeMap<String, String>>) -> PactSpecification {
+fn determin_spec_version(file: &String, metadata: &BTreeMap<String, BTreeMap<String, String>>) -> PactSpecification {
     match metadata.get("pact-specification") {
         Some(spec) => {
             match spec.get("version") {
@@ -628,7 +629,7 @@ fn determin_spec_version(file: &Path, metadata: &BTreeMap<String, BTreeMap<Strin
 impl Pact {
 
     /// Creates a `Pact` from a `Json` struct.
-    pub fn from_json(file: &Path, pact_json: &Json) -> Pact {
+    pub fn from_json(file: &String, pact_json: &Json) -> Pact {
         let metadata = parse_meta_data(pact_json);
         let spec_version = determin_spec_version(file, &metadata);
 
@@ -719,8 +720,25 @@ impl Pact {
         let mut f = try!(File::open(file));
         let pact_json = Json::from_reader(&mut f);
         match pact_json {
-            Ok(ref json) => Ok(Pact::from_json(file, json)),
+            Ok(ref json) => Ok(Pact::from_json(&format!("{:?}", file), json)),
             Err(err) => Err(Error::new(ErrorKind::Other, format!("Failed to parse Pact JSON - {}", err)))
+        }
+    }
+
+    /// Reads the pact file from a URL and parses the resulting JSON into a `Pact` struct
+    pub fn from_url(url: &String) -> Result<Pact, String> {
+        let client = Client::new();
+        match client.get(url).send() {
+            Ok(mut res) => if res.status.is_success() {
+                    let pact_json = Json::from_reader(&mut res);
+                    match pact_json {
+                        Ok(ref json) => Ok(Pact::from_json(url, json)),
+                        Err(err) => Err(format!("Failed to parse Pact JSON - {}", err))
+                    }
+                } else {
+                    Err(format!("Request failed with status - {}", res.status))
+                },
+            Err(err) => Err(format!("Request failed - {}", err))
         }
     }
 

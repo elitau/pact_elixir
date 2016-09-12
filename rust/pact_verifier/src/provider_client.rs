@@ -1,10 +1,9 @@
 use super::*;
 use pact_matching::models::*;
-use std::io;
 use std::str::FromStr;
 use std::collections::hash_map::HashMap;
 use std::io::Read;
-use hyper::client::{Client, RequestBuilder};
+use hyper::client::Client;
 use hyper::client::response::Response as HyperResponse;
 use hyper::error::Error;
 use hyper::method::Method;

@@ -12,6 +12,7 @@ extern crate regex;
 extern crate semver;
 #[macro_use] extern crate itertools;
 extern crate rand;
+#[macro_use] extern crate hyper;
 
 /// Simple macro to convert a string slice to a `String` struct.
 #[macro_export]

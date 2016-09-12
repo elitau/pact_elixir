@@ -18,7 +18,7 @@ mod provider_client;
 use std::path::Path;
 use std::error::Error;
 use std::io;
-use std::fs::{self, DirEntry};
+use std::fs;
 use pact_matching::*;
 use pact_matching::models::{Pact, Interaction};
 use ansi_term::*;
@@ -32,7 +32,9 @@ pub enum PactSource {
     /// Load the pact from a pact file
     File(String),
     /// Load all the pacts from a Directory
-    Dir(String)
+    Dir(String),
+    /// Load the pact from a URL
+    URL(String)
 }
 
 /// Information about the Provider to verify
@@ -162,7 +164,9 @@ pub fn verify_provider(provider_info: &ProviderInfo, source: Vec<PactSource>) ->
                         }
                     }).collect(),
                 Err(err) => vec![Err(format!("Could not load pacts from directory '{}' - {}", dir, err))]
-            }
+            },
+            &PactSource::URL(ref url) => vec![Pact::from_url(url)
+                .map_err(|err| format!("Failed to load pact '{}' - {}", url, err))]
         }
     }).collect::<Vec<Result<Pact, String>>>();
 

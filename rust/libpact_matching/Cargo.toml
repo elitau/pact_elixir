@@ -21,6 +21,10 @@ semver = "^0.2.0"
 itertools = "^0.4.15"
 rand = "^0.3"
 
+[dependencies.hyper]
+version = "^0.9.7"
+default-features = false
+
 [dev-dependencies]
 quickcheck = "^0.2"
 expectest = "^0.4.1"

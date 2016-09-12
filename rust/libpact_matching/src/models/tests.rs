@@ -3,7 +3,6 @@ use std::collections::HashMap;
 use std::fs::{self, File};
 use std::io;
 use std::io::prelude::*;
-use std::path::Path;
 use std::env;
 use rustc_serialize::json::Json;
 use expectest::prelude::*;
@@ -211,7 +210,7 @@ fn defaults_to_none_if_provider_state_null() {
 #[test]
 fn load_empty_pact() {
     let pact_json = r#"{}"#;
-    let pact = Pact::from_json(Path::new(""), &Json::from_str(pact_json).unwrap());
+    let pact = Pact::from_json(&s!(""), &Json::from_str(pact_json).unwrap());
     expect!(pact.provider.name).to(be_equal_to("provider"));
     expect!(pact.consumer.name).to(be_equal_to("consumer"));
     expect!(pact.interactions.iter()).to(have_count(0));
@@ -221,7 +220,7 @@ fn load_empty_pact() {
 #[test]
 fn missing_metadata() {
     let pact_json = r#"{}"#;
-    let pact = Pact::from_json(Path::new(""), &Json::from_str(pact_json).unwrap());
+    let pact = Pact::from_json(&s!(""), &Json::from_str(pact_json).unwrap());
     expect!(pact.specification_version).to(be_equal_to(PactSpecification::V1));
 }
 
@@ -231,7 +230,7 @@ fn missing_spec_version() {
         "metadata" : {
         }
     }"#;
-    let pact = Pact::from_json(Path::new(""), &Json::from_str(pact_json).unwrap());
+    let pact = Pact::from_json(&s!(""), &Json::from_str(pact_json).unwrap());
     expect!(pact.specification_version).to(be_equal_to(PactSpecification::V1));
 }
 
@@ -244,7 +243,7 @@ fn missing_version_in_spec_version() {
             }
         }
     }"#;
-    let pact = Pact::from_json(Path::new(""), &Json::from_str(pact_json).unwrap());
+    let pact = Pact::from_json(&s!(""), &Json::from_str(pact_json).unwrap());
     expect!(pact.specification_version).to(be_equal_to(PactSpecification::V1));
 }
 
@@ -257,7 +256,7 @@ fn empty_version_in_spec_version() {
             }
         }
     }"#;
-    let pact = Pact::from_json(Path::new(""), &Json::from_str(pact_json).unwrap());
+    let pact = Pact::from_json(&s!(""), &Json::from_str(pact_json).unwrap());
     expect!(pact.specification_version).to(be_equal_to(PactSpecification::Unknown));
 }
 
@@ -270,7 +269,7 @@ fn correct_version_in_spec_version() {
             }
         }
     }"#;
-    let pact = Pact::from_json(Path::new(""), &Json::from_str(pact_json).unwrap());
+    let pact = Pact::from_json(&s!(""), &Json::from_str(pact_json).unwrap());
     expect!(pact.specification_version).to(be_equal_to(PactSpecification::V1));
 }
 
@@ -283,7 +282,7 @@ fn invalid_version_in_spec_version() {
             }
         }
     }"#;
-    let pact = Pact::from_json(Path::new(""), &Json::from_str(pact_json).unwrap());
+    let pact = Pact::from_json(&s!(""), &Json::from_str(pact_json).unwrap());
     expect!(pact.specification_version).to(be_equal_to(PactSpecification::Unknown));
 }
 
@@ -317,7 +316,7 @@ fn load_basic_pact() {
         ]
     }
     "#;
-    let pact = Pact::from_json(Path::new(""), &Json::from_str(pact_json).unwrap());
+    let pact = Pact::from_json(&s!(""), &Json::from_str(pact_json).unwrap());
     expect!(&pact.provider.name).to(be_equal_to("Alice Service"));
     expect!(&pact.consumer.name).to(be_equal_to("Consumer"));
     expect!(pact.interactions.iter()).to(have_count(1));
@@ -386,7 +385,7 @@ fn load_pact() {
       }
     }
     "#;
-    let pact = Pact::from_json(Path::new(""), &Json::from_str(pact_json).unwrap());
+    let pact = Pact::from_json(&s!(""), &Json::from_str(pact_json).unwrap());
     expect!(&pact.provider.name).to(be_equal_to("test_provider"));
     expect!(&pact.consumer.name).to(be_equal_to("test_consumer"));
     expect!(pact.metadata.iter()).to(have_count(2));
@@ -456,7 +455,7 @@ fn load_pact_encoded_query_string() {
       }
     }
     "#;
-    let pact = Pact::from_json(Path::new(""), &Json::from_str(pact_json).unwrap());
+    let pact = Pact::from_json(&s!(""), &Json::from_str(pact_json).unwrap());
     expect!(pact.interactions.iter()).to(have_count(1));
     let interaction = pact.interactions[0].clone();
     expect!(interaction.request).to(be_equal_to(Request {
@@ -486,7 +485,7 @@ fn load_pact_converts_methods_to_uppercase() {
       "metadata" : {}
     }
     "#;
-    let pact = Pact::from_json(Path::new(""), &Json::from_str(pact_json).unwrap());
+    let pact = Pact::from_json(&s!(""), &Json::from_str(pact_json).unwrap());
     expect!(pact.interactions.iter()).to(have_count(1));
     let interaction = pact.interactions[0].clone();
     expect!(interaction.request).to(be_equal_to(Request {

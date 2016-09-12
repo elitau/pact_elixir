@@ -54,6 +54,10 @@ fn pact_source(matches: &ArgMatches) -> Vec<PactSource> {
         Some(values) => sources.extend(values.map(|v| PactSource::Dir(s!(v))).collect::<Vec<PactSource>>()),
         None => ()
     };
+    match matches.values_of("url") {
+        Some(values) => sources.extend(values.map(|v| PactSource::URL(s!(v))).collect::<Vec<PactSource>>()),
+        None => ()
+    };
     sources
 }
 
@@ -78,7 +82,7 @@ fn handle_command_args() -> Result<(), i32> {
         .arg(Arg::with_name("file")
             .short("f")
             .long("file")
-            .required_unless_one(&["dir"])
+            .required_unless_one(&["dir", "url"])
             .takes_value(true)
             .use_delimiter(false)
             .multiple(true)
@@ -88,13 +92,23 @@ fn handle_command_args() -> Result<(), i32> {
         .arg(Arg::with_name("dir")
             .short("d")
             .long("dir")
-            .required_unless_one(&["file"])
+            .required_unless_one(&["file", "url"])
             .takes_value(true)
             .use_delimiter(false)
             .multiple(true)
             .number_of_values(1)
             .empty_values(false)
             .help("Directory of pact files to verify (can be repeated)"))
+        .arg(Arg::with_name("url")
+            .short("u")
+            .long("url")
+            .required_unless_one(&["file", "dir"])
+            .takes_value(true)
+            .use_delimiter(false)
+            .multiple(true)
+            .number_of_values(1)
+            .empty_values(false)
+            .help("URL of pact file to verify (can be repeated)"))
         .arg(Arg::with_name("hostname")
             .short("h")
             .long("hostname")
