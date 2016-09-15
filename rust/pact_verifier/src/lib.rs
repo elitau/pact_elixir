@@ -8,12 +8,14 @@ extern crate ansi_term;
 #[macro_use] extern crate log;
 extern crate hyper;
 #[macro_use] extern crate maplit;
+extern crate rustc_serialize;
 
 #[cfg(test)]
 #[macro_use(expect)]
 extern crate expectest;
 
 mod provider_client;
+mod pact_broker;
 
 use std::path::Path;
 use std::error::Error;
@@ -34,12 +36,16 @@ pub enum PactSource {
     /// Load all the pacts from a Directory
     Dir(String),
     /// Load the pact from a URL
-    URL(String)
+    URL(String),
+    /// Load all pacts with the provider name from the pact broker url
+    BROKER_URL(String, String)
 }
 
 /// Information about the Provider to verify
 #[derive(Debug, Clone)]
 pub struct ProviderInfo {
+    /// Provider Name
+    pub name: String,
     /// Provider protocol, defaults to HTTP
     pub protocol: String,
     /// Hostname of the provider
@@ -54,6 +60,7 @@ impl ProviderInfo {
     /// Create a default provider info
     pub fn default() -> ProviderInfo {
         ProviderInfo {
+            name: s!("provider"),
             protocol: s!("http"),
             host: s!("localhost"),
             port: 8080,
@@ -166,7 +173,16 @@ pub fn verify_provider(provider_info: &ProviderInfo, source: Vec<PactSource>) ->
                 Err(err) => vec![Err(format!("Could not load pacts from directory '{}' - {}", dir, err))]
             },
             &PactSource::URL(ref url) => vec![Pact::from_url(url)
-                .map_err(|err| format!("Failed to load pact '{}' - {}", url, err))]
+                .map_err(|err| format!("Failed to load pact '{}' - {}", url, err))],
+            &PactSource::BROKER_URL(ref provider_name, ref broker_url) => match pact_broker::fetch_pacts_from_broker(broker_url, provider_name) {
+                Ok(ref pacts) => pacts.iter().map(|p| {
+                        match p {
+                            &Ok(ref pact) => Ok(pact.clone()),
+                            &Err(ref err) => Err(format!("Failed to load pact from '{}' - {}", broker_url, err))
+                        }
+                    }).collect(),
+                Err(err) => vec![Err(format!("Could not load pacts from the pact broker '{}' - {}", broker_url, err))]
+            }
         }
     }).collect::<Vec<Result<Pact, String>>>();
 
