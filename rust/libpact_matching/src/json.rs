@@ -212,16 +212,30 @@ fn compare_maps(path: &Vec<String>, expected: &BTreeMap<String, Json>, actual: &
             _ => ()
         }
 
-        for (key, value) in expected.iter() {
-            if actual.contains_key(key) {
+        let mut p = path.to_vec();
+        p.push(s!("any"));
+        if wildcard_matcher_is_defined(&p, matchers) {
+            for (key, value) in actual.iter() {
                 let mut p = path.to_vec();
                 p.push(key.clone());
-                compare(&p, value, &actual[key], config, mismatches, matchers);
-            } else {
-                mismatches.push(Mismatch::BodyMismatch { path: path.join("."),
-                    expected: Some(value_of(&expected.to_json())),
-                    actual: Some(value_of(&actual.to_json())),
-                    mismatch: format!("Expected entry {}={} but was missing", key, value_of(value))});
+                if expected.contains_key(key) {
+                    compare(&p, &expected[key], value, config, mismatches, matchers);
+                } else if !expected.is_empty() {
+                    compare(&p, &expected.values().next().unwrap(), value, config, mismatches, matchers);
+                }
+            }
+        } else {
+            for (key, value) in expected.iter() {
+                if actual.contains_key(key) {
+                    let mut p = path.to_vec();
+                    p.push(key.clone());
+                    compare(&p, value, &actual[key], config, mismatches, matchers);
+                } else {
+                    mismatches.push(Mismatch::BodyMismatch { path: path.join("."),
+                        expected: Some(value_of(&expected.to_json())),
+                        actual: Some(value_of(&actual.to_json())),
+                        mismatch: format!("Expected entry {}={} but was missing", key, value_of(value))});
+                }
             }
         }
     }
@@ -638,6 +652,59 @@ mod tests {
         expect!(Json::Array(vec![]).matches(&Json::Array(vec![Json::U64(100), Json::U64(100)]), &matcher)).to(be_err());
         expect!(Json::Array(vec![]).matches(&Json::Array(vec![Json::U64(100)]), &matcher)).to(be_ok());
         expect!(Json::String(s!("100")).matches(&Json::String(s!("101")), &matcher)).to(be_ok());
+    }
+
+    #[test]
+    fn compare_maps_handles_wildcard_matchers() {
+        let mut mismatches = vec![];
+        let val1 = s!(r#"
+        {
+            "articles": [
+                {
+                    "variants": {
+                        "001": {
+                            "bundles": {
+                                "001-A": {
+                                    "description": "someDescription",
+                                    "referencedArticles": [
+                                        {
+                                            "bundleId": "someId"
+                                        }
+                                    ]
+                                }
+                            }
+                        }
+                    }
+                }
+            ]
+        }"#);
+        let val2 = s!(r#"{
+            "articles": [
+                {
+                    "variants": {
+                        "002": {
+                            "bundles": {
+                                "002-A": {
+                                    "description": "someDescription",
+                                    "referencedArticles": [
+                                        {
+                                            "bundleId": "someId"
+                                        }
+                                    ]
+                                }
+                            }
+                        }
+                    }
+                }
+            ]
+        }"#);
+
+        match_json(&val1, &val2, DiffConfig::AllowUnexpectedKeys, &mut mismatches, &Some(hashmap!{
+            s!("$.body.articles[*].variants.*") => hashmap!{ s!("match") => s!("type") },
+            s!("$.body.articles[*].variants.*.bundles.*") => hashmap!{ s!("match") => s!("type") }
+        }));
+        expect!(mismatches.clone()).to(be_empty());
+        mismatches.clear();
     }
 
 }

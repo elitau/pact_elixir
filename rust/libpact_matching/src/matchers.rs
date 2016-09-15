@@ -40,6 +40,16 @@ fn calc_path_weight(path_exp: String, path: &Vec<String>) -> u32 {
     weight
 }
 
+fn path_length(path_exp: String) -> usize {
+    match parse_path_exp(path_exp.clone()) {
+        Ok(path_tokens) => path_tokens.len(),
+        Err(err) => {
+            warn!("Failed to parse path expression - {}", err);
+            0
+        }
+    }
+}
+
 fn resolve_matchers(path: &Vec<String>, matchers: &Matchers) -> Matchers {
     matchers.iter().map(|(k, v)| (k.clone(), v.clone()))
         .filter(|kv| calc_path_weight(kv.0.clone(), path) > 0).collect()
@@ -48,6 +58,15 @@ fn resolve_matchers(path: &Vec<String>, matchers: &Matchers) -> Matchers {
 pub fn matcher_is_defined(path: &Vec<String>, matchers: &Option<Matchers>) -> bool {
     match *matchers {
         Some(ref m) => !resolve_matchers(path, m).is_empty(),
+        None => false
+    }
+}
+
+pub fn wildcard_matcher_is_defined(path: &Vec<String>, matchers: &Option<Matchers>) -> bool {
+    match *matchers {
+        Some(ref m) => m.iter().map(|(k, _)| k.clone())
+            .filter(|k| calc_path_weight(k.clone(), path) > 0 && path_length(k.clone()) == path.len())
+            .any(|k| k.ends_with(".*")),
         None => false
     }
 }
@@ -332,6 +351,38 @@ mod tests {
         expect!(matcher_is_defined(&vec![s!("$"), s!("a"), s!("b"), s!("c")], &Some(hashmap!{
             s!("$.a.b") => hashmap!{}
         }))).to(be_true());
+    }
+
+    #[test]
+    fn wildcard_matcher_is_defined_returns_false_when_there_are_no_matchers() {
+        expect!(wildcard_matcher_is_defined(&vec![s!("$"), s!("a"), s!("b")], &None)).to(be_false());
+    }
+
+    #[test]
+    fn wildcard_matcher_is_defined_returns_false_when_the_path_does_not_have_a_matcher_entry() {
+        expect!(wildcard_matcher_is_defined(&vec![s!("$"), s!("a"), s!("b")], &Some(hashmap!{}))).to(be_false());
+    }
+
+    #[test]
+    fn wildcard_matcher_is_defined_returns_false_when_the_path_does_have_a_matcher_entry_and_it_is_not_a_wildcard() {
+        expect!(wildcard_matcher_is_defined(&vec![s!("$"), s!("a"), s!("b")], &Some(hashmap!{
+            s!("$.a.b") => hashmap!{},
+            s!("$.*") => hashmap!{}
+        }))).to(be_false());
+    }
+
+    #[test]
+    fn wildcard_matcher_is_defined_returns_true_when_the_path_does_have_a_matcher_entry_and_it_is_a_widcard() {
+        expect!(wildcard_matcher_is_defined(&vec![s!("$"), s!("a"), s!("b")], &Some(hashmap!{
+            s!("$.a.*") => hashmap!{}
+        }))).to(be_true());
+    }
+
+    #[test]
+    fn wildcard_matcher_is_defined_returns_false_when_the_parent_of_the_path_does_have_a_matcher_entry() {
+        expect!(wildcard_matcher_is_defined(&vec![s!("$"), s!("a"), s!("b"), s!("c")], &Some(hashmap!{
+            s!("$.a.*") => hashmap!{}
+        }))).to(be_false());
     }
 
     #[test]

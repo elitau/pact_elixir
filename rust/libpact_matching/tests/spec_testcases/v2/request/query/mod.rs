@@ -154,6 +154,42 @@ fn matches() {
 }
 
 #[test]
+fn missing_params() {
+    env_logger::init().unwrap_or(());
+    let pact = Json::from_str(r#"
+      {
+        "match": false,
+        "comment": "Queries are not the same - elephant is missing",
+        "expected" : {
+          "method": "GET",
+          "path": "/path",
+          "query": "alligator=Mary&hippo=Fred&elephant=missing",
+          "headers": {}
+      
+        },
+        "actual": {
+          "method": "GET",
+          "path": "/path",
+          "query": "alligator=Mary&hippo=Fred",
+          "headers": {}
+      
+        }
+      }
+    "#).unwrap();
+
+    let expected = Request::from_json(&pact.find("expected").unwrap(), &PactSpecification::V2);
+    println!("{:?}", expected);
+    let actual = Request::from_json(&pact.find("actual").unwrap(), &PactSpecification::V2);
+    println!("{:?}", actual);
+    let pact_match = pact.find("match").unwrap();
+    if pact_match.as_boolean().unwrap() {
+       expect!(match_request(expected, actual)).to(be_empty());
+    } else {
+       expect!(match_request(expected, actual)).to_not(be_empty());
+    }
+}
+
+#[test]
 fn same_parameter_different_values() {
     env_logger::init().unwrap_or(());
     let pact = Json::from_str(r#"
@@ -277,42 +313,6 @@ fn trailing_ampersand() {
           "method": "GET",
           "path": "/path",
           "query": "alligator=Mary&hippo=John&",
-          "headers": {}
-      
-        }
-      }
-    "#).unwrap();
-
-    let expected = Request::from_json(&pact.find("expected").unwrap(), &PactSpecification::V2);
-    println!("{:?}", expected);
-    let actual = Request::from_json(&pact.find("actual").unwrap(), &PactSpecification::V2);
-    println!("{:?}", actual);
-    let pact_match = pact.find("match").unwrap();
-    if pact_match.as_boolean().unwrap() {
-       expect!(match_request(expected, actual)).to(be_empty());
-    } else {
-       expect!(match_request(expected, actual)).to_not(be_empty());
-    }
-}
-
-#[test]
-fn missing_params() {
-    env_logger::init().unwrap_or(());
-    let pact = Json::from_str(r#"
-      {
-        "match": false,
-        "comment": "Queries are not the same - elephant is missing",
-        "expected" : {
-          "method": "GET",
-          "path": "/path",
-          "query": "alligator=Mary&hippo=Fred&elephant=missing",
-          "headers": {}
-      
-        },
-        "actual": {
-          "method": "GET",
-          "path": "/path",
-          "query": "alligator=Mary&hippo=Fred",
           "headers": {}
       
         }
