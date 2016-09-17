@@ -9,10 +9,16 @@ extern crate ansi_term;
 extern crate hyper;
 #[macro_use] extern crate maplit;
 extern crate rustc_serialize;
+extern crate itertools;
 
 #[cfg(test)]
 #[macro_use(expect)]
 extern crate expectest;
+#[cfg(test)]
+#[macro_use]
+extern crate pact_consumer;
+#[cfg(test)]
+extern crate env_logger;
 
 mod provider_client;
 mod pact_broker;
@@ -38,7 +44,7 @@ pub enum PactSource {
     /// Load the pact from a URL
     URL(String),
     /// Load all pacts with the provider name from the pact broker url
-    BROKER_URL(String, String)
+    BrokerUrl(String, String)
 }
 
 /// Information about the Provider to verify
@@ -174,7 +180,7 @@ pub fn verify_provider(provider_info: &ProviderInfo, source: Vec<PactSource>) ->
             },
             &PactSource::URL(ref url) => vec![Pact::from_url(url)
                 .map_err(|err| format!("Failed to load pact '{}' - {}", url, err))],
-            &PactSource::BROKER_URL(ref provider_name, ref broker_url) => match pact_broker::fetch_pacts_from_broker(broker_url, provider_name) {
+            &PactSource::BrokerUrl(ref provider_name, ref broker_url) => match pact_broker::fetch_pacts_from_broker(broker_url, provider_name) {
                 Ok(ref pacts) => pacts.iter().map(|p| {
                         match p {
                             &Ok(ref pact) => Ok(pact.clone()),
@@ -298,11 +304,4 @@ pub fn verify_provider(provider_info: &ProviderInfo, source: Vec<PactSource>) ->
     }
 
     verify_provider_result
-}
-
-#[cfg(test)]
-mod tests {
-    #[test]
-    fn it_works() {
-    }
 }

@@ -10,7 +10,7 @@ use hyper::method::Method;
 use hyper::header::{Headers, ContentType};
 use hyper::mime::{Mime, TopLevel, SubLevel};
 
-fn join_paths(base: String, path: String) -> String {
+pub fn join_paths(base: String, path: String) -> String {
     let mut full_path = s!(base.trim_right_matches("/"));
     full_path.push('/');
     full_path.push_str(path.trim_left_matches("/"));

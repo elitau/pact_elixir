@@ -546,6 +546,15 @@ impl Interaction {
             (self.request != other.request || self.response != other.response)
     }
 
+    /// Creates a default interaction
+    pub fn default() -> Interaction {
+        Interaction {
+             description: s!("Default Interaction"),
+             provider_state: None,
+             request: Request::default_request(),
+             response: Response::default_response()
+        }
+    }
 }
 
 /// Struct that represents a pact between the consumer and provider of a service.

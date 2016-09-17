@@ -22,6 +22,10 @@ This module provides a command line executable that provides a standalone pact m
 the mock servers. It uses the [libpact_mock_server](libpact_mock_server) and [libpact_matching](libpact_matching)
 libraries.
 
+## [pact_consumer](pact_consumer)
+
+This is a library that provides the Pact consumer test support and DSL.
+
 ## [pact_verifier](pact_verifier)
 
 This library provides support for verifying a provider against pact files.

@@ -1,4 +1,4 @@
-//! The `libpact_matching` crate provides the core logic to performing matching on HTTP requests
+//! The `pact_matching` crate provides the core logic to performing matching on HTTP requests
 //! and responses. It implements the V1 Pact specification (https://github.com/pact-foundation/pact-specification/tree/version-1).
 
 #![warn(missing_docs)]

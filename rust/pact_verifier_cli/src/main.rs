@@ -59,7 +59,7 @@ fn pact_source(matches: &ArgMatches) -> Vec<PactSource> {
         None => ()
     };
     match matches.values_of("broker-url") {
-        Some(values) => sources.extend(values.map(|v| PactSource::BROKER_URL(s!(matches.value_of("provider-name").unwrap()),
+        Some(values) => sources.extend(values.map(|v| PactSource::BrokerUrl(s!(matches.value_of("provider-name").unwrap()),
             s!(v))).collect::<Vec<PactSource>>()),
         None => ()
     };

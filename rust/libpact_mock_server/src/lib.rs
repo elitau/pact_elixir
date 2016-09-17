@@ -1,4 +1,4 @@
-//! The `libpact_mock_server` crate provides the in-process mock server for mocking HTTP requests
+//! The `pact_mock_server` crate provides the in-process mock server for mocking HTTP requests
 //! and generating responses based on a pact file. It implements the V1 Pact specification
 //! (https://github.com/pact-foundation/pact-specification/tree/version-1).
 
@@ -189,6 +189,11 @@ impl MockServer {
             }
         }
     }
+
+    /// Returns the URL of the mock server
+    pub fn url(&self) -> String {
+        format!("http://localhost:{}", self.port)
+    }
 }
 
 impl PartialEq for MockServer {
@@ -342,12 +347,15 @@ pub fn start_mock_server(id: String, pact: Pact, port: i32) -> Result<i32, Strin
         let (mock_server_id, pact, port) = in_rx.recv().unwrap();
         let server = Server::http(format!("0.0.0.0:{}", port).as_str()).unwrap();
         let server_result = server.handle(move |mut req: hyper::server::Request, mut res: hyper::server::Response| {
+            debug!("--> Hyper request to mock server {}", mock_server_id);
             match lookup_mock_server(mock_server_id.clone(), &|_| ()) {
                 None => {
+                    warn!("Mock server {} has been shutdown", mock_server_id);
                     *res.status_mut() = StatusCode::NotImplemented;
                     res.headers_mut().set_raw("X-Pact", vec!["Mock server has been shut down".as_bytes().to_vec()]);
                 },
                 Some(_) => {
+                    debug!("Creating pact request from hyper request");
                     let req = hyper_request_to_pact_request(&mut req);
                     info!("Received request {:?}", req);
                     let match_result = match_request(&req, &pact.interactions);
@@ -414,10 +422,17 @@ pub fn start_mock_server(id: String, pact: Pact, port: i32) -> Result<i32, Strin
 /// closure is returned wrapped in an `Option`. If no mock server is found with that ID, `None`
 /// is returned.
 pub fn lookup_mock_server<R>(id: String, f: &Fn(&MockServer) -> R) -> Option<R> {
+    debug!("Looking up mock server with ID {}", id);
     let map = MOCK_SERVERS.lock().unwrap();
     match map.get(&id) {
-        Some(ref mock_server) => Some(f(mock_server)),
-        None => None
+        Some(ref mock_server) => {
+            debug!("Found mock server, invoking function ...");
+            Some(f(mock_server))
+        },
+        None => {
+            debug!("Did not find mock server");
+            None
+        }
     }
 }
 
@@ -457,6 +472,7 @@ fn cleanup_mock_server_impl(mock_server: &mut MockServer) -> String {
 /// currently work and the listerner will continue handling requests. In this
 /// case, it will always return a 404 once the mock server has been cleaned up.
 pub fn shutdown_mock_server(id: &String) -> bool {
+    debug!("Shutting down mock server with ID {}", id);
     let id_result = update_mock_server(id, &cleanup_mock_server_impl);
 
     match id_result {
@@ -475,6 +491,7 @@ pub fn shutdown_mock_server(id: &String) -> bool {
 /// currently work and the listerner will continue handling requests. In this
 /// case, it will always return a 404 once the mock server has been cleaned up.
 pub fn shutdown_mock_server_by_port(port: i32) -> bool {
+    debug!("Shutting down mock server with port {}", port);
     let id_result = update_mock_server_by_port(port, &cleanup_mock_server_impl);
 
     match id_result {
@@ -518,7 +535,7 @@ pub extern fn create_mock_server(pact_str: *const c_char, port: int32_t) -> int3
         let result = Json::from_str(pact_json);
         match result {
             Ok(pact_json) => {
-                let pact = Pact::from_json(&pact_json);
+                let pact = Pact::from_json(&s!("<create_mock_server>"), &pact_json);
                 match start_mock_server(Uuid::new_v4().simple().to_string(), pact, port) {
                     Ok(mock_server) => mock_server as i32,
                     Err(msg) => {
