@@ -118,7 +118,7 @@ mod tests {
     #[test]
     fn fetch_returns_an_error_if_there_is_no_pact_broker() {
         let client = HALClient{ url: s!("http://idont.exist:6666"), provider: s!("sad_provider"), .. HALClient::default() };
-        expect!(client.fetch(&s!("/"))).to(be_err().value(s!("Failed to access pact broker path \'/\' - \"failed to lookup address information: Name or service not known\". URL: \'http://idont.exist:6666\'")));
+        expect!(client.fetch(&s!("/"))).to(be_err());
     }
 
     #[test]
@@ -147,6 +147,6 @@ mod tests {
     #[test]
     fn fetch_returns_an_error_if_it_does_not_get_a_hal_response() {
         let client = HALClient{ url: s!("http://idont.exist:6666"), provider: s!("sad_provider"), .. HALClient::default() };
-        expect!(client.fetch(&s!("/"))).to(be_err().value(s!("Failed to access pact broker path \'/\' - \"failed to lookup address information: Name or service not known\". URL: \'http://idont.exist:6666\'")));
+        expect!(client.fetch(&s!("/"))).to(be_err());
     }
 }
