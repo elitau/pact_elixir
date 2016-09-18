@@ -6,20 +6,20 @@ This is the project for a reference implementation of Pact in Rust. It implement
 
 There are 5 main modules to this implementation:
 
-## [libpact_matching](libpact_matching)
+## [pact_matching](pact_matching)
 
 This is a library that provides the Pact models and functions for matching requests and responses, as well as reading
 and writing pact files.
 
-## [libpact_mock_server](libpact_mock_server)
+## [pact_mock_server](pact_mock_server)
 
-This is a library that provides an in-process mock server for Pact client tests. It uses the [libpact_matching](libpact_matching)
+This is a library that provides an in-process mock server for Pact client tests. It uses the [pact_matching](pact_matching)
 library.
 
 ## [pact_mock_server_cli](pact_mock_server_cli)
 
 This module provides a command line executable that provides a standalone pact mock server and commands for controlling
-the mock servers. It uses the [libpact_mock_server](libpact_mock_server) and [libpact_matching](libpact_matching)
+the mock servers. It uses the [libpact_mock_server](pact_mock_server) and [libpact_matching](pact_matching)
 libraries.
 
 ## [pact_consumer](pact_consumer)
