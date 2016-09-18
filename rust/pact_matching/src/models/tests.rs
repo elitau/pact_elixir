@@ -127,45 +127,45 @@ fn quickcheck_parse_query_string() {
 fn request_mimetype_is_based_on_the_content_type_header() {
     let request = Request { method: s!("GET"), path: s!("/"), query: None, headers: None,
         body: OptionalBody::Missing, matching_rules: None };
-    expect!(request.mimetype()).to(be_equal_to("text/plain"));
+    expect!(request.content_type()).to(be_equal_to("text/plain"));
     expect!(Request {
-        headers: Some(hashmap!{ s!("Content-Type") => s!("text/html") }), .. request.clone() }.mimetype())
+        headers: Some(hashmap!{ s!("Content-Type") => s!("text/html") }), .. request.clone() }.content_type())
         .to(be_equal_to("text/html"));
     expect!(Request {
-        headers: Some(hashmap!{ s!("Content-Type") => s!("application/json; charset=UTF-8") }), .. request.clone() }.mimetype())
+        headers: Some(hashmap!{ s!("Content-Type") => s!("application/json; charset=UTF-8") }), .. request.clone() }.content_type())
         .to(be_equal_to("application/json"));
     expect!(Request {
-        headers: Some(hashmap!{ s!("Content-Type") => s!("application/json") }), .. request.clone() }.mimetype())
+        headers: Some(hashmap!{ s!("Content-Type") => s!("application/json") }), .. request.clone() }.content_type())
         .to(be_equal_to("application/json"));
     expect!(Request {
-        headers: Some(hashmap!{ s!("CONTENT-TYPE") => s!("application/json ; charset=UTF-8") }), .. request.clone() }.mimetype())
+        headers: Some(hashmap!{ s!("CONTENT-TYPE") => s!("application/json ; charset=UTF-8") }), .. request.clone() }.content_type())
         .to(be_equal_to("application/json"));
     expect!(Request {
-        body: OptionalBody::Present(s!("{\"json\": true}")), .. request.clone() }.mimetype())
+        body: OptionalBody::Present(s!("{\"json\": true}")), .. request.clone() }.content_type())
         .to(be_equal_to("application/json"));
     expect!(Request {
-        body: OptionalBody::Present(s!("{}")), .. request.clone() }.mimetype())
+        body: OptionalBody::Present(s!("{}")), .. request.clone() }.content_type())
         .to(be_equal_to("application/json"));
     expect!(Request {
-        body: OptionalBody::Present(s!("[]")), .. request.clone() }.mimetype())
+        body: OptionalBody::Present(s!("[]")), .. request.clone() }.content_type())
         .to(be_equal_to("application/json"));
     expect!(Request {
-        body: OptionalBody::Present(s!("[1,2,3]")), .. request.clone() }.mimetype())
+        body: OptionalBody::Present(s!("[1,2,3]")), .. request.clone() }.content_type())
         .to(be_equal_to("application/json"));
     expect!(Request {
-        body: OptionalBody::Present(s!("\"string\"")), .. request.clone() }.mimetype())
+        body: OptionalBody::Present(s!("\"string\"")), .. request.clone() }.content_type())
         .to(be_equal_to("application/json"));
     expect!(Request {
-        body: OptionalBody::Present(s!("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<json>false</json>")), .. request.clone() }.mimetype())
+        body: OptionalBody::Present(s!("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<json>false</json>")), .. request.clone() }.content_type())
         .to(be_equal_to("application/xml"));
     expect!(Request {
-        body: OptionalBody::Present(s!("<json>false</json>")), .. request.clone() }.mimetype())
+        body: OptionalBody::Present(s!("<json>false</json>")), .. request.clone() }.content_type())
         .to(be_equal_to("application/xml"));
     expect!(Request {
-        body: OptionalBody::Present(s!("this is not json")), .. request.clone() }.mimetype())
+        body: OptionalBody::Present(s!("this is not json")), .. request.clone() }.content_type())
         .to(be_equal_to("text/plain"));
     expect!(Request {
-        body: OptionalBody::Present(s!("<html><body>this is also not json</body></html>")), .. request.clone() }.mimetype())
+        body: OptionalBody::Present(s!("<html><body>this is also not json</body></html>")), .. request.clone() }.content_type())
         .to(be_equal_to("text/html"));
 }
 
@@ -984,7 +984,7 @@ fn interactions_do_not_conflict_if_they_have_different_descriptions() {
         request: Request::default_request(),
         response: Response::default_response()
     };
-    expect(interaction1.conflicts_with(&interaction2)).to(be_false());
+    expect(interaction1.conflicts_with(&interaction2)).to(be_empty());
 }
 
 #[test]
@@ -1001,7 +1001,7 @@ fn interactions_do_not_conflict_if_they_have_different_provider_states() {
         request: Request::default_request(),
         response: Response::default_response()
     };
-    expect(interaction1.conflicts_with(&interaction2)).to(be_false());
+    expect(interaction1.conflicts_with(&interaction2)).to(be_empty());
 }
 
 #[test]
@@ -1018,7 +1018,7 @@ fn interactions_do_not_conflict_if_they_have_the_same_requests_and_responses() {
         request: Request::default_request(),
         response: Response::default_response()
     };
-    expect(interaction1.conflicts_with(&interaction2)).to(be_false());
+    expect(interaction1.conflicts_with(&interaction2)).to(be_empty());
 }
 
 #[test]
@@ -1035,7 +1035,7 @@ fn interactions_conflict_if_they_have_different_requests() {
         request: Request { method: s!("POST"), .. Request::default_request() },
         response: Response::default_response()
     };
-    expect(interaction1.conflicts_with(&interaction2)).to(be_true());
+    expect(interaction1.conflicts_with(&interaction2)).to_not(be_empty());
 }
 
 #[test]
@@ -1052,7 +1052,7 @@ fn interactions_conflict_if_they_have_different_responses() {
         request: Request::default_request(),
         response: Response { status: 400, .. Response::default_response() }
     };
-    expect(interaction1.conflicts_with(&interaction2)).to(be_true());
+    expect(interaction1.conflicts_with(&interaction2)).to_not(be_empty());
 }
 
 fn hash<T: Hash>(t: &T) -> u64 {

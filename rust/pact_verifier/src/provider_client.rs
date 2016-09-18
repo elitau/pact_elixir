@@ -49,7 +49,7 @@ fn make_request(provider: &ProviderInfo, request: &Request, client: &Client) -> 
             match request.body {
                 OptionalBody::Present(ref s) => hyper_request.body(s.as_str()),
                 OptionalBody::Null => {
-                    if request.mimetype() == "application/json" {
+                    if request.content_type() == "application/json" {
                         hyper_request.body("null")
                     } else {
                         hyper_request

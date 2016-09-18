@@ -465,7 +465,7 @@ fn compare_bodies(mimetype: String, expected: &String, actual: &String, config: 
 /// Matches the actual body to the expected one. This takes into account the content type of each.
 pub fn match_body(expected: &models::HttpPart, actual: &models::HttpPart, config: DiffConfig,
     mismatches: &mut Vec<Mismatch>) {
-    if expected.mimetype() == actual.mimetype() {
+    if expected.content_type() == actual.content_type() {
         match (expected.body(), actual.body()) {
             (&models::OptionalBody::Missing, _) => (),
             (&models::OptionalBody::Null, &models::OptionalBody::Present(ref b)) => {
@@ -486,13 +486,13 @@ pub fn match_body(expected: &models::HttpPart, actual: &models::HttpPart, config
                     path: s!("/")});
             },
             (_, _) => {
-                compare_bodies(expected.mimetype(), &expected.body().value(), &actual.body().value(),
+                compare_bodies(expected.content_type(), &expected.body().value(), &actual.body().value(),
                     config, mismatches);
             }
         }
     } else if expected.body().is_present() {
-        mismatches.push(Mismatch::BodyTypeMismatch { expected: expected.mimetype(),
-            actual: actual.mimetype() });
+        mismatches.push(Mismatch::BodyTypeMismatch { expected: expected.content_type(),
+            actual: actual.content_type() });
     }
 }
 
@@ -507,6 +507,7 @@ pub fn match_request(expected: models::Request, actual: models::Request) -> Vec<
     match_query(expected.query, actual.query, &mut mismatches);
     match_headers(expected.headers, actual.headers, &mut mismatches);
 
+    debug!("--> Mismatches: {:?}", mismatches);
     mismatches
 }
 

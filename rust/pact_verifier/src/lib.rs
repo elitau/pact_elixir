@@ -188,7 +188,7 @@ pub fn verify_provider(provider_info: &ProviderInfo, source: Vec<PactSource>) ->
                             &Err(ref err) => Err(format!("Failed to load pact from '{}' - {}", broker_url, err))
                         }
                     }).collect(),
-                Err(err) => vec![Err(format!("Could not load pacts from the pact broker '{}' - {}", broker_url, err))]
+                Err(err) => vec![Err(format!("Could not load pacts from the pact broker '{}' - {:?}", broker_url, err))]
             }
         }
     }).collect::<Vec<Result<Pact, String>>>();
