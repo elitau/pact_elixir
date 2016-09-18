@@ -35,6 +35,7 @@ pub enum VerificationResult {
 }
 
 /// Runner for a consumer pact test
+#[derive(Debug, Clone)]
 pub struct ConsumerPactRunner {
     /// The Pact that represents the expectations of the consumer test
     pact: Pact
@@ -121,7 +122,6 @@ enum BuilderState {
 
 /// Struct to setup the consumer pact test expectations
 pub struct ConsumerPactBuilder {
-    /// The Pact that represents the expectations of the consumer test
     pact: Pact,
     interaction: Interaction,
     state: BuilderState
@@ -215,6 +215,7 @@ impl ConsumerPactBuilder {
     fn push_interaction(&mut self) {
         match self.state {
             BuilderState::BuildingRequest => (),
+            BuilderState::None => (),
             _ => {
                 self.pact.interactions.push(self.interaction.clone());
                 self.interaction = Interaction::default();

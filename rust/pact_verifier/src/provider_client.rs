@@ -70,7 +70,7 @@ fn extract_headers(headers: &Headers) -> Option<HashMap<String, String>> {
     }
 }
 
-fn extract_body(response: &mut HyperResponse) -> OptionalBody {
+pub fn extract_body(response: &mut HyperResponse) -> OptionalBody {
     let mut buffer = String::new();
     match response.read_to_string(&mut buffer) {
         Ok(size) => if size > 0 {
@@ -80,7 +80,7 @@ fn extract_body(response: &mut HyperResponse) -> OptionalBody {
             },
         Err(err) => {
             warn!("Failed to read request body: {}", err);
-            OptionalBody::Empty
+            OptionalBody::Missing
         }
     }
 }

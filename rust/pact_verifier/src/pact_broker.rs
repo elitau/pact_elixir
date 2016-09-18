@@ -1,12 +1,13 @@
-use pact_matching::models::Pact;
+use pact_matching::models::{Pact, OptionalBody};
 use rustc_serialize::json::Json;
 use itertools::Itertools;
 use std::collections::BTreeMap;
 use hyper::client::*;
 use std::error::Error;
 use super::provider_client::join_paths;
-use hyper::header::{Accept, qitem};
+use hyper::header::{Accept, qitem, ContentType};
 use hyper::mime::{Mime, TopLevel, SubLevel, Attr, Value};
+use provider_client::extract_body;
 
 fn is_true(object: &BTreeMap<String, Json>, field: &String) -> bool {
     match object.get(field) {
@@ -22,6 +23,27 @@ fn as_string(json: &Json) -> String {
     match json {
         &Json::String(ref s) => s.clone(),
         _ => format!("{}", json)
+    }
+}
+
+fn content_type(response: &Response) -> String {
+    match response.headers.get::<ContentType>() {
+        Some(header) => format!("{}", header),
+        None => s!("text/plain")
+    }
+}
+
+fn json_content_type(response: &Response) -> bool {
+    match response.headers.get::<ContentType>() {
+        Some(header) => {
+            let &ContentType(ref mime) = header;
+            match mime.clone() {
+                Mime(TopLevel::Application, SubLevel::Json, _) => true,
+                Mime(TopLevel::Application, SubLevel::Ext(ext), _) => ext == "hal+json",
+                _ => false
+            }
+        },
+        None => false
     }
 }
 
@@ -83,13 +105,23 @@ impl HALClient {
             ]))
             .send();
         match res {
-            Ok(response) => {
-                debug!("Got response {:?}", response);
+            Ok(mut response) => {
                 if response.status.is_success() {
-                    Err(s!(""))
+                    if json_content_type(&response) {
+                        match extract_body(&mut response) {
+                            OptionalBody::Present(body) => Json::from_str(&body)
+                                .map_err(|err| format!("Did not get a valid HAL response body from pact broker path '{}' - {}: {}. URL: '{}'",
+                                    path, err.description(), err, self.url)),
+                            _ => Err(format!("Did not get a valid HAL response body from pact broker path '{}'. URL: '{}'",
+                                path, self.url))
+                        }
+                    } else {
+                        Err(format!("Did not get a HAL response from pact broker path '{}', content type is '{}'. URL: '{}'",
+                            path, content_type(&response), self.url))
+                    }
                 } else {
-                    Err(format!("Request to pact broker path '{}' failed: {}", path,
-                        response.status))
+                    Err(format!("Request to pact broker path '{}' failed: {}. URL: '{}'", path,
+                        response.status, self.url))
                 }
             },
             Err(err) => Err(format!("Failed to access pact broker path '{}' - {:?}. URL: '{}'",
@@ -112,8 +144,25 @@ pub fn fetch_pacts_from_broker(broker_url: &String, provider_name: &String) -> R
 mod tests {
     use expectest::prelude::*;
     use super::*;
+    use super::{content_type, json_content_type};
     use pact_consumer::*;
     use env_logger::*;
+    use pact_matching::models::OptionalBody;
+    use hyper::Url;
+    use hyper::client::response::Response;
+    use std::io::{self, Write, Read};
+    use hyper::http::{
+        RawStatus,
+        HttpMessage,
+        RequestHead,
+        ResponseHead,
+    };
+    use hyper::error::Error;
+    use hyper::version::HttpVersion;
+    use std::time::Duration;
+    use hyper::header::{Headers, ContentType};
+    use std::borrow::Cow;
+    use hyper::mime::{Mime, TopLevel, SubLevel, Attr, Value};
 
     #[test]
     fn fetch_returns_an_error_if_there_is_no_pact_broker() {
@@ -123,8 +172,6 @@ mod tests {
 
     #[test]
     fn fetch_returns_an_error_if_it_does_not_get_a_success_response() {
-        init().unwrap_or(());
-
         let pact_runner = ConsumerPactBuilder::consumer(s!("RustPactVerifier"))
             .has_pact_with(s!("PactBroker"))
             .given(s!("the pact broker has a valid pact"))
@@ -135,10 +182,10 @@ mod tests {
             .build();
 
         let result = pact_runner.run(&|broker_url| {
-            debug!("Broker URL is {}, Running test ...", broker_url);
-            let client = HALClient{ url: broker_url, provider: s!("sad_provider"), .. HALClient::default() };
+            let client = HALClient{ url: broker_url.clone(), provider: s!("sad_provider"), .. HALClient::default() };
             let result = client.fetch(&s!("/hello"));
-            expect!(result).to(be_err().value(s!("Request to pact broker path \'/hello\' failed: 404 Not Found")));
+            expect!(result).to(be_err().value(format!("Request to pact broker path \'/hello\' failed: 404 Not Found. URL: '{}'",
+                broker_url)));
             Ok(())
         });
         expect!(result).to(be_equal_to(VerificationResult::PactVerified));
@@ -146,7 +193,154 @@ mod tests {
 
     #[test]
     fn fetch_returns_an_error_if_it_does_not_get_a_hal_response() {
-        let client = HALClient{ url: s!("http://idont.exist:6666"), provider: s!("sad_provider"), .. HALClient::default() };
-        expect!(client.fetch(&s!("/"))).to(be_err());
+        let pact_runner = ConsumerPactBuilder::consumer(s!("RustPactVerifier"))
+            .has_pact_with(s!("PactBrokerStub"))
+            .upon_receiving(s!("a request to a non-json resource"))
+                .path(s!("/nonjson"))
+            .will_respond_with()
+                .status(200)
+                .headers(hashmap!{ s!("Content-Type") => s!("text/html") })
+                .body(OptionalBody::Present(s!("<html></html>")))
+            .build();
+
+        let result = pact_runner.run(&|broker_url| {
+            let client = HALClient{ url: broker_url.clone(), provider: s!("sad_provider"), .. HALClient::default() };
+            let result = client.fetch(&s!("/nonjson"));
+            expect!(result).to(be_err().value(format!("Did not get a HAL response from pact broker path \'/nonjson\', content type is 'text/html'. URL: '{}'",
+                broker_url)));
+            Ok(())
+        });
+        expect!(result).to(be_equal_to(VerificationResult::PactVerified));
+    }
+
+    #[derive(Debug, Clone)]
+    struct MockHttpMessage {
+        pub body: Option<String>,
+        pub headers: Headers,
+        pub status: RawStatus
+    }
+
+    impl HttpMessage for MockHttpMessage {
+
+        fn set_outgoing(&mut self, _head: RequestHead) -> Result<RequestHead, Error> {
+            Err(Error::Io(io::Error::new(io::ErrorKind::Other, "Not supported with MockHttpMessage")))
+        }
+
+        fn get_incoming(&mut self) -> Result<ResponseHead, Error> {
+            Ok(ResponseHead {
+                headers: self.headers.clone(),
+                raw_status: self.status.clone(),
+                version: HttpVersion::Http11,
+            })
+        }
+
+        fn has_body(&self) -> bool {
+            self.body.is_some()
+        }
+
+        fn set_read_timeout(&self, _dur: Option<Duration>) -> io::Result<()> {
+            Ok(())
+        }
+
+        fn set_write_timeout(&self, _dur: Option<Duration>) -> io::Result<()> {
+            Ok(())
+        }
+
+        fn close_connection(&mut self) -> Result<(), Error> {
+            Ok(())
+        }
+    }
+
+    impl Write for MockHttpMessage {
+
+        fn write(&mut self, _buf: &[u8]) -> io::Result<usize> {
+            Err(io::Error::new(io::ErrorKind::Other, "Not supported with MockHttpMessage"))
+        }
+
+        fn flush(&mut self) -> io::Result<()> {
+            Err(io::Error::new(io::ErrorKind::Other, "Not supported with MockHttpMessage"))
+        }
+
+    }
+
+    impl Read for MockHttpMessage {
+
+        fn read(&mut self, _buf: &mut [u8]) -> io::Result<usize> {
+            Err(io::Error::new(io::ErrorKind::Other, "Not supported with MockHttpMessage"))
+        }
+
+    }
+
+    #[test]
+    fn content_type_test() {
+        let mut message = MockHttpMessage {
+            body: None,
+            status: RawStatus(200, Cow::Owned(s!("OK"))),
+            headers: Headers::new()
+        };
+        let url = Url::parse("http://localhost").unwrap();
+
+        let response = Response::with_message(url.clone(), Box::new(message.clone())).unwrap();
+        expect!(content_type(&response)).to(be_equal_to(s!("text/plain")));
+
+        message.headers.set::<ContentType>(
+            ContentType(Mime(TopLevel::Application, SubLevel::Ext(s!("hal+json")),
+                vec![(Attr::Charset, Value::Utf8)])));
+        let response = Response::with_message(url.clone(), Box::new(message.clone())).unwrap();
+        expect!(content_type(&response)).to(be_equal_to(s!("application/hal+json; charset=utf-8")));
+    }
+
+    #[test]
+    fn json_content_type_test() {
+        let mut message = MockHttpMessage {
+            body: None,
+            status: RawStatus(200, Cow::Owned(s!("OK"))),
+            headers: Headers::new()
+        };
+        let url = Url::parse("http://localhost").unwrap();
+
+        let response = Response::with_message(url.clone(), Box::new(message.clone())).unwrap();
+        expect!(json_content_type(&response)).to(be_false());
+
+        message.headers.set::<ContentType>(
+            ContentType(Mime(TopLevel::Application, SubLevel::Json, vec![])));
+        let response = Response::with_message(url.clone(), Box::new(message.clone())).unwrap();
+        expect!(json_content_type(&response)).to(be_true());
+
+        message.headers.set::<ContentType>(
+            ContentType(Mime(TopLevel::Application, SubLevel::Ext(s!("hal+json")),
+                vec![(Attr::Charset, Value::Utf8)])));
+        let response = Response::with_message(url.clone(), Box::new(message.clone())).unwrap();
+        expect!(json_content_type(&response)).to(be_true());
+    }
+
+    #[test]
+    fn fetch_returns_an_error_if_it_does_not_get_a_valid_hal_response() {
+        let pact_runner = ConsumerPactBuilder::consumer(s!("RustPactVerifier"))
+            .has_pact_with(s!("PactBrokerStub"))
+            .upon_receiving(s!("a request to a non-hal resource"))
+                .path(s!("/nonhal"))
+            .will_respond_with()
+                .status(200)
+                .headers(hashmap!{ s!("Content-Type") => s!("application/hal+json") })
+            .upon_receiving(s!("a request to a non-hal resource 2"))
+                .path(s!("/nonhal2"))
+            .will_respond_with()
+                .status(200)
+                .headers(hashmap!{ s!("Content-Type") => s!("application/hal+json") })
+                .body(OptionalBody::Present(s!("<html>This is not JSON</html>")))
+            .build();
+
+        let result = pact_runner.run(&|broker_url| {
+            let client = HALClient{ url: broker_url.clone(), provider: s!("sad_provider"), .. HALClient::default() };
+            let result = client.fetch(&s!("/nonhal"));
+            expect!(result).to(be_err().value(format!("Did not get a valid HAL response body from pact broker path \'/nonhal\'. URL: '{}'",
+                broker_url)));
+            let result = client.fetch(&s!("/nonhal2"));
+            expect!(result).to(be_err().value(format!("Did not get a valid HAL response body from pact broker path \'/nonhal2\' - failed to parse json: SyntaxError(\"invalid syntax\", 1, 1). URL: '{}'",
+                broker_url)));
+            Ok(())
+        });
+        expect!(result).to(be_equal_to(VerificationResult::PactVerified));
     }
 }
