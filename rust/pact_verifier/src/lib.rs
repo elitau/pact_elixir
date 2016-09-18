@@ -10,6 +10,7 @@ extern crate hyper;
 #[macro_use] extern crate maplit;
 extern crate rustc_serialize;
 extern crate itertools;
+extern crate regex;
 
 #[cfg(test)]
 #[macro_use(expect)]

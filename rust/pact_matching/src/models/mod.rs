@@ -689,9 +689,11 @@ impl Pact {
         if self.consumer.name == pact.consumer.name && self.provider.name == pact.provider.name {
             let conflicts = iproduct!(self.interactions.clone(), pact.interactions.clone())
                 .filter(|i| i.0.conflicts_with(&i.1))
-                .count();
-            if conflicts > 0 {
-                Err(format!("Unable to merge pacts, as there were {} conflicts between the interactions", conflicts))
+                .collect::<Vec<(Interaction, Interaction)>>();
+            if conflicts.len() > 0 {
+                warn!("The following conflicting interactions where found: {:?}", conflicts);
+                Err(format!("Unable to merge pacts, as there were {} conflict(s) between the interactions",
+                    conflicts.len()))
             } else {
                 Ok(Pact {
                     provider: self.provider.clone(),

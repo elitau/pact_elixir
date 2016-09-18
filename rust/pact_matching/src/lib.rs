@@ -418,7 +418,7 @@ fn match_header_value(key: &String, expected: &String, actual: &String, mismatch
     }
 }
 
-fn find_entry(map: &HashMap<String, String>, key: &String) -> Option<(String, String)> {
+fn find_entry<T>(map: &HashMap<String, T>, key: &String) -> Option<(String, T)> where T: Clone {
     match map.keys().find(|k| k.to_lowercase() == key.to_lowercase() ) {
         Some(k) => map.get(k).map(|v| (key.clone(), v.clone()) ),
         None => None
