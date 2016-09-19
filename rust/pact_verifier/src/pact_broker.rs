@@ -92,6 +92,25 @@ impl <'a> PartialEq<&'a str> for PactBrokerError {
     }
 }
 
+#[derive(Debug, Clone)]
+pub struct Link {
+    name: String,
+    href: Option<String>,
+    templated: bool
+}
+
+impl Link {
+
+    pub fn from_json(link: &String, link_data: &BTreeMap<String, Json>) -> Link {
+        Link {
+            name: link.clone(),
+            href: find_entry(link_data, &s!("href")).map(|(_, href)| as_string(&href)),
+            templated: is_true(link_data, &s!("templated"))
+        }
+    }
+
+}
+
 pub struct HALClient {
     url: String,
     path_info: Option<Json>
@@ -103,21 +122,22 @@ impl HALClient {
         HALClient{ url: s!(""), path_info: None }
     }
 
-    fn navigate(&mut self, link: &str, template_values: &HashMap<String, String>) -> Result<(), PactBrokerError> {
+    fn navigate(&mut self, link: &str, template_values: &HashMap<String, String>) -> Result<Json, PactBrokerError> {
         if self.path_info.is_none() {
             self.path_info = Some(try!(self.fetch("/")));
         }
         self.path_info = Some(try!(self.fetch_link(link, template_values)));
-        Ok(())
+        Ok(self.path_info.clone().unwrap())
     }
 
-    fn fetch_link(&self, link: &str, template_values: &HashMap<String, String>) -> Result<Json, PactBrokerError> {
-        let link_data = try!(match self.path_info {
+    fn find_link(&self, link: &str) -> Result<Link, PactBrokerError> {
+        match self.path_info {
             None => Err(PactBrokerError::LinkError(format!("No previous resource has been fetched from the pact broker. URL: '{}', LINK: '{}'",
                 self.url, link))),
             Some(ref json) => match json.find("_links") {
                 Some(json) => match json.find(link) {
                     Some(link_data) => link_data.as_object()
+                        .map(|link_data| Link::from_json(&s!(link), link_data))
                         .ok_or(PactBrokerError::LinkError(format!("Link is malformed, expcted an object but got {}. URL: '{}', LINK: '{}'",
                             link_data, self.url, link))),
                     None => Err(PactBrokerError::LinkError(format!("Link '{}' was not found in the response, only the following links where found: {:?}. URL: '{}', LINK: '{}'",
@@ -126,15 +146,22 @@ impl HALClient {
                 None => Err(PactBrokerError::LinkError(format!("Expected a HAL+JSON response from the pact broker, but got a response with no '_links'. URL: '{}', LINK: '{}'",
                     self.url, link)))
             }
-        });
+        }
+    }
 
-        let link_url = try!(if is_true(link_data, &s!("templated")) {
+    fn fetch_link(&self, link: &str, template_values: &HashMap<String, String>) -> Result<Json, PactBrokerError> {
+        let link_data = try!(self.find_link(link));
+        self.fetch_url(&link_data, template_values)
+    }
+
+    fn fetch_url(&self, link: &Link, template_values: &HashMap<String, String>) -> Result<Json, PactBrokerError> {
+        let link_url = try!(if link.templated {
             debug!("Link URL is templated");
-            self.parse_link_url(link_data, template_values, link)
+            self.parse_link_url(&link, template_values)
         } else {
-            find_entry(link_data, &s!("href")).map(|(_, href)| as_string(&href))
-                .ok_or(PactBrokerError::LinkError(format!("Link is malformed, there is no href. URL: '{}', LINK: '{}'",
-                    self.url, link)))
+            link.href.clone().ok_or(
+                PactBrokerError::LinkError(format!("Link is malformed, there is no href. URL: '{}', LINK: '{}'",
+                    self.url, link.name)))
         });
         let base = try!(Url::parse(&self.url).map_err(|err| PactBrokerError::UrlError(format!("{}", err.description()))));
         let url = try!(base.join(&link_url).map_err(|err| PactBrokerError::UrlError(format!("{}", err.description()))));
@@ -180,13 +207,12 @@ impl HALClient {
         }
     }
 
-    fn parse_link_url(&self, link_data: &BTreeMap<String, Json>, values: &HashMap<String, String>, link: &str) -> Result<String, PactBrokerError> {
-        match find_entry(link_data, &s!("href")) {
-            Some((_, value)) => {
-                let href_template = as_string(&value);
-                debug!("templated URL = {}", href_template);
+    fn parse_link_url(&self, link: &Link, values: &HashMap<String, String>) -> Result<String, PactBrokerError> {
+        match link.href {
+            Some(ref href) => {
+                debug!("templated URL = {}", href);
                 let re = Regex::new(r"\{(\w+)\}").unwrap();
-                let final_url = re.replace_all(&href_template, |caps: &Captures| {
+                let final_url = re.replace_all(href, |caps: &Captures| {
                     let lookup = caps.at(1).unwrap();
                     debug!("Looking up value for key '{}'", lookup);
                     match values.get(lookup) {
@@ -202,15 +228,49 @@ impl HALClient {
                 Ok(final_url)
             },
             None => Err(PactBrokerError::LinkError(format!("Expected a HAL+JSON response from the pact broker, but got a link with no HREF. URL: '{}', LINK: '{}'",
-                self.url, link)))
+                self.url, link.name)))
+        }
+    }
+
+    fn iter_links(&self, link: String) -> Result<Vec<Link>, PactBrokerError> {
+        match self.path_info {
+            None => Err(PactBrokerError::LinkError(format!("No previous resource has been fetched from the pact broker. URL: '{}', LINK: '{}'",
+                self.url, link))),
+            Some(ref json) => match json.find("_links") {
+                Some(json) => match json.find(&link) {
+                    Some(link_data) => link_data.as_array()
+                        .map(|link_data| link_data.iter().map(|link_json| match link_json {
+                            &Json::Object(ref data) => Link::from_json(&link, data),
+                            &Json::String(ref s) => Link { name: link.clone(), href: Some(s.clone()), templated: false },
+                            _ => Link { name: link.clone(), href: Some(link_json.to_string()), templated: false }
+                        }).collect())
+                        .ok_or(PactBrokerError::LinkError(format!("Link is malformed, expcted an object but got {}. URL: '{}', LINK: '{}'",
+                            link_data, self.url, link))),
+                    None => Err(PactBrokerError::LinkError(format!("Link '{}' was not found in the response, only the following links where found: {:?}. URL: '{}', LINK: '{}'",
+                        link, json.as_object().unwrap_or(&btreemap!{}).keys().join(", "), self.url, link)))
+                },
+                None => Err(PactBrokerError::LinkError(format!("Expected a HAL+JSON response from the pact broker, but got a response with no '_links'. URL: '{}', LINK: '{}'",
+                    self.url, link)))
+            }
         }
     }
 }
 
-pub fn fetch_pacts_from_broker(broker_url: &String, provider_name: &String) -> Result<Vec<Result<Pact, String>>, PactBrokerError> {
+pub fn fetch_pacts_from_broker(broker_url: &String, provider_name: &String) -> Result<Vec<Result<Pact, PactBrokerError>>, PactBrokerError> {
     let mut client = HALClient{ url: broker_url.clone(), .. HALClient::default() };
-    match client.navigate("pb:latest-provider-pacts", &hashmap!{ s!("provider") => provider_name.clone() }) {
-        Ok(stuff) => Err(PactBrokerError::LinkError(s!("Boom"))),
+    let template_values = hashmap!{ s!("provider") => provider_name.clone() };
+    match client.navigate("pb:latest-provider-pacts", &template_values) {
+        Ok(_) => {
+            let pact_links = try!(client.iter_links(s!("pacts")));
+            debug!("Pact links = {:?}", pact_links);
+            let pacts = pact_links.iter().map(|link| match link.clone().href {
+                Some(_) => client.fetch_url(&link, &template_values).map(|pact_json| Pact::from_json(&link.href.clone().unwrap(), &pact_json)),
+                None => Err(PactBrokerError::LinkError(format!("Expected a HAL+JSON response from the pact broker, but got a link with no HREF. URL: '{}', LINK: '{:?}'",
+                    client.url, link)))
+            }).collect();
+            debug!("pacts = {:?}", pacts);
+            Ok(pacts)
+        },
         Err(err) => match err {
             PactBrokerError::NotFound(_) => Err(
                 PactBrokerError::NotFound(
@@ -228,7 +288,7 @@ mod tests {
     use super::{content_type, json_content_type};
     use pact_consumer::*;
     use env_logger::*;
-    use pact_matching::models::OptionalBody;
+    use pact_matching::models::{Pact, OptionalBody};
     use hyper::Url;
     use hyper::client::response::Response;
     use std::io::{self, Write, Read};
@@ -429,7 +489,8 @@ mod tests {
     #[test]
     fn parse_link_url_returns_error_if_there_is_no_href() {
         let client = HALClient::default();
-        expect!(client.parse_link_url(&btreemap!{}, &hashmap!{}, "link")).to(be_err().value(
+        let link = Link { name: s!("link"), href: None, templated: false };
+        expect!(client.parse_link_url(&link, &hashmap!{})).to(be_err().value(
             "Expected a HAL+JSON response from the pact broker, but got a link with no HREF. URL: '', LINK: 'link'"));
     }
 
@@ -438,17 +499,14 @@ mod tests {
         let client = HALClient::default();
         let values = hashmap!{ s!("valA") => s!("A"), s!("valB") => s!("B") };
 
-        expect!(client.parse_link_url(&btreemap!{ s!("href") => Json::String(s!("http://localhost")) },
-            &values, "link"))
-        .to(be_ok().value("http://localhost"));
+        let link = Link { name: s!("link"), href: Some(s!("http://localhost")), templated: false };
+        expect!(client.parse_link_url(&link, &values)).to(be_ok().value("http://localhost"));
 
-        expect!(client.parse_link_url(&btreemap!{ s!("hRef") => Json::String(s!("http://{valA}/{valB}")) },
-            &values, "link"))
-        .to(be_ok().value("http://A/B"));
+        let link = Link { name: s!("link"), href: Some(s!("http://{valA}/{valB}")), templated: false };
+        expect!(client.parse_link_url(&link, &values)).to(be_ok().value("http://A/B"));
 
-        expect!(client.parse_link_url(&btreemap!{ s!("HREF") => Json::String(s!("http://{valA}/{valC}")) },
-            &values, "link"))
-        .to(be_ok().value("http://A/{valC}"));
+        let link = Link { name: s!("link"), href: Some(s!("http://{valA}/{valC}")), templated: false };
+        expect!(client.parse_link_url(&link, &values)).to(be_ok().value("http://A/{valC}"));
     }
 
     #[test]
@@ -658,6 +716,74 @@ mod tests {
             let result = fetch_pacts_from_broker(&broker_url, &s!("sad_provider"));
             expect!(result).to(be_err().value(format!("No pacts for provider 'sad_provider' where found in the pact broker. URL: '{}'",
                 broker_url)));
+            Ok(())
+        });
+        expect!(result).to(be_equal_to(VerificationResult::PactVerified));
+    }
+
+    #[test]
+    fn fetch_pacts_from_broker_returns_a_list_of_pacts() {
+        init().unwrap_or(());
+
+        let pact = Pact::default().to_json().to_string();
+        let pact_runner = ConsumerPactBuilder::consumer(s!("RustPactVerifier"))
+            .has_pact_with(s!("PactBroker"))
+            .upon_receiving(s!("a request to the pact broker root"))
+                .path(s!("/"))
+                .headers(hashmap!{ s!("Accept") => s!("application/hal+json; charset=utf-8") })
+            .will_respond_with()
+                .status(200)
+                .headers(hashmap!{ s!("Content-Type") => s!("application/hal+json") })
+                .body(OptionalBody::Present(s!(r#"
+                    {
+                        "_links":{
+                            "pb:latest-provider-pacts":{"href":"http://localhost/pacts/provider/{provider}/latest","templated":true}
+                        }
+                    }
+                "#)))
+            .given(s!("There are two pacts in the pact broker"))
+            .upon_receiving(s!("a request for a providers pacts"))
+                .path(s!("/pacts/provider/happy_provider/latest"))
+                .headers(hashmap!{ s!("Accept") => s!("application/hal+json; charset=utf-8") })
+            .will_respond_with()
+                .status(200)
+                .headers(hashmap!{ s!("Content-Type") => s!("application/hal+json") })
+                .body(OptionalBody::Present(s!(r#"
+                    {
+                        "_links":{
+                            "pacts":[
+                                {"href":"http://localhost/pacts/provider/Activity%20Service/consumer/Foo%20Client/version/1.0"},
+                                {"href":"http://localhost/pacts/provider/Activity%20Service/consumer/Foo%20Client2/version/1.0"}
+                            ]
+                        }
+                    }
+                "#)))
+            .given(s!("There are two pacts in the pact broker"))
+            .upon_receiving(s!("a request for the first provider pact"))
+                .path(s!("/pacts/provider/Activity%20Service/consumer/Foo%20Client/version/1.0"))
+                .headers(hashmap!{ s!("Accept") => s!("application/hal+json; charset=utf-8") })
+            .will_respond_with()
+                .status(200)
+                .headers(hashmap!{ s!("Content-Type") => s!("application/hal+json") })
+                .body(OptionalBody::Present(pact.clone()))
+            .given(s!("There are two pacts in the pact broker"))
+            .upon_receiving(s!("a request for the second provider pact"))
+                .path(s!("/pacts/provider/Activity%20Service/consumer/Foo%20Client2/version/1.0"))
+                .headers(hashmap!{ s!("Accept") => s!("application/hal+json; charset=utf-8") })
+            .will_respond_with()
+                .status(200)
+                .headers(hashmap!{ s!("Content-Type") => s!("application/hal+json") })
+                .body(OptionalBody::Present(pact.clone()))
+            .build();
+
+        let result = pact_runner.run(&|broker_url| {
+            let result = fetch_pacts_from_broker(&broker_url, &s!("happy_provider"));
+            expect!(result.clone()).to(be_ok());
+            let pacts = result.unwrap();
+            expect!(pacts.len()).to(be_equal_to(2));
+            for pact in pacts {
+                expect!(pact).to(be_ok());
+            }
             Ok(())
         });
         expect!(result).to(be_equal_to(VerificationResult::PactVerified));
