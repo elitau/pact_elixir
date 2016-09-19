@@ -6,7 +6,7 @@ use hyper::client::*;
 use std::error::Error;
 use super::provider_client::join_paths;
 use hyper::header::{Accept, qitem, ContentType};
-use hyper::mime::{Mime, TopLevel, SubLevel, Attr, Value};
+use hyper::mime::{Mime, TopLevel, SubLevel};
 use provider_client::extract_body;
 use regex::{Regex, Captures};
 use hyper::Url;
@@ -173,8 +173,8 @@ impl HALClient {
         let client = Client::new();
         let res = client.get(&join_paths(self.url.clone(), s!(path)))
             .header(Accept(vec![
-                qitem(Mime(TopLevel::Application, SubLevel::Ext(s!("hal+json")),
-                   vec![(Attr::Charset, Value::Utf8)]))
+                qitem(Mime(TopLevel::Application, SubLevel::Ext(s!("hal+json")), vec![])),
+                qitem(Mime(TopLevel::Application, SubLevel::Json, vec![]))
             ]))
             .send();
         match res {
@@ -693,7 +693,7 @@ mod tests {
             .has_pact_with(s!("PactBroker"))
             .upon_receiving(s!("a request to the pact broker root"))
                 .path(s!("/"))
-                .headers(hashmap!{ s!("Accept") => s!("application/hal+json; charset=utf-8") })
+                .headers(hashmap!{ s!("Accept") => s!("application/hal+json, application/json") })
             .will_respond_with()
                 .status(200)
                 .headers(hashmap!{ s!("Content-Type") => s!("application/hal+json") })
@@ -707,7 +707,7 @@ mod tests {
             .given(s!("There are no pacts in the pact broker"))
             .upon_receiving(s!("a request for a providers pacts"))
                 .path(s!("/pacts/provider/sad_provider/latest"))
-                .headers(hashmap!{ s!("Accept") => s!("application/hal+json; charset=utf-8") })
+                .headers(hashmap!{ s!("Accept") => s!("application/hal+json, application/json") })
             .will_respond_with()
                 .status(404)
             .build();
@@ -730,7 +730,7 @@ mod tests {
             .has_pact_with(s!("PactBroker"))
             .upon_receiving(s!("a request to the pact broker root"))
                 .path(s!("/"))
-                .headers(hashmap!{ s!("Accept") => s!("application/hal+json; charset=utf-8") })
+                .headers(hashmap!{ s!("Accept") => s!("application/hal+json, application/json") })
             .will_respond_with()
                 .status(200)
                 .headers(hashmap!{ s!("Content-Type") => s!("application/hal+json") })
@@ -744,7 +744,7 @@ mod tests {
             .given(s!("There are two pacts in the pact broker"))
             .upon_receiving(s!("a request for a providers pacts"))
                 .path(s!("/pacts/provider/happy_provider/latest"))
-                .headers(hashmap!{ s!("Accept") => s!("application/hal+json; charset=utf-8") })
+                .headers(hashmap!{ s!("Accept") => s!("application/hal+json, application/json") })
             .will_respond_with()
                 .status(200)
                 .headers(hashmap!{ s!("Content-Type") => s!("application/hal+json") })
@@ -761,18 +761,18 @@ mod tests {
             .given(s!("There are two pacts in the pact broker"))
             .upon_receiving(s!("a request for the first provider pact"))
                 .path(s!("/pacts/provider/Activity%20Service/consumer/Foo%20Client/version/1.0"))
-                .headers(hashmap!{ s!("Accept") => s!("application/hal+json; charset=utf-8") })
+                .headers(hashmap!{ s!("Accept") => s!("application/hal+json, application/json") })
             .will_respond_with()
                 .status(200)
-                .headers(hashmap!{ s!("Content-Type") => s!("application/hal+json") })
+                .headers(hashmap!{ s!("Content-Type") => s!("application/json") })
                 .body(OptionalBody::Present(pact.clone()))
             .given(s!("There are two pacts in the pact broker"))
             .upon_receiving(s!("a request for the second provider pact"))
                 .path(s!("/pacts/provider/Activity%20Service/consumer/Foo%20Client2/version/1.0"))
-                .headers(hashmap!{ s!("Accept") => s!("application/hal+json; charset=utf-8") })
+                .headers(hashmap!{ s!("Accept") => s!("application/hal+json, application/json") })
             .will_respond_with()
                 .status(200)
-                .headers(hashmap!{ s!("Content-Type") => s!("application/hal+json") })
+                .headers(hashmap!{ s!("Content-Type") => s!("application/json") })
                 .body(OptionalBody::Present(pact.clone()))
             .build();
 
