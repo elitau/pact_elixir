@@ -23,6 +23,7 @@ macro_rules! s {
 use std::collections::HashMap;
 use std::iter::FromIterator;
 use rustc_serialize::json::{Json, ToJson};
+use regex::Regex;
 
 pub mod models;
 mod json;
@@ -31,9 +32,12 @@ fn strip_whitespace<'a, T: FromIterator<&'a str>>(val: &'a String, split_by: &'a
     val.split(split_by).map(|v| v.trim().clone() ).collect()
 }
 
-static BODY_MATCHERS: [(&'static str, fn(expected: &String, actual: &String, config: DiffConfig, mismatches: &mut Vec<Mismatch>)); 1] = [
-    ("application/json", json::match_json)
-];
+lazy_static! {
+    static ref BODY_MATCHERS: [(Regex, fn(expected: &String, actual: &String, config: DiffConfig, mismatches: &mut Vec<Mismatch>)); 2] = [
+        (Regex::new("application/.*json").unwrap(), json::match_json),
+        (Regex::new("application/json.*").unwrap(), json::match_json)
+    ];
+}
 
 /// Enum that defines the different types of mismatches that can occur.
 #[derive(Debug, Clone)]
@@ -210,7 +214,7 @@ impl Mismatch {
             Mismatch::StatusMismatch { expected: ref e, actual: ref a } => format!("expected {} but was {}", e, a),
             Mismatch::QueryMismatch { ref mismatch, .. } => mismatch.clone(),
             Mismatch::HeaderMismatch { ref mismatch, .. } => mismatch.clone(),
-            Mismatch::BodyTypeMismatch {  expected: ref e, actual: ref a } => format!("expected a '{}' body but was '{}'", e, a),
+            Mismatch::BodyTypeMismatch {  expected: ref e, actual: ref a } => format!("expected '{}' body but was '{}'", e, a),
             Mismatch::BodyMismatch { ref path, ref mismatch, .. } => format!("{} -> {}", path, mismatch)
         }
     }
@@ -456,7 +460,7 @@ pub fn match_headers(expected: Option<HashMap<String, String>>,
 
 fn compare_bodies(mimetype: String, expected: &String, actual: &String, config: DiffConfig,
     mismatches: &mut Vec<Mismatch>) {
-    match BODY_MATCHERS.iter().find(|mt| *mt.0 == mimetype) {
+    match BODY_MATCHERS.iter().find(|mt| mt.0.is_match(&mimetype)) {
         Some(ref match_fn) => match_fn.1(expected, actual, config, mismatches),
         None => match_text(expected, actual, mismatches)
     }
