@@ -5,12 +5,12 @@ use std::collections::hash_map::HashMap;
 use std::io::Read;
 use hyper::client::Client;
 use hyper::client::response::Response as HyperResponse;
-use hyper::error::Error;
+use hyper::error::Error as HyperError;
 use hyper::method::Method;
 use hyper::header::{Headers, ContentType};
 use hyper::mime::{Mime, TopLevel, SubLevel};
 
-pub fn join_paths(base: String, path: String) -> String {
+pub fn join_paths(base: &String, path: String) -> String {
     let mut full_path = s!(base.trim_right_matches("/"));
     full_path.push('/');
     full_path.push_str(path.trim_left_matches("/"));
@@ -33,11 +33,9 @@ fn setup_headers(headers: &Option<HashMap<String, String>>) -> Headers {
     hyper_headers
 }
 
-fn make_request(provider: &ProviderInfo, request: &Request, client: &Client) -> Result<HyperResponse, Error> {
+fn make_request(base_url: &String, request: &Request, client: &Client) -> Result<HyperResponse, HyperError> {
     match Method::from_str(&request.method) {
         Ok(method) => {
-            let base_url = format!("{}://{}:{}{}", provider.protocol, provider.host, provider.port,
-                provider.path);
             let mut url = join_paths(base_url, request.path.clone());
             if request.query.is_some() {
                 url.push('?');
@@ -94,10 +92,11 @@ fn hyper_response_to_pact_response(response: &mut HyperResponse) -> Response {
     }
 }
 
-pub fn make_provider_request(provider: &ProviderInfo, request: &Request) -> Result<Response, Error> {
+pub fn make_provider_request(provider: &ProviderInfo, request: &Request) -> Result<Response, HyperError> {
     debug!("Sending {:?} to provider", request);
     let client = Client::new();
-    match make_request(provider, request, &client) {
+    match make_request(&format!("{}://{}:{}{}", provider.protocol, provider.host, provider.port,
+        provider.path), request, &client) {
         Ok(ref mut response) => {
             debug!("Received response: {:?}", response);
             Ok(hyper_response_to_pact_response(response))
@@ -109,6 +108,26 @@ pub fn make_provider_request(provider: &ProviderInfo, request: &Request) -> Resu
     }
 }
 
+pub fn make_state_change_request(provider: &ProviderInfo, request: &Request) -> Result<(), String> {
+    debug!("Sending {:?} to state change handler", request);
+    let client = Client::new();
+    match make_request(&provider.state_change_url.clone().unwrap(), request, &client) {
+        Ok(ref mut response) => {
+            debug!("Received response: {:?}", response);
+            if response.status.is_success() {
+                Ok(())
+            } else {
+                debug!("Request failed: {}", response.status);
+                Err(format!("State change request failed: {}", response.status))
+            }
+        },
+        Err(err) => {
+            debug!("Request failed: {}", err);
+            Err(format!("State change request failed: {}", err))
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use expectest::prelude::*;
@@ -116,11 +135,11 @@ mod tests {
 
     #[test]
     fn join_paths_test() {
-        expect!(join_paths(s!(""), s!(""))).to(be_equal_to(s!("/")));
-        expect!(join_paths(s!("/"), s!(""))).to(be_equal_to(s!("/")));
-        expect!(join_paths(s!(""), s!("/"))).to(be_equal_to(s!("/")));
-        expect!(join_paths(s!("/"), s!("/"))).to(be_equal_to(s!("/")));
-        expect!(join_paths(s!("/a/b"), s!("/c/d"))).to(be_equal_to(s!("/a/b/c/d")));
+        expect!(join_paths(&s!(""), s!(""))).to(be_equal_to(s!("/")));
+        expect!(join_paths(&s!("/"), s!(""))).to(be_equal_to(s!("/")));
+        expect!(join_paths(&s!(""), s!("/"))).to(be_equal_to(s!("/")));
+        expect!(join_paths(&s!("/"), s!("/"))).to(be_equal_to(s!("/")));
+        expect!(join_paths(&s!("/a/b"), s!("/c/d"))).to(be_equal_to(s!("/a/b/c/d")));
     }
 
 }

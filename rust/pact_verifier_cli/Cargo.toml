@@ -11,7 +11,7 @@ license = "MIT"
 
 [dependencies]
 libc = "^0.2.9"
-clap = "~2.9.2"
+clap = "2.13.0"
 rustc-serialize = "^0.3"
 # pact_matching = "^0.0.2"
 pact_matching = { path = "../pact_matching" }

@@ -171,7 +171,7 @@ impl HALClient {
     fn fetch(&self, path: &str) -> Result<Json, PactBrokerError> {
         debug!("Fetching path '{}' from pact broker", path);
         let client = Client::new();
-        let res = client.get(&join_paths(self.url.clone(), s!(path)))
+        let res = client.get(&join_paths(&self.url.clone(), s!(path)))
             .header(Accept(vec![
                 qitem(Mime(TopLevel::Application, SubLevel::Ext(s!("hal+json")), vec![])),
                 qitem(Mime(TopLevel::Application, SubLevel::Json, vec![]))
@@ -288,7 +288,7 @@ mod tests {
     use super::{content_type, json_content_type};
     use pact_consumer::*;
     use env_logger::*;
-    use pact_matching::models::{Pact, OptionalBody};
+    use pact_matching::models::{Pact, OptionalBody, Consumer, Provider, Interaction};
     use hyper::Url;
     use hyper::client::response::Response;
     use std::io::{self, Write, Read};
@@ -725,7 +725,15 @@ mod tests {
     fn fetch_pacts_from_broker_returns_a_list_of_pacts() {
         init().unwrap_or(());
 
-        let pact = Pact::default().to_json().to_string();
+        let pact = Pact { consumer: Consumer { name: s!("Consumer") },
+            provider: Provider { name: s!("happy_provider") },
+            .. Pact::default() }
+            .to_json().to_string();
+        let pact2 = Pact { consumer: Consumer { name: s!("Consumer2") },
+            provider: Provider { name: s!("happy_provider") },
+            interactions: vec![ Interaction { description: s!("a request friends"), .. Interaction::default() } ],
+            .. Pact::default() }
+            .to_json().to_string();
         let pact_runner = ConsumerPactBuilder::consumer(s!("RustPactVerifier"))
             .has_pact_with(s!("PactBroker"))
             .upon_receiving(s!("a request to the pact broker root"))
@@ -773,7 +781,7 @@ mod tests {
             .will_respond_with()
                 .status(200)
                 .headers(hashmap!{ s!("Content-Type") => s!("application/json") })
-                .body(OptionalBody::Present(pact.clone()))
+                .body(OptionalBody::Present(pact2.clone()))
             .build();
 
         let result = pact_runner.run(&|broker_url| {

@@ -124,7 +124,7 @@ fn handle_command_args() -> Result<(), i32> {
             .multiple(true)
             .number_of_values(1)
             .empty_values(false)
-            .help("URL of the pact broker to fetch pacts from to verify"))
+            .help("URL of the pact broker to fetch pacts from to verify (requires the provider name parameter)"))
         .arg(Arg::with_name("hostname")
             .short("h")
             .long("hostname")
@@ -144,6 +144,18 @@ fn handle_command_args() -> Result<(), i32> {
             .takes_value(true)
             .use_delimiter(false)
             .help("Provider name (defaults to provider)"))
+        .arg(Arg::with_name("state-change-url")
+            .short("s")
+            .long("state-change-url")
+            .takes_value(true)
+            .use_delimiter(false)
+            .help("URL to post state change requests to"))
+        .arg(Arg::with_name("state-change-as-query")
+            .long("state-change-as-query")
+            .help("State change request data will be sent as query parameters instead of in the request body"))
+        .arg(Arg::with_name("state-change-teardown")
+            .long("state-change-teardown")
+            .help("State change teardown requests are to be made after each interaction"))
         ;
 
     let matches = app.get_matches_safe();
@@ -158,6 +170,9 @@ fn handle_command_args() -> Result<(), i32> {
             let provider = ProviderInfo {
                 host: s!(matches.value_of("hostname").unwrap_or("localhost")),
                 port: matches.value_of("port").unwrap_or("8080").parse::<u16>().unwrap(),
+                state_change_url: matches.value_of("state-change-url").map(|s| s.to_string()),
+                state_change_body: !matches.is_present("state-change-as-query"),
+                state_change_teardown: matches.is_present("state-change-teardown"),
                 .. ProviderInfo::default()
             };
             let source = pact_source(matches);
@@ -170,7 +185,7 @@ fn handle_command_args() -> Result<(), i32> {
         Err(ref err) => {
             match err.kind {
                 ErrorKind::HelpDisplayed => {
-                    println!("");
+                    println!("{}", err.message);
                     Ok(())
                 },
                 ErrorKind::VersionDisplayed => {
@@ -179,7 +194,7 @@ fn handle_command_args() -> Result<(), i32> {
                     Ok(())
                 },
                 _ => {
-                    println!("");
+                    println!("{}", err.message);
                     err.exit()
                 }
             }

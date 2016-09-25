@@ -594,7 +594,7 @@ impl Interaction {
             },
             None => format!("Interaction {}", index)
         };
-        let provider_state = match pact_json.find("providerState") {
+        let provider_state = match pact_json.find("providerState").or(pact_json.find("provider_state")) {
             Some(v) => match *v {
                 Json::String(ref s) => if s.is_empty() {
                     None

@@ -30,11 +30,12 @@ use std::error::Error;
 use std::io;
 use std::fs;
 use pact_matching::*;
-use pact_matching::models::{Pact, Interaction, Response, HttpPart, DetectedContentType};
+use pact_matching::models::*;
 use ansi_term::*;
 use ansi_term::Colour::*;
 use std::collections::HashMap;
-use provider_client::make_provider_request;
+use provider_client::{make_provider_request, make_state_change_request};
+use rustc_serialize::json::Json;
 
 /// Source for loading pacts
 #[derive(Debug, Clone)]
@@ -61,7 +62,13 @@ pub struct ProviderInfo {
     /// Port the provider is running on, defaults to 8080
     pub port: u16,
     /// Base path for the provider, defaults to /
-    pub path: String
+    pub path: String,
+    /// URL to post state change requests to
+    pub state_change_url: Option<String>,
+    /// If teardown state change requests should be made (default is false)
+    pub state_change_teardown: bool,
+    /// If state change request data should be sent in the body (true) or as query parameters (false)
+    pub state_change_body: bool
 }
 
 impl ProviderInfo {
@@ -72,7 +79,10 @@ impl ProviderInfo {
             protocol: s!("http"),
             host: s!("localhost"),
             port: 8080,
-            path: s!("/")
+            path: s!("/"),
+            state_change_url: None,
+            state_change_teardown: false,
+            state_change_body: true
         }
     }
 }
@@ -103,30 +113,63 @@ fn verify_response_from_provider(provider: &ProviderInfo, interaction: &Interact
     }
 }
 
-fn verify_interaction(provider: &ProviderInfo, interaction: &Interaction) -> Result<(), MismatchResult> {
-    /*
-    def interactionMessage = "Verifying a pact between ${consumer.name} and ${provider.name}" +
-          " - ${interaction.description}"
-
-        def stateChangeOk = true
-        if (interaction.providerState) {
-          stateChangeOk = stateChange(interaction.providerState, provider, consumer)
-          log.debug "State Change: \"${interaction.providerState}\" -> ${stateChangeOk}"
-          if (stateChangeOk != true) {
-            failures[interactionMessage] = stateChangeOk
-            stateChangeOk = false
-          } else {
-            interactionMessage += " Given ${interaction.providerState}"
-          }
+fn execute_state_change(provider_state: &String, provider: &ProviderInfo, setup: bool) -> Result<(), MismatchResult> {
+    if setup {
+        println!("  Given {}", Style::new().bold().paint(provider_state.clone()));
+    }
+    let result = match provider.state_change_url {
+        Some(_) => {
+            let mut state_change_request = Request { method: s!("POST"), .. Request::default_request() };
+            if provider.state_change_body {
+              let json_body = Json::Object(btreemap!{
+                  s!("state") => Json::String(provider_state.clone()),
+                  s!("action") => Json::String(if setup {
+                    s!("setup")
+                  } else {
+                    s!("teardown")
+                  })
+              });
+              state_change_request.body = OptionalBody::Present(json_body.to_string());
+            } else {
+              let mut query = hashmap!{ s!("state") => vec![provider_state.clone()] };
+              if setup {
+                query.insert(s!("action"), vec![s!("setup")]);
+              } else {
+                query.insert(s!("action"), vec![s!("teardown")]);
+              }
+              state_change_request.query = Some(query);
+            }
+            match make_state_change_request(provider, &state_change_request) {
+                Ok(_) => Ok(()),
+                Err(err) => Err(MismatchResult::Error(err))
+            }
+        },
+        None => {
+            if setup {
+                println!("    {}", Yellow.paint("WARNING: State Change ignored as there is no state change URL"));
+            }
+            Ok(())
         }
+    };
 
-        if (stateChangeOk) {*/
+    debug!("State Change: \"{}\" -> {:?}", provider_state, result);
+    result
+}
+
+fn verify_interaction(provider: &ProviderInfo, interaction: &Interaction) -> Result<(), MismatchResult> {
+    match interaction.provider_state {
+        Some(ref state) => try!(execute_state_change(state, provider, true)),
+        None => ()
+    }
 
     let result = verify_response_from_provider(provider, interaction);
 
-    // if (provider.stateChangeTeardown) {
-    // stateChange(interaction.providerState, provider, consumer, false)
-    // }
+    if provider.state_change_teardown {
+        match interaction.provider_state {
+            Some(ref state) => try!(execute_state_change(state, provider, false)),
+            None => ()
+        }
+    }
 
     result
 }
@@ -224,7 +267,6 @@ pub fn verify_provider(provider_info: &ProviderInfo, source: Vec<PactSource>) ->
                         if interaction.provider_state.is_some() {
                             description.push_str(&format!(" Given {}",
                                 interaction.provider_state.clone().unwrap()));
-                            println!("  Given {}", Style::new().bold().paint(interaction.provider_state.unwrap()));
                         }
                         description.push_str(" - ");
                         description.push_str(&interaction.description);
