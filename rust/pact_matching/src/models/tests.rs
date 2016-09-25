@@ -170,6 +170,31 @@ fn request_mimetype_is_based_on_the_content_type_header() {
 }
 
 #[test]
+fn content_type_enum_test() {
+    let request = Request { method: s!("GET"), path: s!("/"), query: None, headers: None,
+        body: OptionalBody::Missing, matching_rules: None };
+    expect!(request.content_type_enum()).to(be_equal_to(DetectedContentType::Text));
+    expect!(Request {
+        headers: Some(hashmap!{ s!("Content-Type") => s!("text/html") }), .. request.clone() }.content_type_enum())
+        .to(be_equal_to(DetectedContentType::Text));
+    expect!(Request {
+        headers: Some(hashmap!{ s!("Content-Type") => s!("application/json") }), .. request.clone() }.content_type_enum())
+        .to(be_equal_to(DetectedContentType::Json));
+    expect!(Request {
+        headers: Some(hashmap!{ s!("Content-Type") => s!("application/hal+json") }), .. request.clone() }.content_type_enum())
+        .to(be_equal_to(DetectedContentType::Json));
+    expect!(Request {
+        headers: Some(hashmap!{ s!("CONTENT-TYPE") => s!("application/json-rpc") }), .. request.clone() }.content_type_enum())
+        .to(be_equal_to(DetectedContentType::Json));
+    expect!(Request {
+        headers: Some(hashmap!{ s!("CONTENT-TYPE") => s!("application/xml") }), .. request.clone() }.content_type_enum())
+        .to(be_equal_to(DetectedContentType::Xml));
+    expect!(Request {
+        headers: Some(hashmap!{ s!("CONTENT-TYPE") => s!("application/stuff+xml") }), .. request.clone() }.content_type_enum())
+        .to(be_equal_to(DetectedContentType::Xml));
+}
+
+#[test]
 fn loading_interaction_from_json() {
     let interaction_json = r#"{
         "description": "String",

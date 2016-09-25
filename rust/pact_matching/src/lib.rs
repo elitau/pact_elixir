@@ -13,6 +13,8 @@ extern crate semver;
 #[macro_use] extern crate itertools;
 extern crate rand;
 #[macro_use] extern crate hyper;
+extern crate ansi_term;
+extern crate difference;
 
 /// Simple macro to convert a string slice to a `String` struct.
 #[macro_export]
@@ -24,9 +26,11 @@ use std::collections::HashMap;
 use std::iter::FromIterator;
 use rustc_serialize::json::{Json, ToJson};
 use regex::Regex;
+use ansi_term::*;
+use ansi_term::Colour::*;
 
 pub mod models;
-mod json;
+pub mod json;
 
 fn strip_whitespace<'a, T: FromIterator<&'a str>>(val: &'a String, split_by: &'a str) -> T {
     val.split(split_by).map(|v| v.trim().clone() ).collect()
@@ -216,6 +220,21 @@ impl Mismatch {
             Mismatch::HeaderMismatch { ref mismatch, .. } => mismatch.clone(),
             Mismatch::BodyTypeMismatch {  expected: ref e, actual: ref a } => format!("expected '{}' body but was '{}'", e, a),
             Mismatch::BodyMismatch { ref path, ref mismatch, .. } => format!("{} -> {}", path, mismatch)
+        }
+    }
+
+    /// Returns a formated string with ansi escape codes for this mismatch
+    pub fn ansi_description(&self) -> String {
+        match *self {
+            Mismatch::MethodMismatch { expected: ref e, actual: ref a } => format!("expected {} but was {}", Red.paint(e.clone()), Green.paint(a.clone())),
+            Mismatch::PathMismatch { expected: ref e, actual: ref a } => format!("expected '{}' but was '{}'", Red.paint(e.clone()), Green.paint(a.clone())),
+            Mismatch::StatusMismatch { expected: ref e, actual: ref a } => format!("expected {} but was {}", Red.paint(e.to_string()), Green.paint(a.to_string())),
+            Mismatch::QueryMismatch { expected: ref e, actual: ref a, parameter: ref p, .. } => format!("Expected '{}' but received '{}' for query parameter '{}'",
+                Red.paint(e.to_string()), Green.paint(a.to_string()), Style::new().bold().paint(p.clone())),
+            Mismatch::HeaderMismatch { expected: ref e, actual: ref a, key: ref k, .. } => format!("Expected header '{}' to have value '{}' but was '{}'",
+                Style::new().bold().paint(k.clone()), Red.paint(e.to_string()), Green.paint(a.to_string())),
+            Mismatch::BodyTypeMismatch {  expected: ref e, actual: ref a } => format!("expected '{}' body but was '{}'", Red.paint(e.clone()), Green.paint(a.clone())),
+            Mismatch::BodyMismatch { ref path, ref mismatch, .. } => format!("{} -> {}", Style::new().bold().paint(path.clone()), mismatch)
         }
     }
 }

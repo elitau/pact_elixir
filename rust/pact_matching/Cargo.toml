@@ -20,6 +20,8 @@ lazy_static = "^0.1.15"
 semver = "^0.2.0"
 itertools = "^0.4.15"
 rand = "^0.3"
+ansi_term = "0.9"
+difference = "0.4"
 
 [dependencies.hyper]
 version = "^0.9.7"

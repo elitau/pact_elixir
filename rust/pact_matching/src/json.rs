@@ -1,9 +1,15 @@
+//! The `json` module provides functions to compare and display the differences between JSON bodies
+
 use rustc_serialize::json::Json;
 use rustc_serialize::json::ToJson;
 use std::collections::btree_map::*;
 use super::Mismatch;
 use super::DiffConfig;
+use difference::*;
+use ansi_term::Colour::*;
+use std::str::FromStr;
 
+/// Matches the expected JSON to the actual, and populates the mismatches vector with any differences
 pub fn match_json(expected: &String, actual: &String, config: DiffConfig, mismatches: &mut Vec<super::Mismatch>) {
     let expected_json = Json::from_str(expected);
     let actual_json = Json::from_str(actual);
@@ -28,6 +34,45 @@ pub fn match_json(expected: &String, actual: &String, config: DiffConfig, mismat
     } else {
         compare(vec!["$", "body"], &expected_json.unwrap(), &actual_json.unwrap(), &config, mismatches);
     }
+}
+
+fn walk_json(json: &Json, path: &mut Iterator<Item=&str>) -> Option<Json> {
+    match path.next() {
+        Some(p) => match json {
+            &Json::Object(_) => json.find(p).map(|json| json.clone()),
+            &Json::Array(ref array) => match usize::from_str(p) {
+                Ok(index) => array.get(index).map(|json| json.clone()),
+                Err(_) => None
+            },
+            _ => None
+        },
+        None => None
+    }
+}
+
+/// Returns a diff of the expected versus the actual JSON bodies, focusing on a particular path
+pub fn display_diff(expected: &String, actual: &String, path: &String) -> String {
+    let expected_body = Json::from_str(expected).unwrap();
+    let actual_body = Json::from_str(actual).unwrap();
+    let path = path.split('.').skip(2);
+    let expected_fragment = match walk_json(&expected_body, &mut path.clone()) {
+        Some(json) => format!("{}", json.pretty()),
+        None => s!("")
+    };
+    let actual_fragment = match walk_json(&actual_body, &mut path.clone()) {
+        Some(json) => format!("{}", json.pretty()),
+        None => s!("")
+    };
+    let (_dist, changeset) = diff(&expected_fragment, &actual_fragment, "\n");
+    let mut output = String::new();
+    for change in changeset {
+        match change {
+            Difference::Same(ref x) => output.push_str(&format!(" {}\n", x)),
+            Difference::Add(ref x) => output.push_str(&Green.paint(format!("+{}\n", x)).to_string()),
+            Difference::Rem(ref x) => output.push_str(&Red.paint(format!("-{}\n", x)).to_string())
+        }
+    }
+    output
 }
 
 fn type_of(json: &Json) -> String {

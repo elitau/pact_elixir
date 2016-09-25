@@ -139,6 +139,20 @@ lazy_static! {
     static ref HTMLREGEXP: Regex = Regex::new(r"^\s*(<!DOCTYPE)|(<HTML>).*").unwrap();
     static ref JSONREGEXP: Regex = Regex::new(r#"^\s*(true|false|null|[0-9]+|"\w*|\{\s*(}|"\w+)|\[\s*)"#).unwrap();
     static ref XMLREGEXP2: Regex = Regex::new(r#"^\s*<\w+\s*(:\w+=["”][^"”]+["”])?.*"#).unwrap();
+
+    static ref JSON_CONTENT_TYPE: Regex = Regex::new("application/.*json.*").unwrap();
+    static ref XML_CONTENT_TYPE: Regex = Regex::new("application/.*xml").unwrap();
+}
+
+/// Enumeration of general content types
+#[derive(PartialEq, Debug, Clone, Eq)]
+pub enum DetectedContentType {
+    /// Json content types
+    Json,
+    /// XML content types
+    Xml,
+    /// All other content types
+    Text
 }
 
 /// Trait to specify an HTTP part of a message. It encapsulates the shared parts of a request and
@@ -185,6 +199,18 @@ pub trait HttpPart {
                 }
             },
             _ => s!("text/plain")
+        }
+    }
+
+    /// Returns the general content type (ignoring subtypes)
+    fn content_type_enum(&self) -> DetectedContentType {
+        let content_type = self.content_type();
+        if JSON_CONTENT_TYPE.is_match(&content_type) {
+            DetectedContentType::Json
+        } else if XML_CONTENT_TYPE.is_match(&content_type) {
+            DetectedContentType::Xml
+        } else {
+            DetectedContentType::Text
         }
     }
 }
