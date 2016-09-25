@@ -12,6 +12,7 @@
 extern crate pact_verifier;
 extern crate simplelog;
 extern crate rand;
+extern crate regex;
 
 #[cfg(test)]
 #[macro_use(expect)]
@@ -27,6 +28,8 @@ use pact_verifier::*;
 use log::LogLevelFilter;
 use simplelog::TermLogger;
 use std::str::FromStr;
+use std::error::Error;
+use regex::Regex;
 
 fn main() {
     match handle_command_args() {
@@ -64,6 +67,27 @@ fn pact_source(matches: &ArgMatches) -> Vec<PactSource> {
         None => ()
     };
     sources
+}
+
+fn interaction_filter(matches: &ArgMatches) -> FilterInfo {
+    if matches.is_present("filter-description") &&
+        (matches.is_present("filter-state") || matches.is_present("filter-no-state")) {
+        if matches.is_present("filter-state") {
+            FilterInfo::DescriptionAndState(s!(matches.value_of("filter-description").unwrap()),
+                s!(matches.value_of("filter-state").unwrap()))
+        } else {
+            FilterInfo::DescriptionAndState(s!(matches.value_of("filter-description").unwrap()),
+                s!(""))
+        }
+    } else if matches.is_present("filter-description") {
+        FilterInfo::Description(s!(matches.value_of("filter-description").unwrap()))
+    } else if matches.is_present("filter-state") {
+        FilterInfo::State(s!(matches.value_of("filter-state").unwrap()))
+    } else if matches.is_present("filter-no-state") {
+        FilterInfo::State(s!(""))
+    } else {
+        FilterInfo::None
+    }
 }
 
 fn handle_command_args() -> Result<(), i32> {
@@ -156,6 +180,27 @@ fn handle_command_args() -> Result<(), i32> {
         .arg(Arg::with_name("state-change-teardown")
             .long("state-change-teardown")
             .help("State change teardown requests are to be made after each interaction"))
+        .arg(Arg::with_name("filter-description")
+            .long("filter-description")
+            .takes_value(true)
+            .use_delimiter(false)
+            .validator(|val| Regex::new(&val)
+                .map(|_| ())
+                .map_err(|err| format!("'{}' is an invalid filter value: {}", val, err.description())))
+            .help("Only validate interactions whose descriptions match this filter"))
+        .arg(Arg::with_name("filter-state")
+            .long("filter-state")
+            .takes_value(true)
+            .use_delimiter(false)
+            .conflicts_with("filter-no-state")
+            .validator(|val| Regex::new(&val)
+                .map(|_| ())
+                .map_err(|err| format!("'{}' is an invalid filter value: {}", val, err.description())))
+            .help("Only validate interactions whose provider states match this filter"))
+        .arg(Arg::with_name("filter-no-state")
+            .long("filter-no-state")
+            .conflicts_with("filter-state")
+            .help("Only validate interactions that have no defined provider state"))
         ;
 
     let matches = app.get_matches_safe();
@@ -176,7 +221,8 @@ fn handle_command_args() -> Result<(), i32> {
                 .. ProviderInfo::default()
             };
             let source = pact_source(matches);
-            if verify_provider(&provider, source) {
+            let filter = interaction_filter(matches);
+            if verify_provider(&provider, source, &filter) {
                 Ok(())
             } else {
                 Err(2)

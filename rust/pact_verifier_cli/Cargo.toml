@@ -23,6 +23,7 @@ log = "^0.3.5"
 maplit = "^0.1.3"
 lazy_static = "^0.1.15"
 rand = "^0.3"
+regex = "0.1"
 
 [dependencies.hyper]
 version = "^0.9.7"

@@ -36,6 +36,7 @@ use ansi_term::Colour::*;
 use std::collections::HashMap;
 use provider_client::{make_provider_request, make_state_change_request};
 use rustc_serialize::json::Json;
+use regex::Regex;
 
 /// Source for loading pacts
 #[derive(Debug, Clone)]
@@ -216,8 +217,100 @@ fn display_body_mismatch(expected: &Response, actual: &Response, path: &String) 
     }
 }
 
+/// Filter information used to filter the interactions that are verified
+pub enum FilterInfo {
+    /// No filter, all interactions will be verified
+    None,
+    /// Filter on the interaction description
+    Description(String),
+    /// Filter on the interaction provider state
+    State(String),
+    /// Filter on both the interaction description and provider state
+    DescriptionAndState(String, String)
+}
+
+impl FilterInfo {
+
+    /// If this filter is filtering on description
+    pub fn has_description(&self) -> bool {
+        match self {
+            &FilterInfo::Description(_) => true,
+            &FilterInfo::DescriptionAndState(_, _) => true,
+            _ => false
+        }
+    }
+
+    /// If this filter is filtering on provider state
+    pub fn has_state(&self) -> bool {
+        match self {
+            &FilterInfo::State(_) => true,
+            &FilterInfo::DescriptionAndState(_, _) => true,
+            _ => false
+        }
+    }
+
+    /// Value of the state to filter
+    pub fn state(&self) -> String {
+        match self {
+            &FilterInfo::State(ref s) => s.clone(),
+            &FilterInfo::DescriptionAndState(_, ref s) => s.clone(),
+            _ => s!("")
+        }
+    }
+
+    /// Value of the description to filter
+    pub fn description(&self) -> String {
+        match self {
+            &FilterInfo::Description(ref s) => s.clone(),
+            &FilterInfo::DescriptionAndState(ref s, _) => s.clone(),
+            _ => s!("")
+        }
+    }
+
+    /// If the filter matches the interaction provider state using a regular expression. If the
+    /// filter value is the empty string, then it will match interactions with no provider state.
+    ///
+    /// # Panics
+    /// If the state filter value can't be parsed as a regular expression
+    pub fn match_state(&self, interaction: &Interaction) -> bool {
+        match interaction.provider_state.clone() {
+            Some(state) => {
+                if self.state().is_empty() {
+                    false
+                } else {
+                    let re = Regex::new(&self.state()).unwrap();
+                    re.is_match(&state)
+                }
+            },
+            None => self.has_state() && self.state().is_empty()
+        }
+    }
+
+    /// If the filter matches the interaction description using a regular expression
+    ///
+    /// # Panics
+    /// If the description filter value can't be parsed as a regular expression
+    pub fn match_description(&self, interaction: &Interaction) -> bool {
+        let re = Regex::new(&self.description()).unwrap();
+        re.is_match(&interaction.description)
+    }
+
+}
+
+fn filter_interaction(interaction: &Interaction, filter: &FilterInfo) -> bool {
+    if filter.has_description() && filter.has_state() {
+      filter.match_description(interaction) && filter.match_state(interaction)
+    } else if filter.has_description() {
+      filter.match_description(interaction)
+    } else if filter.has_state() {
+      filter.match_state(interaction)
+    } else {
+      true
+    }
+}
+
 /// Verify the provider with the given pact source
-pub fn verify_provider(provider_info: &ProviderInfo, source: Vec<PactSource>) -> bool {
+pub fn verify_provider(provider_info: &ProviderInfo, source: Vec<PactSource>, filter: &FilterInfo) -> bool {
     let pacts = source.iter().flat_map(|s| {
         match s {
             &PactSource::File(ref file) => vec![Pact::read_pact(Path::new(&file))
@@ -257,7 +350,9 @@ pub fn verify_provider(provider_info: &ProviderInfo, source: Vec<PactSource>) ->
                 if pact.interactions.is_empty() {
                     println!("         {}", Yellow.paint("WARNING: Pact file has no interactions"));
                 } else {
-                    let results: HashMap<Interaction, Result<(), MismatchResult>> = pact.interactions.iter().map(|interaction| {
+                    let results: HashMap<Interaction, Result<(), MismatchResult>> = pact.interactions.iter()
+                    .filter(|interaction| filter_interaction(interaction, filter))
+                    .map(|interaction| {
                         (interaction.clone(), verify_interaction(provider_info, interaction))
                     }).collect();
 
@@ -362,4 +457,143 @@ pub fn verify_provider(provider_info: &ProviderInfo, source: Vec<PactSource>) ->
     }
 
     verify_provider_result
+}
+
+#[cfg(test)]
+mod tests {
+    use expectest::prelude::*;
+    use super::{FilterInfo, filter_interaction};
+    use pact_matching::models::*;
+
+    #[test]
+    fn if_no_interaction_filter_is_defined_returns_true() {
+        let interaction = Interaction::default();
+        expect!(filter_interaction(&interaction, &FilterInfo::None)).to(be_true());
+    }
+
+    #[test]
+    fn if_an_interaction_filter_is_defined_returns_false_if_the_description_does_not_match() {
+        let interaction = Interaction { description: s!("bob"), .. Interaction::default() };
+        expect!(filter_interaction(&interaction, &FilterInfo::Description(s!("fred")))).to(be_false());
+    }
+
+    #[test]
+    fn if_an_interaction_filter_is_defined_returns_true_if_the_description_does_match() {
+        let interaction = Interaction { description: s!("bob"), .. Interaction::default() };
+        expect!(filter_interaction(&interaction, &FilterInfo::Description(s!("bob")))).to(be_true());
+    }
+
+    #[test]
+    fn uses_regexs_to_match_the_description() {
+        let interaction = Interaction { description: s!("bobby"), .. Interaction::default() };
+        expect!(filter_interaction(&interaction, &FilterInfo::Description(s!("bob.*")))).to(be_true());
+    }
+
+    #[test]
+    fn if_an_interaction_state_filter_is_defined_returns_false_if_the_state_does_not_match() {
+        let interaction = Interaction { provider_state: Some(s!("bob")), .. Interaction::default() };
+        expect!(filter_interaction(&interaction, &FilterInfo::State(s!("fred")))).to(be_false());
+    }
+
+    #[test]
+    fn if_an_interaction_state_filter_is_defined_returns_true_if_the_state_does_match() {
+        let interaction = Interaction { provider_state: Some(s!("bob")), .. Interaction::default() };
+        expect!(filter_interaction(&interaction, &FilterInfo::State(s!("bob")))).to(be_true());
+    }
+
+    #[test]
+    fn uses_regexs_to_match_the_state() {
+        let interaction = Interaction { provider_state: Some(s!("bobby")), .. Interaction::default() };
+        expect!(filter_interaction(&interaction, &FilterInfo::State(s!("bob.*")))).to(be_true());
+    }
+
+    #[test]
+    fn if_the_state_filter_is_empty_returns_false_if_the_interaction_state_is_defined() {
+        let interaction = Interaction { provider_state: Some(s!("bobby")), .. Interaction::default() };
+        expect!(filter_interaction(&interaction, &FilterInfo::State(s!("")))).to(be_false());
+    }
+
+    #[test]
+    fn if_the_state_filter_is_empty_returns_true_if_the_interaction_state_is_not_defined() {
+        let interaction = Interaction { provider_state: None, .. Interaction::default() };
+        expect!(filter_interaction(&interaction, &FilterInfo::State(s!("")))).to(be_true());
+    }
+
+    #[test]
+    fn if_the_state_filter_and_interaction_filter_is_defined_must_match_both() {
+        let interaction = Interaction { description: s!("freddy"), provider_state: Some(s!("bobby")), .. Interaction::default() };
+        expect!(filter_interaction(&interaction, &FilterInfo::DescriptionAndState(s!(".*ddy"), s!("bob.*")))).to(be_true());
+    }
+
+    #[test]
+    fn if_the_state_filter_and_interaction_filter_is_defined_is_false_if_the_provider_state_does_not_match() {
+        let interaction = Interaction { description: s!("freddy"), provider_state: Some(s!("boddy")), .. Interaction::default() };
+        expect!(filter_interaction(&interaction, &FilterInfo::DescriptionAndState(s!(".*ddy"), s!("bob.*")))).to(be_false());
+    }
+
+    #[test]
+    fn if_the_state_filter_and_interaction_filter_is_defined_is_false_if_the_description_does_not_match() {
+        let interaction = Interaction { description: s!("frebby"), provider_state: Some(s!("bobby")), .. Interaction::default() };
+        expect!(filter_interaction(&interaction, &FilterInfo::DescriptionAndState(s!(".*ddy"), s!("bob.*")))).to(be_false());
+    }
+
+    #[test]
+    fn if_the_state_filter_and_interaction_filter_is_defined_is_false_if_both_do_not_match() {
+        let interaction = Interaction { description: s!("joe"), provider_state: Some(s!("authur")), .. Interaction::default() };
+        expect!(filter_interaction(&interaction, &FilterInfo::DescriptionAndState(s!(".*ddy"), s!("bob.*")))).to(be_false());
+    }
+
+    /*
+    def 'if no consumer filter is defined, returns true'() {
+        given:
+        verifier.projectHasProperty = { false }
+        def consumer = [:]
+
+        when:
+        boolean result = verifier.filterConsumers(consumer)
+
+        then:
+        result
+      }
+
+      def 'if a consumer filter is defined, returns false if the consumer name does not match'() {
+        given:
+        verifier.projectHasProperty = { it == ProviderVerifier.PACT_FILTER_CONSUMERS }
+        verifier.projectGetProperty = { 'fred,joe' }
+        def consumer = [name: 'bob']
+
+        when:
+        boolean result = verifier.filterConsumers(consumer)
+
+        then:
+        !result
+      }
+
+      def 'if a consumer filter is defined, returns true if the consumer name does match'() {
+        given:
+        verifier.projectHasProperty = { it == ProviderVerifier.PACT_FILTER_CONSUMERS }
+        verifier.projectGetProperty = { 'fred,joe,bob' }
+        def consumer = [name: 'bob']
+
+        when:
+        boolean result = verifier.filterConsumers(consumer)
+
+        then:
+        result
+      }
+
+      def 'trims whitespaces off the consumer names'() {
+        given:
+        verifier.projectHasProperty = { it == ProviderVerifier.PACT_FILTER_CONSUMERS }
+        verifier.projectGetProperty = { 'fred,\tjoe, bob\n' }
+        def consumer = [name: 'bob']
+
+        when:
+        boolean result = verifier.filterConsumers(consumer)
+
+        then:
+        result
+      }
+    */
+
 }
