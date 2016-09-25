@@ -752,15 +752,15 @@ mod tests {
                     {
                         "_links":{
                             "pacts":[
-                                {"href":"http://localhost/pacts/provider/Activity%20Service/consumer/Foo%20Client/version/1.0"},
-                                {"href":"http://localhost/pacts/provider/Activity%20Service/consumer/Foo%20Client2/version/1.0"}
+                                {"href":"http://localhost/pacts/provider/happy_provider/consumer/Consumer/version/1.0.0"},
+                                {"href":"http://localhost/pacts/provider/happy_provider/consumer/Consumer2/version/1.0.0"}
                             ]
                         }
                     }
                 "#)))
             .given(s!("There are two pacts in the pact broker"))
             .upon_receiving(s!("a request for the first provider pact"))
-                .path(s!("/pacts/provider/Activity%20Service/consumer/Foo%20Client/version/1.0"))
+                .path(s!("/pacts/provider/happy_provider/consumer/Consumer/version/1.0.0"))
                 .headers(hashmap!{ s!("Accept") => s!("application/hal+json, application/json") })
             .will_respond_with()
                 .status(200)
@@ -768,7 +768,7 @@ mod tests {
                 .body(OptionalBody::Present(pact.clone()))
             .given(s!("There are two pacts in the pact broker"))
             .upon_receiving(s!("a request for the second provider pact"))
-                .path(s!("/pacts/provider/Activity%20Service/consumer/Foo%20Client2/version/1.0"))
+                .path(s!("/pacts/provider/happy_provider/consumer/Consumer2/version/1.0.0"))
                 .headers(hashmap!{ s!("Accept") => s!("application/hal+json, application/json") })
             .will_respond_with()
                 .status(200)

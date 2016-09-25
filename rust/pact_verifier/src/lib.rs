@@ -11,6 +11,7 @@ extern crate hyper;
 extern crate rustc_serialize;
 extern crate itertools;
 extern crate regex;
+extern crate difference;
 
 #[cfg(test)]
 #[macro_use(expect)]
@@ -29,7 +30,7 @@ use std::error::Error;
 use std::io;
 use std::fs;
 use pact_matching::*;
-use pact_matching::models::{Pact, Interaction};
+use pact_matching::models::{Pact, Interaction, Response, HttpPart, DetectedContentType};
 use ansi_term::*;
 use ansi_term::Colour::*;
 use std::collections::HashMap;
@@ -80,20 +81,20 @@ impl ProviderInfo {
 #[derive(Debug, Clone)]
 pub enum MismatchResult {
     /// Response mismatches
-    Mismatches(Vec<Mismatch>),
+    Mismatches(Vec<Mismatch>, Response, Response),
     /// Error occured
     Error(String)
 }
 
 fn verify_response_from_provider(provider: &ProviderInfo, interaction: &Interaction) -> Result<(), MismatchResult> {
-    let expected_response = interaction.response.clone();
+    let ref expected_response = interaction.response;
     match make_provider_request(provider, &interaction.request) {
-        Ok(actual_response) => {
-            let mismatches = match_response(expected_response, actual_response);
+        Ok(ref actual_response) => {
+            let mismatches = match_response(expected_response.clone(), actual_response.clone());
             if mismatches.is_empty() {
                 Ok(())
             } else {
-                Err(MismatchResult::Mismatches(mismatches))
+                Err(MismatchResult::Mismatches(mismatches, expected_response.clone(), actual_response.clone()))
             }
         },
         Err(err) => {
@@ -164,6 +165,14 @@ fn walkdir(dir: &Path) -> io::Result<Vec<io::Result<Pact>>> {
     Ok(pacts)
 }
 
+fn display_body_mismatch(expected: &Response, actual: &Response, path: &String) {
+    match expected.content_type_enum() {
+        DetectedContentType::Json => println!("{}", pact_matching::json::display_diff(&expected.body.value(),
+            &actual.body.value(), path)),
+        _ => ()
+    }
+}
+
 /// Verify the provider with the given pact source
 pub fn verify_provider(provider_info: &ProviderInfo, source: Vec<PactSource>) -> bool {
     let pacts = source.iter().flat_map(|s| {
@@ -227,16 +236,15 @@ pub fn verify_provider(provider_info: &ProviderInfo, source: Vec<PactSource>) ->
                                         (k.clone(), v.clone(), Green.paint("OK"))
                                     }).collect()), Green.paint("OK"))
                             },
-                            Err(err) => match err {
-                                MismatchResult::Error(err_des) => {
+                            Err(ref err) => match err {
+                                &MismatchResult::Error(ref err_des) => {
                                     println!("      {}", Red.paint(format!("Request Failed - {}", err_des)));
-                                    all_errors.push((description, MismatchResult::Error(err_des)));
+                                    all_errors.push((description, MismatchResult::Error(err_des.clone())));
                                     verify_provider_result = false;
                                 },
-                                MismatchResult::Mismatches(mismatches) => {
+                                &MismatchResult::Mismatches(ref mismatches, ref expected_response, ref actual_response) => {
                                     description.push_str(" returns a response which ");
-                                    let mut iter = mismatches.iter();
-                                    let status_result = if iter.any(|m| m.mismatch_type() == s!("StatusMismatch")) {
+                                    let status_result = if mismatches.iter().any(|m| m.mismatch_type() == s!("StatusMismatch")) {
                                         verify_provider_result = false;
                                         Red.paint("FAILED")
                                     } else {
@@ -244,7 +252,7 @@ pub fn verify_provider(provider_info: &ProviderInfo, source: Vec<PactSource>) ->
                                     };
                                     let header_results = match interaction.response.headers {
                                         Some(ref h) => Some(h.iter().map(|(k, v)| {
-                                            (k.clone(), v.clone(), if iter.any(|m| {
+                                            (k.clone(), v.clone(), if mismatches.iter().any(|m| {
                                                 match m {
                                                     &Mismatch::HeaderMismatch{ ref key, .. } => k == key,
                                                     _ => false
@@ -258,7 +266,7 @@ pub fn verify_provider(provider_info: &ProviderInfo, source: Vec<PactSource>) ->
                                         }).collect()),
                                         None => None
                                     };
-                                    let body_result = if iter.any(|m| m.mismatch_type() == s!("BodyMismatch") ||
+                                    let body_result = if mismatches.iter().any(|m| m.mismatch_type() == s!("BodyMismatch") ||
                                         m.mismatch_type() == s!("BodyTypeMismatch")) {
                                         verify_provider_result = false;
                                         Red.paint("FAILED")
@@ -270,7 +278,9 @@ pub fn verify_provider(provider_info: &ProviderInfo, source: Vec<PactSource>) ->
                                         body_result);
 
                                     for mismatch in mismatches.clone() {
-                                        all_errors.push((description.clone(), MismatchResult::Mismatches(vec![mismatch.clone()])));
+                                        all_errors.push((description.clone(),
+                                            MismatchResult::Mismatches(vec![mismatch.clone()],
+                                                expected_response.clone(), actual_response.clone())));
                                     }
                                 }
                             }
@@ -293,10 +303,15 @@ pub fn verify_provider(provider_info: &ProviderInfo, source: Vec<PactSource>) ->
         for (i, &(ref description, ref mismatch)) in all_errors.iter().enumerate() {
             match mismatch {
                 &MismatchResult::Error(ref err) => println!("{}) {} - {}\n", i, description, err),
-                &MismatchResult::Mismatches(ref mismatch) => {
+                &MismatchResult::Mismatches(ref mismatch, ref expected_response, ref actual_response) => {
                     let mismatch = mismatch.first().unwrap();
                     println!("{}) {}{}", i, description, mismatch.summary());
-                    println!("    {}\n", mismatch.description());
+                    println!("    {}\n", mismatch.ansi_description());
+
+                    match mismatch {
+                        &Mismatch::BodyMismatch{ref path, ..} => display_body_mismatch(expected_response, actual_response, path),
+                        _ => ()
+                    }
                 }
             }
         }
