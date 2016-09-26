@@ -309,8 +309,13 @@ fn filter_interaction(interaction: &Interaction, filter: &FilterInfo) -> bool {
     }
 }
 
-/// Verify the provider with the given pact source
-pub fn verify_provider(provider_info: &ProviderInfo, source: Vec<PactSource>, filter: &FilterInfo) -> bool {
+fn filter_consumers(consumers: &Vec<String>, res: &Result<Pact, String>) -> bool {
+    consumers.is_empty() || res.is_err() || consumers.contains(&res.clone().unwrap().consumer.name)
+}
+
+/// Verify the provider with the given pact sources
+pub fn verify_provider(provider_info: &ProviderInfo, source: Vec<PactSource>, filter: &FilterInfo,
+    consumers: &Vec<String>) -> bool {
     let pacts = source.iter().flat_map(|s| {
         match s {
             &PactSource::File(ref file) => vec![Pact::read_pact(Path::new(&file))
@@ -336,7 +341,9 @@ pub fn verify_provider(provider_info: &ProviderInfo, source: Vec<PactSource>, fi
                 Err(err) => vec![Err(format!("Could not load pacts from the pact broker '{}' - {:?}", broker_url, err))]
             }
         }
-    }).collect::<Vec<Result<Pact, String>>>();
+    })
+    .filter(|res| filter_consumers(consumers, res))
+    .collect::<Vec<Result<Pact, String>>>();
 
     let mut verify_provider_result = true;
     let mut all_errors: Vec<(String, MismatchResult)> = vec![];
@@ -462,7 +469,7 @@ pub fn verify_provider(provider_info: &ProviderInfo, source: Vec<PactSource>, fi
 #[cfg(test)]
 mod tests {
     use expectest::prelude::*;
-    use super::{FilterInfo, filter_interaction};
+    use super::{FilterInfo, filter_interaction, filter_consumers};
     use pact_matching::models::*;
 
     #[test]
@@ -543,57 +550,31 @@ mod tests {
         expect!(filter_interaction(&interaction, &FilterInfo::DescriptionAndState(s!(".*ddy"), s!("bob.*")))).to(be_false());
     }
 
-    /*
-    def 'if no consumer filter is defined, returns true'() {
-        given:
-        verifier.projectHasProperty = { false }
-        def consumer = [:]
+    #[test]
+    fn if_no_consumer_filter_is_defined_returns_true() {
+        let consumers = vec![];
+        let result = Err(s!(""));
+        expect!(filter_consumers(&consumers, &result)).to(be_true());
+    }
 
-        when:
-        boolean result = verifier.filterConsumers(consumer)
+    #[test]
+    fn if_a_consumer_filter_is_defined_returns_false_if_the_consumer_name_does_not_match() {
+        let consumers = vec![s!("fred"), s!("joe")];
+        let result = Ok(Pact { consumer: Consumer { name: s!("bob") }, .. Pact::default() });
+        expect!(filter_consumers(&consumers, &result)).to(be_false());
+    }
 
-        then:
-        result
-      }
+    #[test]
+    fn if_a_consumer_filter_is_defined_returns_true_if_the_result_is_an_error() {
+        let consumers = vec![s!("fred"), s!("joe")];
+        let result = Err(s!(""));
+        expect!(filter_consumers(&consumers, &result)).to(be_true());
+    }
 
-      def 'if a consumer filter is defined, returns false if the consumer name does not match'() {
-        given:
-        verifier.projectHasProperty = { it == ProviderVerifier.PACT_FILTER_CONSUMERS }
-        verifier.projectGetProperty = { 'fred,joe' }
-        def consumer = [name: 'bob']
-
-        when:
-        boolean result = verifier.filterConsumers(consumer)
-
-        then:
-        !result
-      }
-
-      def 'if a consumer filter is defined, returns true if the consumer name does match'() {
-        given:
-        verifier.projectHasProperty = { it == ProviderVerifier.PACT_FILTER_CONSUMERS }
-        verifier.projectGetProperty = { 'fred,joe,bob' }
-        def consumer = [name: 'bob']
-
-        when:
-        boolean result = verifier.filterConsumers(consumer)
-
-        then:
-        result
-      }
-
-      def 'trims whitespaces off the consumer names'() {
-        given:
-        verifier.projectHasProperty = { it == ProviderVerifier.PACT_FILTER_CONSUMERS }
-        verifier.projectGetProperty = { 'fred,\tjoe, bob\n' }
-        def consumer = [name: 'bob']
-
-        when:
-        boolean result = verifier.filterConsumers(consumer)
-
-        then:
-        result
-      }
-    */
-
+    #[test]
+    fn if_a_consumer_filter_is_defined_returns_true_if_the_consumer_name_does_match() {
+        let consumers = vec![s!("fred"), s!("joe"), s!("bob")];
+        let result = Ok(Pact { consumer: Consumer { name: s!("bob") }, .. Pact::default() });
+        expect!(filter_consumers(&consumers, &result)).to(be_true());
+    }
 }

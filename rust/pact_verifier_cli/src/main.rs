@@ -201,6 +201,13 @@ fn handle_command_args() -> Result<(), i32> {
             .long("filter-no-state")
             .conflicts_with("filter-state")
             .help("Only validate interactions that have no defined provider state"))
+        .arg(Arg::with_name("filter-consumer")
+            .short("c")
+            .long("filter-consumer")
+            .takes_value(true)
+            .multiple(true)
+            .empty_values(false)
+            .help("Consumer name to filter the pacts to be verified (can be repeated)"))
         ;
 
     let matches = app.get_matches_safe();
@@ -222,7 +229,7 @@ fn handle_command_args() -> Result<(), i32> {
             };
             let source = pact_source(matches);
             let filter = interaction_filter(matches);
-            if verify_provider(&provider, source, &filter) {
+            if verify_provider(&provider, source, &filter, &matches.values_of_lossy("filter-consumer").unwrap_or(vec![])) {
                 Ok(())
             } else {
                 Err(2)
