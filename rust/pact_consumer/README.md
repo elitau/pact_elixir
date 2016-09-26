@@ -28,7 +28,7 @@ You can now write a pact test using the consumer DSL.
 use pact_consumer::*;
 
 #[test]
-def a_service_consumer_side_of_a_pact_goes_a_little_something_like_this() {
+fn a_service_consumer_side_of_a_pact_goes_a_little_something_like_this() {
 
     // Define the Pact for the test (you can setup multiple interactions by chaining the given or upon_receiving calls)
     let pact_runner = ConsumerPactBuilder::consumer(s!("Consumer")) // Define the service consumer by name
