@@ -9,6 +9,9 @@ repository = "https://github.com/pact-foundation/pact-reference/blob/master/rust
 readme = "README.md"
 keywords = ["testing", "pact", "cdc"]
 license = "MIT"
+exclude = [
+    "*.iml"
+]
 
 [dependencies]
 libc = "^0.2.9"
