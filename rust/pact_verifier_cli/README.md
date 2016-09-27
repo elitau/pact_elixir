@@ -104,7 +104,90 @@ This option will cause the verifier to also make a tear down request after the m
 
 ## Example run
 
-```console
+This will verify all the pacts for the `happy_provider` found in the pact broker (running on localhost) against the provider running on localhost port 5050. Only the pacts for the consumers `Consumer` and `Consumer2` will be verified.
 
+```console
+$ pact_verifier_cli -b http://localhost -n 'happy_provider' -p 5050 --filter-consumer Consumer --filter-consumer Consumer2
+21:59:28 [WARN] pact_matching::models: No metadata found in pact file "http://localhost/pacts/provider/happy_provider/consumer/Consumer/version/1.0.0", assuming V1 specification
+21:59:28 [WARN] pact_matching::models: No metadata found in pact file "http://localhost/pacts/provider/happy_provider/consumer/Consumer2/version/1.0.0", assuming V1 specification
+
+Verifying a pact between Consumer and happy_provider
+  Given I am friends with Fred
+    WARNING: State Change ignored as there is no state change URL
+  Given I have no friends
+    WARNING: State Change ignored as there is no state change URL
+  a request to unfriend but no friends
+    returns a response which
+      has status code 200 (OK)
+      includes headers
+      has a matching body (OK)
+  a request friends
+    returns a response which
+      has status code 200 (FAILED)
+      includes headers
+        "Content-Type" with value "application/json" (FAILED)
+      has a matching body (FAILED)
+  a request to unfriend
+    returns a response which
+      has status code 200 (OK)
+      includes headers
+        "Content-Type" with value "application/json" (OK)
+      has a matching body (FAILED)
+
+
+Verifying a pact between Consumer2 and happy_provider
+  Given I am friends with Fred
+    WARNING: State Change ignored as there is no state change URL
+  Given I have no friends
+    WARNING: State Change ignored as there is no state change URL
+  a request to unfriend but no friends
+    returns a response which
+      has status code 200 (OK)
+      includes headers
+      has a matching body (OK)
+  a request friends
+    returns a response which
+      has status code 200 (FAILED)
+      includes headers
+        "Content-Type" with value "application/json" (FAILED)
+      has a matching body (FAILED)
+  a request to unfriend
+    returns a response which
+      has status code 200 (OK)
+      includes headers
+        "Content-Type" with value "application/json" (OK)
+      has a matching body (FAILED)
+
+
+Failures:
+
+0) Verifying a pact between Consumer and happy_provider - a request friends returns a response which has a matching body
+    expected 'application/json' body but was 'text/plain'
+
+1) Verifying a pact between Consumer and happy_provider - a request friends returns a response which has status code 200
+    expected 200 but was 404
+
+2) Verifying a pact between Consumer and happy_provider - a request friends returns a response which includes header 'Content-Type' with value 'application/json'
+    Expected header 'Content-Type' to have value 'application/json' but was 'text/plain'
+
+3) Verifying a pact between Consumer and happy_provider Given I am friends with Fred - a request to unfriend returns a response which has a matching body
+    $.body -> Type mismatch: Expected Map {"reply":"Bye"} but received  "Ok"
+
+
+4) Verifying a pact between Consumer2 and happy_provider - a request friends returns a response which has a matching body
+    expected 'application/json' body but was 'text/plain'
+
+5) Verifying a pact between Consumer2 and happy_provider - a request friends returns a response which has status code 200
+    expected 200 but was 404
+
+6) Verifying a pact between Consumer2 and happy_provider - a request friends returns a response which includes header 'Content-Type' with value 'application/json'
+    Expected header 'Content-Type' to have value 'application/json' but was 'text/plain'
+
+7) Verifying a pact between Consumer2 and happy_provider Given I am friends with Fred - a request to unfriend returns a response which has a matching body
+    $.body -> Type mismatch: Expected Map {"reply":"Bye"} but received  "Ok"
+
+
+
+There were 8 pact failures
 
 ```
