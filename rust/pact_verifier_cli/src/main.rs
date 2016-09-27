@@ -162,26 +162,26 @@
 //! Failures:
 //!
 //! 0) Verifying a pact between Consumer and happy_provider - a request friends returns a response which has a matching body
-//!     expected 'application/json' body but was 'text/plain'
+//!     expected "application/json" body but was "text/plain"
 //!
 //! 1) Verifying a pact between Consumer and happy_provider - a request friends returns a response which has status code 200
 //!     expected 200 but was 404
 //!
-//! 2) Verifying a pact between Consumer and happy_provider - a request friends returns a response which includes header 'Content-Type' with value 'application/json'
-//!     Expected header 'Content-Type' to have value 'application/json' but was 'text/plain'
+//! 2) Verifying a pact between Consumer and happy_provider - a request friends returns a response which includes header "Content-Type" with value "application/json"
+//!     Expected header "Content-Type" to have value "application/json" but was "text/plain"
 //!
 //! 3) Verifying a pact between Consumer and happy_provider Given I am friends with Fred - a request to unfriend returns a response which has a matching body
 //!     $.body -> Type mismatch: Expected Map {"reply":"Bye"} but received  "Ok"
 //!
 //!
 //! 4) Verifying a pact between Consumer2 and happy_provider - a request friends returns a response which has a matching body
-//!     expected 'application/json' body but was 'text/plain'
+//!     expected "application/json" body but was "text/plain"
 //!
 //! 5) Verifying a pact between Consumer2 and happy_provider - a request friends returns a response which has status code 200
 //!     expected 200 but was 404
 //!
-//! 6) Verifying a pact between Consumer2 and happy_provider - a request friends returns a response which includes header 'Content-Type' with value 'application/json'
-//!     Expected header 'Content-Type' to have value 'application/json' but was 'text/plain'
+//! 6) Verifying a pact between Consumer2 and happy_provider - a request friends returns a response which includes header "Content-Type" with value "application/json"
+//!     Expected header "Content-Type" to have value "application/json" but was "text/plain"
 //!
 //! 7) Verifying a pact between Consumer2 and happy_provider Given I am friends with Fred - a request to unfriend returns a response which has a matching body
 //!     $.body -> Type mismatch: Expected Map {"reply":"Bye"} but received  "Ok"
