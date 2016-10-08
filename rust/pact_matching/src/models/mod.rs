@@ -748,7 +748,7 @@ fn determin_spec_version(file: &String, metadata: &BTreeMap<String, BTreeMap<Str
             }
         },
         None => {
-            warn!("No metadata found in pact file {:?}, assuming V1 specification", file);
+            warn!("No metadata found in pact file {:?}, assuming V1.1 specification", file);
             PactSpecification::V1_1
         }
     }

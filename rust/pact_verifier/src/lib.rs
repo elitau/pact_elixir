@@ -1,5 +1,5 @@
 //! The `pact_verifier` crate provides the core logic to performing verification of providers.
-//! It implements the V1 Pact specification (https://github.com/pact-foundation/pact-specification/tree/version-1).
+//! It implements the V1.1 Pact specification (https://github.com/pact-foundation/pact-specification/tree/version-1.1).
 
 #![warn(missing_docs)]
 

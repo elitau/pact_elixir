@@ -1,6 +1,6 @@
 //! # Standalone Pact Verifier
 //!
-//! This project provides a command line interface to verify pact files against a running provider. It is a single executable binary. It implements the [V1 Pact specification](https://github.com/pact-foundation/pact-specification/tree/version-1).
+//! This project provides a command line interface to verify pact files against a running provider. It is a single executable binary. It implements the [V1.1 Pact specification](https://github.com/pact-foundation/pact-specification/tree/version-1.1).
 //!
 //! [Online rust docs](https://docs.rs/pact_verifier_cli/)
 //!
@@ -108,8 +108,8 @@
 //!
 //! ```console,ignore
 //! $ pact_verifier_cli -b http://localhost -n 'happy_provider' -p 5050 --filter-consumer Consumer --filter-consumer Consumer2
-//! 21:59:28 [WARN] pact_matching::models: No metadata found in pact file "http://localhost/pacts/provider/happy_provider/consumer/Consumer/version/1.0.0", assuming V1 specification
-//! 21:59:28 [WARN] pact_matching::models: No metadata found in pact file "http://localhost/pacts/provider/happy_provider/consumer/Consumer2/version/1.0.0", assuming V1 specification
+//! 21:59:28 [WARN] pact_matching::models: No metadata found in pact file "http://localhost/pacts/provider/happy_provider/consumer/Consumer/version/1.0.0", assuming V1.1 specification
+//! 21:59:28 [WARN] pact_matching::models: No metadata found in pact file "http://localhost/pacts/provider/happy_provider/consumer/Consumer2/version/1.0.0", assuming V1.1 specification
 //!
 //! Verifying a pact between Consumer and happy_provider
 //!   Given I am friends with Fred
@@ -230,7 +230,7 @@ fn main() {
 
 fn print_version() {
     println!("\npact verifier version     : v{}", crate_version!());
-    println!("pact specification version: v{}", PactSpecification::V1.version_str());
+    println!("pact specification version: v{}", PactSpecification::V1_1.version_str());
 }
 
 fn integer_value(v: String) -> Result<(), String> {

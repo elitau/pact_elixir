@@ -1,6 +1,6 @@
 # Standalone Pact Verifier
 
-This project provides a command line interface to verify pact files against a running provider. It is a single executable binary. It implements the [V1 Pact specification](https://github.com/pact-foundation/pact-specification/tree/version-1).
+This project provides a command line interface to verify pact files against a running provider. It is a single executable binary. It implements the [V1.1 Pact specification](https://github.com/pact-foundation/pact-specification/tree/version-1.1).
 
 [Online rust docs](https://docs.rs/pact_verifier_cli/)
 
@@ -108,8 +108,8 @@ This will verify all the pacts for the `happy_provider` found in the pact broker
 
 ```console
 $ pact_verifier_cli -b http://localhost -n 'happy_provider' -p 5050 --filter-consumer Consumer --filter-consumer Consumer2
-21:59:28 [WARN] pact_matching::models: No metadata found in pact file "http://localhost/pacts/provider/happy_provider/consumer/Consumer/version/1.0.0", assuming V1 specification
-21:59:28 [WARN] pact_matching::models: No metadata found in pact file "http://localhost/pacts/provider/happy_provider/consumer/Consumer2/version/1.0.0", assuming V1 specification
+21:59:28 [WARN] pact_matching::models: No metadata found in pact file "http://localhost/pacts/provider/happy_provider/consumer/Consumer/version/1.0.0", assuming V1.1 specification
+21:59:28 [WARN] pact_matching::models: No metadata found in pact file "http://localhost/pacts/provider/happy_provider/consumer/Consumer2/version/1.0.0", assuming V1.1 specification
 
 Verifying a pact between Consumer and happy_provider
   Given I am friends with Fred

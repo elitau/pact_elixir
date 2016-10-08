@@ -1,6 +1,6 @@
 //! The `pact_mock_server` crate provides the in-process mock server for mocking HTTP requests
-//! and generating responses based on a pact file. It implements the V1.1 Pact specification
-//! (https://github.com/pact-foundation/pact-specification/tree/version-1.1).
+//! and generating responses based on a pact file. It implements the V1 Pact specification
+//! (https://github.com/pact-foundation/pact-specification/tree/version-1).
 
 #![warn(missing_docs)]
 
@@ -42,7 +42,7 @@ use itertools::Itertools;
 /// Enum to define a match result
 #[derive(Debug, Clone, PartialEq)]
 pub enum MatchResult {
-    /// Match result where the request was successfully matched
+    /// Match result where the request was sucessfully matched
     RequestMatch(Interaction),
     /// Match result where there were a number of mismatches
     RequestMismatch(Interaction, Vec<Mismatch>),

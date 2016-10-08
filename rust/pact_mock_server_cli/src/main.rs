@@ -53,7 +53,7 @@ mod shutdown;
 
 fn print_version() {
     println!("\npact mock server version  : v{}", crate_version!());
-    println!("pact specification version: v{}", PactSpecification::V1.version_str());
+    println!("pact specification version: v{}", PactSpecification::V1_1.version_str());
 }
 
 fn setup_loggers(level: &str, command: &str, output: Option<&str>) -> Result<(), io::Error> {
@@ -66,10 +66,10 @@ fn setup_loggers(level: &str, command: &str, output: Option<&str>) -> Result<(),
             Some(p) => {
                 try!(fs::create_dir_all(p));
                 let mut path = PathBuf::from(p);
-                path.push("pact_v1_mock_server.log");
+                path.push("pact_mock_server.log");
                 path
             },
-            None => PathBuf::from("pact_v1_mock_server.log")
+            None => PathBuf::from("pact_mock_server.log")
         };
         let file = try!(OpenOptions::new()
             .read(false)

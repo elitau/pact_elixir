@@ -1,6 +1,6 @@
 //! The `pact_consumer` crate provides the test DSL for writing consumer pact tests.
-//! It implements the V1 Pact specification
-//! (https://github.com/pact-foundation/pact-specification/tree/version-1).
+//! It implements the V1.1 Pact specification
+//! (https://github.com/pact-foundation/pact-specification/tree/version-1.1).
 //!
 //! ## To use it
 //!
