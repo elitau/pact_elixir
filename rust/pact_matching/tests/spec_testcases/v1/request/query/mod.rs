@@ -8,11 +8,11 @@ use rustc_serialize::json::Json;
 use expectest::prelude::*;
 
 #[test]
-fn different_param_order() {
+fn trailing_amperand() {
     let pact = Json::from_str(r#"
       {
         "match": true,
-        "comment": "Query strings are matched using basic string equality, these are not equal. (Not supported)",
+        "comment": "Query strings are matched using basic string equality, these are not equal. (not supported)",
         "expected" : {
           "method": "GET",
           "path": "/path",
@@ -23,42 +23,7 @@ fn different_param_order() {
         "actual": {
           "method": "GET",
           "path": "/path",
-          "query": "hippo=John&alligator=Mary",
-          "headers": {}
-      
-        }
-      }
-    "#).unwrap();
-
-    let expected = Request::from_json(&pact.find("expected").unwrap(), &PactSpecification::V1);
-    println!("{:?}", expected);
-    let actual = Request::from_json(&pact.find("actual").unwrap(), &PactSpecification::V1);
-    println!("{:?}", actual);
-    let pact_match = pact.find("match").unwrap();
-    if pact_match.as_boolean().unwrap() {
-       expect!(match_request(expected, actual)).to(be_empty());
-    } else {
-       expect!(match_request(expected, actual)).to_not(be_empty());
-    }
-}
-
-#[test]
-fn different_param_values() {
-    let pact = Json::from_str(r#"
-      {
-        "match": false,
-        "comment": "Queries are not the same - hippo is Fred instead of John",
-        "expected" : {
-          "method": "GET",
-          "path": "/path",
-          "query": "alligator=Mary&hippo=John",
-          "headers": {}
-      
-        },
-        "actual": {
-          "method": "GET",
-          "path": "/path",
-          "query": "alligator=Mary&hippo=Fred",
+          "query": "alligator=Mary&hippo=John&",
           "headers": {}
       
         }
@@ -113,11 +78,11 @@ fn matches() {
 }
 
 #[test]
-fn trailing_amperand() {
+fn different_param_values() {
     let pact = Json::from_str(r#"
       {
-        "match": true,
-        "comment": "Query strings are matched using basic string equality, these are not equal. (not supported)",
+        "match": false,
+        "comment": "Queries are not the same - hippo is Fred instead of John",
         "expected" : {
           "method": "GET",
           "path": "/path",
@@ -128,7 +93,42 @@ fn trailing_amperand() {
         "actual": {
           "method": "GET",
           "path": "/path",
-          "query": "alligator=Mary&hippo=John&",
+          "query": "alligator=Mary&hippo=Fred",
+          "headers": {}
+      
+        }
+      }
+    "#).unwrap();
+
+    let expected = Request::from_json(&pact.find("expected").unwrap(), &PactSpecification::V1);
+    println!("{:?}", expected);
+    let actual = Request::from_json(&pact.find("actual").unwrap(), &PactSpecification::V1);
+    println!("{:?}", actual);
+    let pact_match = pact.find("match").unwrap();
+    if pact_match.as_boolean().unwrap() {
+       expect!(match_request(expected, actual)).to(be_empty());
+    } else {
+       expect!(match_request(expected, actual)).to_not(be_empty());
+    }
+}
+
+#[test]
+fn different_param_order() {
+    let pact = Json::from_str(r#"
+      {
+        "match": true,
+        "comment": "Query strings are matched using basic string equality, these are not equal. (Not supported)",
+        "expected" : {
+          "method": "GET",
+          "path": "/path",
+          "query": "alligator=Mary&hippo=John",
+          "headers": {}
+      
+        },
+        "actual": {
+          "method": "GET",
+          "path": "/path",
+          "query": "hippo=John&alligator=Mary",
           "headers": {}
       
         }

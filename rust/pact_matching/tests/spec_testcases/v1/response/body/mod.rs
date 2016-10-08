@@ -8,90 +8,629 @@ use rustc_serialize::json::Json;
 use expectest::prelude::*;
 
 #[test]
-fn array_in_different_order() {
+fn unexpected_key_with_null_value() {
     let pact = Json::from_str(r#"
       {
-        "match": false,
-        "comment": "Favourite colours in wrong order",
-        "expected" : {
-          "headers": {},
-          "body": {
-            "alligator":{
-              "favouriteColours": ["red","blue"]
-            }
-          }
-        },
-        "actual": {
-          "headers": {},
-          "body": {
-            "alligator":{
-              "favouriteColours": ["blue", "red"]
-            }
-          }
-        }
-      }
-    "#).unwrap();
-
-    let expected = Response::from_json(&pact.find("expected").unwrap(), &PactSpecification::V1);
-    println!("{:?}", expected);
-    let actual = Response::from_json(&pact.find("actual").unwrap(), &PactSpecification::V1);
-    println!("{:?}", actual);
-    let pact_match = pact.find("match").unwrap();
-    if pact_match.as_boolean().unwrap() {
-       expect!(match_response(expected, actual)).to(be_empty());
-    } else {
-       expect!(match_response(expected, actual)).to_not(be_empty());
-    }
-}
-
-#[test]
-fn different_value_found_at_index() {
-    let pact = Json::from_str(r#"
-      {
-        "match": false,
-        "comment": "Incorrect favourite colour",
-        "expected" : {
-          "headers": {},
-          "body": {
-            "alligator":{
-              "favouriteColours": ["red","blue"]
-            }
-          }
-        },
-        "actual": {
-          "headers": {},
-          "body": {
-            "alligator":{
-              "favouriteColours": ["red","taupe"]
-            }
-          }
-        }
-      }
-    "#).unwrap();
-
-    let expected = Response::from_json(&pact.find("expected").unwrap(), &PactSpecification::V1);
-    println!("{:?}", expected);
-    let actual = Response::from_json(&pact.find("actual").unwrap(), &PactSpecification::V1);
-    println!("{:?}", actual);
-    let pact_match = pact.find("match").unwrap();
-    if pact_match.as_boolean().unwrap() {
-       expect!(match_response(expected, actual)).to(be_empty());
-    } else {
-       expect!(match_response(expected, actual)).to_not(be_empty());
-    }
-}
-
-#[test]
-fn different_value_found_at_key() {
-    let pact = Json::from_str(r#"
-      {
-        "match": false,
-        "comment": "Incorrect value at alligator name",
+        "match": true,
+        "comment": "Unexpected phone number with null value",
         "expected" : {
           "headers": {},
           "body": {
             "alligator":{
               "name": "Mary"
+            }
+          }
+        },
+        "actual": {
+          "headers": {},
+          "body": {
+            "alligator":{
+              "name": "Mary",
+              "phoneNumber": null
+            }
+          }
+        }
+      }
+    "#).unwrap();
+
+    let expected = Response::from_json(&pact.find("expected").unwrap(), &PactSpecification::V1);
+    println!("{:?}", expected);
+    let actual = Response::from_json(&pact.find("actual").unwrap(), &PactSpecification::V1);
+    println!("{:?}", actual);
+    let pact_match = pact.find("match").unwrap();
+    if pact_match.as_boolean().unwrap() {
+       expect!(match_response(expected, actual)).to(be_empty());
+    } else {
+       expect!(match_response(expected, actual)).to_not(be_empty());
+    }
+}
+
+#[test]
+fn unexpected_key_with_not_null_value() {
+    let pact = Json::from_str(r#"
+      {
+        "match": true,
+        "comment": "Unexpected phone number",
+        "expected" : {
+          "headers": {},
+          "body": {
+            "alligator":{
+              "name": "Mary"
+            }
+          }
+        },
+        "actual": {
+          "headers": {},
+          "body": {
+            "alligator":{
+              "name": "Mary",
+              "phoneNumber": "12345678"
+            }
+          }
+        }
+      }
+    "#).unwrap();
+
+    let expected = Response::from_json(&pact.find("expected").unwrap(), &PactSpecification::V1);
+    println!("{:?}", expected);
+    let actual = Response::from_json(&pact.find("actual").unwrap(), &PactSpecification::V1);
+    println!("{:?}", actual);
+    let pact_match = pact.find("match").unwrap();
+    if pact_match.as_boolean().unwrap() {
+       expect!(match_response(expected, actual)).to(be_empty());
+    } else {
+       expect!(match_response(expected, actual)).to_not(be_empty());
+    }
+}
+
+#[test]
+fn unexpected_index_with_null_value() {
+    let pact = Json::from_str(r#"
+      {
+        "match": false,
+        "comment": "Unexpected favourite colour with null value",
+        "expected" : {
+          "headers": {},
+          "body": {
+            "alligator":{
+              "favouriteColours": ["red","blue"]
+            }
+          }
+        },
+        "actual": {
+          "headers": {},
+          "body": {
+            "alligator":{
+              "favouriteColours": ["red","blue", null]
+            }
+          }
+        }
+      }
+    "#).unwrap();
+
+    let expected = Response::from_json(&pact.find("expected").unwrap(), &PactSpecification::V1);
+    println!("{:?}", expected);
+    let actual = Response::from_json(&pact.find("actual").unwrap(), &PactSpecification::V1);
+    println!("{:?}", actual);
+    let pact_match = pact.find("match").unwrap();
+    if pact_match.as_boolean().unwrap() {
+       expect!(match_response(expected, actual)).to(be_empty());
+    } else {
+       expect!(match_response(expected, actual)).to_not(be_empty());
+    }
+}
+
+#[test]
+fn unexpected_index_with_not_null_value() {
+    let pact = Json::from_str(r#"
+      {
+        "match": false,
+        "comment": "Unexpected favourite colour",
+        "expected" : {
+          "headers": {},
+          "body": {
+            "alligator":{
+              "favouriteColours": ["red","blue"]
+            }
+          }
+        },
+        "actual": {
+          "headers": {},
+          "body": {
+            "alligator":{
+              "favouriteColours": ["red","blue","taupe"]
+            }
+          }
+        }
+      }
+    "#).unwrap();
+
+    let expected = Response::from_json(&pact.find("expected").unwrap(), &PactSpecification::V1);
+    println!("{:?}", expected);
+    let actual = Response::from_json(&pact.find("actual").unwrap(), &PactSpecification::V1);
+    println!("{:?}", actual);
+    let pact_match = pact.find("match").unwrap();
+    if pact_match.as_boolean().unwrap() {
+       expect!(match_response(expected, actual)).to(be_empty());
+    } else {
+       expect!(match_response(expected, actual)).to_not(be_empty());
+    }
+}
+
+#[test]
+fn string_found_in_array_when_number_expected() {
+    let pact = Json::from_str(r#"
+      {
+        "match": false,
+        "comment": "Favourite Numbers expected to be numbers, but 2 is a string",
+        "expected" : {
+          "headers": {},
+          "body": {
+            "alligator":{
+              "favouriteNumbers": [1,2,3]
+            }
+          }
+        },
+        "actual": {
+          "headers": {},
+          "body": {
+            "alligator":{
+              "favouriteNumbers": [1,"2",3]
+            }
+          }
+        }
+      }
+    "#).unwrap();
+
+    let expected = Response::from_json(&pact.find("expected").unwrap(), &PactSpecification::V1);
+    println!("{:?}", expected);
+    let actual = Response::from_json(&pact.find("actual").unwrap(), &PactSpecification::V1);
+    println!("{:?}", actual);
+    let pact_match = pact.find("match").unwrap();
+    if pact_match.as_boolean().unwrap() {
+       expect!(match_response(expected, actual)).to(be_empty());
+    } else {
+       expect!(match_response(expected, actual)).to_not(be_empty());
+    }
+}
+
+#[test]
+fn string_found_at_key_when_number_expected() {
+    let pact = Json::from_str(r#"
+      {
+        "match": false,
+        "comment": "Number of feet expected to be number but was string",
+        "expected" : {
+          "headers": {},
+          "body": {
+            "alligator":{
+              "feet": 4
+            }
+          }
+        },
+        "actual": {
+          "headers": {},
+          "body": {
+            "alligator":{
+              "feet": "4"
+            }
+          }
+        }
+      }
+    "#).unwrap();
+
+    let expected = Response::from_json(&pact.find("expected").unwrap(), &PactSpecification::V1);
+    println!("{:?}", expected);
+    let actual = Response::from_json(&pact.find("actual").unwrap(), &PactSpecification::V1);
+    println!("{:?}", actual);
+    let pact_match = pact.find("match").unwrap();
+    if pact_match.as_boolean().unwrap() {
+       expect!(match_response(expected, actual)).to(be_empty());
+    } else {
+       expect!(match_response(expected, actual)).to_not(be_empty());
+    }
+}
+
+#[test]
+fn property_name_is_different_case() {
+    let pact = Json::from_str(r#"
+      {
+        "match": false,
+        "comment": "Property names on objects are case sensitive",
+        "expected" : {
+          "headers": {},
+          "body": {
+            "alligator":{
+              "FavouriteColour": "red"
+            }
+          }
+        },
+        "actual": {
+          "headers": {},
+          "body": {
+            "alligator":{
+              "favouritecolour": "red"
+            }
+          }
+        }
+      }
+    "#).unwrap();
+
+    let expected = Response::from_json(&pact.find("expected").unwrap(), &PactSpecification::V1);
+    println!("{:?}", expected);
+    let actual = Response::from_json(&pact.find("actual").unwrap(), &PactSpecification::V1);
+    println!("{:?}", actual);
+    let pact_match = pact.find("match").unwrap();
+    if pact_match.as_boolean().unwrap() {
+       expect!(match_response(expected, actual)).to(be_empty());
+    } else {
+       expect!(match_response(expected, actual)).to_not(be_empty());
+    }
+}
+
+#[test]
+fn plain_text_that_matches() {
+    let pact = Json::from_str(r#"
+      {
+        "match": true,
+        "comment": "Plain text that matches",
+        "expected" : {
+          "headers": { "Content-Type": "text/plain" },
+          "body": "alligator named mary"
+        },
+        "actual": {
+          "headers": { "Content-Type": "text/plain" },
+          "body": "alligator named mary"
+        }
+      }
+    "#).unwrap();
+
+    let expected = Response::from_json(&pact.find("expected").unwrap(), &PactSpecification::V1);
+    println!("{:?}", expected);
+    let actual = Response::from_json(&pact.find("actual").unwrap(), &PactSpecification::V1);
+    println!("{:?}", actual);
+    let pact_match = pact.find("match").unwrap();
+    if pact_match.as_boolean().unwrap() {
+       expect!(match_response(expected, actual)).to(be_empty());
+    } else {
+       expect!(match_response(expected, actual)).to_not(be_empty());
+    }
+}
+
+#[test]
+fn plain_text_that_does_not_match() {
+    let pact = Json::from_str(r#"
+      {
+        "match": false,
+        "comment": "Plain text that does not match",
+        "expected" : {
+          "headers": { "Content-Type": "text/plain" },
+          "body": "alligator named mary"
+        },
+        "actual": {
+          "headers": { "Content-Type": "text/plain" },
+          "body": "alligator named fred"
+        }
+      }
+    "#).unwrap();
+
+    let expected = Response::from_json(&pact.find("expected").unwrap(), &PactSpecification::V1);
+    println!("{:?}", expected);
+    let actual = Response::from_json(&pact.find("actual").unwrap(), &PactSpecification::V1);
+    println!("{:?}", actual);
+    let pact_match = pact.find("match").unwrap();
+    if pact_match.as_boolean().unwrap() {
+       expect!(match_response(expected, actual)).to(be_empty());
+    } else {
+       expect!(match_response(expected, actual)).to_not(be_empty());
+    }
+}
+
+#[test]
+fn objects_in_array_second_matches() {
+    let pact = Json::from_str(r#"
+      {
+        "match": false,
+        "comment": "Property of second object matches, but unexpected element recieved",
+        "expected" : {
+          "headers": {},
+          "body": [
+      		{"favouriteColor": "red"}
+      	]
+        },
+        "actual": {
+          "headers": {},
+          "body": [
+      		{"favouriteColor": "blue",
+      		"favouriteNumber": 4},
+      		{"favouriteColor": "red",
+      		"favouriteNumber": 2}
+      	]
+        }
+      }
+    "#).unwrap();
+
+    let expected = Response::from_json(&pact.find("expected").unwrap(), &PactSpecification::V1);
+    println!("{:?}", expected);
+    let actual = Response::from_json(&pact.find("actual").unwrap(), &PactSpecification::V1);
+    println!("{:?}", actual);
+    let pact_match = pact.find("match").unwrap();
+    if pact_match.as_boolean().unwrap() {
+       expect!(match_response(expected, actual)).to(be_empty());
+    } else {
+       expect!(match_response(expected, actual)).to_not(be_empty());
+    }
+}
+
+#[test]
+fn objects_in_array_no_matches() {
+    let pact = Json::from_str(r#"
+      {
+        "match": false,
+        "comment": "Array of objects, properties match on incorrect objects",
+        "expected" : {
+          "headers": {},
+          "body": [
+      		{"favouriteColor": "red"},
+      		{"favouriteNumber": 2}
+      	]
+        },
+        "actual": {
+          "headers": {},
+          "body": [
+      		{"favouriteColor": "blue",
+      		"favouriteNumber": 4},
+      		{"favouriteColor": "red",
+      		"favouriteNumber": 2}
+      	]
+        }
+      }
+    "#).unwrap();
+
+    let expected = Response::from_json(&pact.find("expected").unwrap(), &PactSpecification::V1);
+    println!("{:?}", expected);
+    let actual = Response::from_json(&pact.find("actual").unwrap(), &PactSpecification::V1);
+    println!("{:?}", actual);
+    let pact_match = pact.find("match").unwrap();
+    if pact_match.as_boolean().unwrap() {
+       expect!(match_response(expected, actual)).to(be_empty());
+    } else {
+       expect!(match_response(expected, actual)).to_not(be_empty());
+    }
+}
+
+#[test]
+fn objects_in_array_first_matches() {
+    let pact = Json::from_str(r#"
+      {
+        "match": false,
+        "comment": "Properties match but unexpected element recieved",
+        "expected" : {
+          "headers": {},
+          "body": [
+      		{"favouriteColor": "red"}
+      	]
+        },
+        "actual": {
+          "headers": {},
+          "body": [
+      		{"favouriteColor": "red",
+      		"favouriteNumber": 2},
+      		{"favouriteColor": "blue",
+      		"favouriteNumber": 2}
+      	]
+        }
+      }
+    "#).unwrap();
+
+    let expected = Response::from_json(&pact.find("expected").unwrap(), &PactSpecification::V1);
+    println!("{:?}", expected);
+    let actual = Response::from_json(&pact.find("actual").unwrap(), &PactSpecification::V1);
+    println!("{:?}", actual);
+    let pact_match = pact.find("match").unwrap();
+    if pact_match.as_boolean().unwrap() {
+       expect!(match_response(expected, actual)).to(be_empty());
+    } else {
+       expect!(match_response(expected, actual)).to_not(be_empty());
+    }
+}
+
+#[test]
+fn number_found_in_array_when_string_expected() {
+    let pact = Json::from_str(r#"
+      {
+        "match": false,
+        "comment": "Favourite numbers expected to be strings found a number",
+        "expected" : {
+          "headers": {},
+          "body": {
+            "alligator":{
+              "favouriteNumbers": ["1","2","3"]
+            }
+          }
+        },
+        "actual": {
+          "headers": {},
+          "body": {
+            "alligator":{
+              "favouriteNumbers": ["1",2,"3"]
+            }
+          }
+        }
+      }
+    "#).unwrap();
+
+    let expected = Response::from_json(&pact.find("expected").unwrap(), &PactSpecification::V1);
+    println!("{:?}", expected);
+    let actual = Response::from_json(&pact.find("actual").unwrap(), &PactSpecification::V1);
+    println!("{:?}", actual);
+    let pact_match = pact.find("match").unwrap();
+    if pact_match.as_boolean().unwrap() {
+       expect!(match_response(expected, actual)).to(be_empty());
+    } else {
+       expect!(match_response(expected, actual)).to_not(be_empty());
+    }
+}
+
+#[test]
+fn number_found_at_key_when_string_expected() {
+    let pact = Json::from_str(r#"
+      {
+        "match": false,
+        "comment": "Number of feet expected to be string but was number",
+        "expected" : {
+          "headers": {},
+          "body": {
+            "alligator":{
+              "feet": "4"
+            }
+          }
+        },
+        "actual": {
+          "headers": {},
+          "body": {
+            "alligator":{
+              "feet": 4
+            }
+          }
+        }
+      }
+    "#).unwrap();
+
+    let expected = Response::from_json(&pact.find("expected").unwrap(), &PactSpecification::V1);
+    println!("{:?}", expected);
+    let actual = Response::from_json(&pact.find("actual").unwrap(), &PactSpecification::V1);
+    println!("{:?}", actual);
+    let pact_match = pact.find("match").unwrap();
+    if pact_match.as_boolean().unwrap() {
+       expect!(match_response(expected, actual)).to(be_empty());
+    } else {
+       expect!(match_response(expected, actual)).to_not(be_empty());
+    }
+}
+
+#[test]
+fn null_found_in_array_when_not_null_expected() {
+    let pact = Json::from_str(r#"
+      {
+        "match": false,
+        "comment": "Favourite numbers expected to be strings found a null",
+        "expected" : {
+          "headers": {},
+          "body": {
+            "alligator":{
+              "favouriteNumbers": ["1","2","3"]
+            }
+          }
+        },
+        "actual": {
+          "headers": {},
+          "body": {
+            "alligator":{
+              "favouriteNumbers": ["1",null,"3"]
+            }
+          }
+        }
+      }
+    "#).unwrap();
+
+    let expected = Response::from_json(&pact.find("expected").unwrap(), &PactSpecification::V1);
+    println!("{:?}", expected);
+    let actual = Response::from_json(&pact.find("actual").unwrap(), &PactSpecification::V1);
+    println!("{:?}", actual);
+    let pact_match = pact.find("match").unwrap();
+    if pact_match.as_boolean().unwrap() {
+       expect!(match_response(expected, actual)).to(be_empty());
+    } else {
+       expect!(match_response(expected, actual)).to_not(be_empty());
+    }
+}
+
+#[test]
+fn null_found_at_key_where_not_null_expected() {
+    let pact = Json::from_str(r#"
+      {
+        "match": false,
+        "comment": "Name should not be null",
+        "expected" : {
+          "headers": {},
+          "body": {
+            "alligator":{
+              "name": "Mary"
+            }
+          }
+        },
+        "actual": {
+          "headers": {},
+          "body": {
+            "alligator":{
+              "name": null
+            }
+          }
+        }
+      }
+    "#).unwrap();
+
+    let expected = Response::from_json(&pact.find("expected").unwrap(), &PactSpecification::V1);
+    println!("{:?}", expected);
+    let actual = Response::from_json(&pact.find("actual").unwrap(), &PactSpecification::V1);
+    println!("{:?}", actual);
+    let pact_match = pact.find("match").unwrap();
+    if pact_match.as_boolean().unwrap() {
+       expect!(match_response(expected, actual)).to(be_empty());
+    } else {
+       expect!(match_response(expected, actual)).to_not(be_empty());
+    }
+}
+
+#[test]
+fn not_null_found_in_array_when_null_expected() {
+    let pact = Json::from_str(r#"
+      {
+        "match": false,
+        "comment": "Favourite numbers expected to contain null, but not null found",
+        "expected" : {
+          "headers": {},
+          "body": {
+            "alligator":{
+              "favouriteNumbers": ["1",null,"3"]
+            }
+          }
+        },
+        "actual": {
+          "headers": {},
+          "body": {
+            "alligator":{
+              "favouriteNumbers": ["1","2","3"]
+            }
+          }
+        }
+      }
+    "#).unwrap();
+
+    let expected = Response::from_json(&pact.find("expected").unwrap(), &PactSpecification::V1);
+    println!("{:?}", expected);
+    let actual = Response::from_json(&pact.find("actual").unwrap(), &PactSpecification::V1);
+    println!("{:?}", actual);
+    let pact_match = pact.find("match").unwrap();
+    if pact_match.as_boolean().unwrap() {
+       expect!(match_response(expected, actual)).to(be_empty());
+    } else {
+       expect!(match_response(expected, actual)).to_not(be_empty());
+    }
+}
+
+#[test]
+fn not_null_found_at_key_when_null_expected() {
+    let pact = Json::from_str(r#"
+      {
+        "match": false,
+        "comment": "Name should be null",
+        "expected" : {
+          "headers": {},
+          "body": {
+            "alligator":{
+              "name": null
             }
           }
         },
@@ -119,23 +658,63 @@ fn different_value_found_at_key() {
 }
 
 #[test]
-fn keys_out_of_order_match() {
+fn missing_key() {
     let pact = Json::from_str(r#"
       {
-        "match": true,
-        "comment": "Favourite number and favourite colours out of order",
+        "match": false,
+        "comment": "Missing key alligator name",
         "expected" : {
           "headers": {},
           "body": {
-      		"favouriteNumber": 7,
-              "favouriteColours": ["red","blue"]
+            "alligator":{
+              "name": "Mary",
+              "age": 3
+            }
           }
         },
         "actual": {
           "headers": {},
           "body": {
-              "favouriteColours": ["red","blue"],
-      		"favouriteNumber": 7
+            "alligator": {
+              "age": 3
+            }
+          }
+        }
+      }
+    "#).unwrap();
+
+    let expected = Response::from_json(&pact.find("expected").unwrap(), &PactSpecification::V1);
+    println!("{:?}", expected);
+    let actual = Response::from_json(&pact.find("actual").unwrap(), &PactSpecification::V1);
+    println!("{:?}", actual);
+    let pact_match = pact.find("match").unwrap();
+    if pact_match.as_boolean().unwrap() {
+       expect!(match_response(expected, actual)).to(be_empty());
+    } else {
+       expect!(match_response(expected, actual)).to_not(be_empty());
+    }
+}
+
+#[test]
+fn missing_index() {
+    let pact = Json::from_str(r#"
+      {
+        "match": false,
+        "comment": "Missing favorite colour",
+        "expected" : {
+          "headers": {},
+          "body": {
+            "alligator":{
+              "favouriteColours": ["red","blue"]
+            }
+          }
+        },
+        "actual": {
+          "headers": {},
+          "body": {
+            "alligator": {
+              "favouriteColours": ["red"]
+            }
           }
         }
       }
@@ -195,25 +774,23 @@ fn matches() {
 }
 
 #[test]
-fn missing_index() {
+fn keys_out_of_order_match() {
     let pact = Json::from_str(r#"
       {
-        "match": false,
-        "comment": "Missing favorite colour",
+        "match": true,
+        "comment": "Favourite number and favourite colours out of order",
         "expected" : {
           "headers": {},
           "body": {
-            "alligator":{
+      		"favouriteNumber": 7,
               "favouriteColours": ["red","blue"]
-            }
           }
         },
         "actual": {
           "headers": {},
           "body": {
-            "alligator": {
-              "favouriteColours": ["red"]
-            }
+              "favouriteColours": ["red","blue"],
+      		"favouriteNumber": 7
           }
         }
       }
@@ -232,54 +809,16 @@ fn missing_index() {
 }
 
 #[test]
-fn missing_key() {
+fn different_value_found_at_key() {
     let pact = Json::from_str(r#"
       {
         "match": false,
-        "comment": "Missing key alligator name",
+        "comment": "Incorrect value at alligator name",
         "expected" : {
           "headers": {},
           "body": {
             "alligator":{
-              "name": "Mary",
-              "age": 3
-            }
-          }
-        },
-        "actual": {
-          "headers": {},
-          "body": {
-            "alligator": {
-              "age": 3
-            }
-          }
-        }
-      }
-    "#).unwrap();
-
-    let expected = Response::from_json(&pact.find("expected").unwrap(), &PactSpecification::V1);
-    println!("{:?}", expected);
-    let actual = Response::from_json(&pact.find("actual").unwrap(), &PactSpecification::V1);
-    println!("{:?}", actual);
-    let pact_match = pact.find("match").unwrap();
-    if pact_match.as_boolean().unwrap() {
-       expect!(match_response(expected, actual)).to(be_empty());
-    } else {
-       expect!(match_response(expected, actual)).to_not(be_empty());
-    }
-}
-
-#[test]
-fn not_null_found_at_key_when_null_expected() {
-    let pact = Json::from_str(r#"
-      {
-        "match": false,
-        "comment": "Name should be null",
-        "expected" : {
-          "headers": {},
-          "body": {
-            "alligator":{
-              "name": null
+              "name": "Mary"
             }
           }
         },
@@ -307,474 +846,11 @@ fn not_null_found_at_key_when_null_expected() {
 }
 
 #[test]
-fn not_null_found_in_array_when_null_expected() {
+fn different_value_found_at_index() {
     let pact = Json::from_str(r#"
       {
         "match": false,
-        "comment": "Favourite numbers expected to contain null, but not null found",
-        "expected" : {
-          "headers": {},
-          "body": {
-            "alligator":{
-              "favouriteNumbers": ["1",null,"3"]
-            }
-          }
-        },
-        "actual": {
-          "headers": {},
-          "body": {
-            "alligator":{
-              "favouriteNumbers": ["1","2","3"]
-            }
-          }
-        }
-      }
-    "#).unwrap();
-
-    let expected = Response::from_json(&pact.find("expected").unwrap(), &PactSpecification::V1);
-    println!("{:?}", expected);
-    let actual = Response::from_json(&pact.find("actual").unwrap(), &PactSpecification::V1);
-    println!("{:?}", actual);
-    let pact_match = pact.find("match").unwrap();
-    if pact_match.as_boolean().unwrap() {
-       expect!(match_response(expected, actual)).to(be_empty());
-    } else {
-       expect!(match_response(expected, actual)).to_not(be_empty());
-    }
-}
-
-#[test]
-fn null_found_at_key_where_not_null_expected() {
-    let pact = Json::from_str(r#"
-      {
-        "match": false,
-        "comment": "Name should not be null",
-        "expected" : {
-          "headers": {},
-          "body": {
-            "alligator":{
-              "name": "Mary"
-            }
-          }
-        },
-        "actual": {
-          "headers": {},
-          "body": {
-            "alligator":{
-              "name": null
-            }
-          }
-        }
-      }
-    "#).unwrap();
-
-    let expected = Response::from_json(&pact.find("expected").unwrap(), &PactSpecification::V1);
-    println!("{:?}", expected);
-    let actual = Response::from_json(&pact.find("actual").unwrap(), &PactSpecification::V1);
-    println!("{:?}", actual);
-    let pact_match = pact.find("match").unwrap();
-    if pact_match.as_boolean().unwrap() {
-       expect!(match_response(expected, actual)).to(be_empty());
-    } else {
-       expect!(match_response(expected, actual)).to_not(be_empty());
-    }
-}
-
-#[test]
-fn null_found_in_array_when_not_null_expected() {
-    let pact = Json::from_str(r#"
-      {
-        "match": false,
-        "comment": "Favourite numbers expected to be strings found a null",
-        "expected" : {
-          "headers": {},
-          "body": {
-            "alligator":{
-              "favouriteNumbers": ["1","2","3"]
-            }
-          }
-        },
-        "actual": {
-          "headers": {},
-          "body": {
-            "alligator":{
-              "favouriteNumbers": ["1",null,"3"]
-            }
-          }
-        }
-      }
-    "#).unwrap();
-
-    let expected = Response::from_json(&pact.find("expected").unwrap(), &PactSpecification::V1);
-    println!("{:?}", expected);
-    let actual = Response::from_json(&pact.find("actual").unwrap(), &PactSpecification::V1);
-    println!("{:?}", actual);
-    let pact_match = pact.find("match").unwrap();
-    if pact_match.as_boolean().unwrap() {
-       expect!(match_response(expected, actual)).to(be_empty());
-    } else {
-       expect!(match_response(expected, actual)).to_not(be_empty());
-    }
-}
-
-#[test]
-fn number_found_at_key_when_string_expected() {
-    let pact = Json::from_str(r#"
-      {
-        "match": false,
-        "comment": "Number of feet expected to be string but was number",
-        "expected" : {
-          "headers": {},
-          "body": {
-            "alligator":{
-              "feet": "4"
-            }
-          }
-        },
-        "actual": {
-          "headers": {},
-          "body": {
-            "alligator":{
-              "feet": 4
-            }
-          }
-        }
-      }
-    "#).unwrap();
-
-    let expected = Response::from_json(&pact.find("expected").unwrap(), &PactSpecification::V1);
-    println!("{:?}", expected);
-    let actual = Response::from_json(&pact.find("actual").unwrap(), &PactSpecification::V1);
-    println!("{:?}", actual);
-    let pact_match = pact.find("match").unwrap();
-    if pact_match.as_boolean().unwrap() {
-       expect!(match_response(expected, actual)).to(be_empty());
-    } else {
-       expect!(match_response(expected, actual)).to_not(be_empty());
-    }
-}
-
-#[test]
-fn number_found_in_array_when_string_expected() {
-    let pact = Json::from_str(r#"
-      {
-        "match": false,
-        "comment": "Favourite numbers expected to be strings found a number",
-        "expected" : {
-          "headers": {},
-          "body": {
-            "alligator":{
-              "favouriteNumbers": ["1","2","3"]
-            }
-          }
-        },
-        "actual": {
-          "headers": {},
-          "body": {
-            "alligator":{
-              "favouriteNumbers": ["1",2,"3"]
-            }
-          }
-        }
-      }
-    "#).unwrap();
-
-    let expected = Response::from_json(&pact.find("expected").unwrap(), &PactSpecification::V1);
-    println!("{:?}", expected);
-    let actual = Response::from_json(&pact.find("actual").unwrap(), &PactSpecification::V1);
-    println!("{:?}", actual);
-    let pact_match = pact.find("match").unwrap();
-    if pact_match.as_boolean().unwrap() {
-       expect!(match_response(expected, actual)).to(be_empty());
-    } else {
-       expect!(match_response(expected, actual)).to_not(be_empty());
-    }
-}
-
-#[test]
-fn objects_in_array_first_matches() {
-    let pact = Json::from_str(r#"
-      {
-        "match": false,
-        "comment": "Properties match but unexpected element recieved",
-        "expected" : {
-          "headers": {},
-          "body": [
-      		{"favouriteColor": "red"}
-      	]
-        },
-        "actual": {
-          "headers": {},
-          "body": [
-      		{"favouriteColor": "red",
-      		"favouriteNumber": 2},
-      		{"favouriteColor": "blue",
-      		"favouriteNumber": 2}
-      	]
-        }
-      }
-    "#).unwrap();
-
-    let expected = Response::from_json(&pact.find("expected").unwrap(), &PactSpecification::V1);
-    println!("{:?}", expected);
-    let actual = Response::from_json(&pact.find("actual").unwrap(), &PactSpecification::V1);
-    println!("{:?}", actual);
-    let pact_match = pact.find("match").unwrap();
-    if pact_match.as_boolean().unwrap() {
-       expect!(match_response(expected, actual)).to(be_empty());
-    } else {
-       expect!(match_response(expected, actual)).to_not(be_empty());
-    }
-}
-
-#[test]
-fn objects_in_array_no_matches() {
-    let pact = Json::from_str(r#"
-      {
-        "match": false,
-        "comment": "Array of objects, properties match on incorrect objects",
-        "expected" : {
-          "headers": {},
-          "body": [
-      		{"favouriteColor": "red"},
-      		{"favouriteNumber": 2}
-      	]
-        },
-        "actual": {
-          "headers": {},
-          "body": [
-      		{"favouriteColor": "blue",
-      		"favouriteNumber": 4},
-      		{"favouriteColor": "red",
-      		"favouriteNumber": 2}
-      	]
-        }
-      }
-    "#).unwrap();
-
-    let expected = Response::from_json(&pact.find("expected").unwrap(), &PactSpecification::V1);
-    println!("{:?}", expected);
-    let actual = Response::from_json(&pact.find("actual").unwrap(), &PactSpecification::V1);
-    println!("{:?}", actual);
-    let pact_match = pact.find("match").unwrap();
-    if pact_match.as_boolean().unwrap() {
-       expect!(match_response(expected, actual)).to(be_empty());
-    } else {
-       expect!(match_response(expected, actual)).to_not(be_empty());
-    }
-}
-
-#[test]
-fn objects_in_array_second_matches() {
-    let pact = Json::from_str(r#"
-      {
-        "match": false,
-        "comment": "Property of second object matches, but unexpected element recieved",
-        "expected" : {
-          "headers": {},
-          "body": [
-      		{"favouriteColor": "red"}
-      	]
-        },
-        "actual": {
-          "headers": {},
-          "body": [
-      		{"favouriteColor": "blue",
-      		"favouriteNumber": 4},
-      		{"favouriteColor": "red",
-      		"favouriteNumber": 2}
-      	]
-        }
-      }
-    "#).unwrap();
-
-    let expected = Response::from_json(&pact.find("expected").unwrap(), &PactSpecification::V1);
-    println!("{:?}", expected);
-    let actual = Response::from_json(&pact.find("actual").unwrap(), &PactSpecification::V1);
-    println!("{:?}", actual);
-    let pact_match = pact.find("match").unwrap();
-    if pact_match.as_boolean().unwrap() {
-       expect!(match_response(expected, actual)).to(be_empty());
-    } else {
-       expect!(match_response(expected, actual)).to_not(be_empty());
-    }
-}
-
-#[test]
-fn plain_text_that_does_not_match() {
-    let pact = Json::from_str(r#"
-      {
-        "match": false,
-        "comment": "Plain text that does not match",
-        "expected" : {
-          "headers": { "Content-Type": "text/plain" },
-          "body": "alligator named mary"
-        },
-        "actual": {
-          "headers": { "Content-Type": "text/plain" },
-          "body": "alligator named fred"
-        }
-      }
-    "#).unwrap();
-
-    let expected = Response::from_json(&pact.find("expected").unwrap(), &PactSpecification::V1);
-    println!("{:?}", expected);
-    let actual = Response::from_json(&pact.find("actual").unwrap(), &PactSpecification::V1);
-    println!("{:?}", actual);
-    let pact_match = pact.find("match").unwrap();
-    if pact_match.as_boolean().unwrap() {
-       expect!(match_response(expected, actual)).to(be_empty());
-    } else {
-       expect!(match_response(expected, actual)).to_not(be_empty());
-    }
-}
-
-#[test]
-fn plain_text_that_matches() {
-    let pact = Json::from_str(r#"
-      {
-        "match": true,
-        "comment": "Plain text that matches",
-        "expected" : {
-          "headers": { "Content-Type": "text/plain" },
-          "body": "alligator named mary"
-        },
-        "actual": {
-          "headers": { "Content-Type": "text/plain" },
-          "body": "alligator named mary"
-        }
-      }
-    "#).unwrap();
-
-    let expected = Response::from_json(&pact.find("expected").unwrap(), &PactSpecification::V1);
-    println!("{:?}", expected);
-    let actual = Response::from_json(&pact.find("actual").unwrap(), &PactSpecification::V1);
-    println!("{:?}", actual);
-    let pact_match = pact.find("match").unwrap();
-    if pact_match.as_boolean().unwrap() {
-       expect!(match_response(expected, actual)).to(be_empty());
-    } else {
-       expect!(match_response(expected, actual)).to_not(be_empty());
-    }
-}
-
-#[test]
-fn property_name_is_different_case() {
-    let pact = Json::from_str(r#"
-      {
-        "match": false,
-        "comment": "Property names on objects are case sensitive",
-        "expected" : {
-          "headers": {},
-          "body": {
-            "alligator":{
-              "FavouriteColour": "red"
-            }
-          }
-        },
-        "actual": {
-          "headers": {},
-          "body": {
-            "alligator":{
-              "favouritecolour": "red"
-            }
-          }
-        }
-      }
-    "#).unwrap();
-
-    let expected = Response::from_json(&pact.find("expected").unwrap(), &PactSpecification::V1);
-    println!("{:?}", expected);
-    let actual = Response::from_json(&pact.find("actual").unwrap(), &PactSpecification::V1);
-    println!("{:?}", actual);
-    let pact_match = pact.find("match").unwrap();
-    if pact_match.as_boolean().unwrap() {
-       expect!(match_response(expected, actual)).to(be_empty());
-    } else {
-       expect!(match_response(expected, actual)).to_not(be_empty());
-    }
-}
-
-#[test]
-fn string_found_at_key_when_number_expected() {
-    let pact = Json::from_str(r#"
-      {
-        "match": false,
-        "comment": "Number of feet expected to be number but was string",
-        "expected" : {
-          "headers": {},
-          "body": {
-            "alligator":{
-              "feet": 4
-            }
-          }
-        },
-        "actual": {
-          "headers": {},
-          "body": {
-            "alligator":{
-              "feet": "4"
-            }
-          }
-        }
-      }
-    "#).unwrap();
-
-    let expected = Response::from_json(&pact.find("expected").unwrap(), &PactSpecification::V1);
-    println!("{:?}", expected);
-    let actual = Response::from_json(&pact.find("actual").unwrap(), &PactSpecification::V1);
-    println!("{:?}", actual);
-    let pact_match = pact.find("match").unwrap();
-    if pact_match.as_boolean().unwrap() {
-       expect!(match_response(expected, actual)).to(be_empty());
-    } else {
-       expect!(match_response(expected, actual)).to_not(be_empty());
-    }
-}
-
-#[test]
-fn string_found_in_array_when_number_expected() {
-    let pact = Json::from_str(r#"
-      {
-        "match": false,
-        "comment": "Favourite Numbers expected to be numbers, but 2 is a string",
-        "expected" : {
-          "headers": {},
-          "body": {
-            "alligator":{
-              "favouriteNumbers": [1,2,3]
-            }
-          }
-        },
-        "actual": {
-          "headers": {},
-          "body": {
-            "alligator":{
-              "favouriteNumbers": [1,"2",3]
-            }
-          }
-        }
-      }
-    "#).unwrap();
-
-    let expected = Response::from_json(&pact.find("expected").unwrap(), &PactSpecification::V1);
-    println!("{:?}", expected);
-    let actual = Response::from_json(&pact.find("actual").unwrap(), &PactSpecification::V1);
-    println!("{:?}", actual);
-    let pact_match = pact.find("match").unwrap();
-    if pact_match.as_boolean().unwrap() {
-       expect!(match_response(expected, actual)).to(be_empty());
-    } else {
-       expect!(match_response(expected, actual)).to_not(be_empty());
-    }
-}
-
-#[test]
-fn unexpected_index_with_not_null_value() {
-    let pact = Json::from_str(r#"
-      {
-        "match": false,
-        "comment": "Unexpected favourite colour",
+        "comment": "Incorrect favourite colour",
         "expected" : {
           "headers": {},
           "body": {
@@ -787,120 +863,7 @@ fn unexpected_index_with_not_null_value() {
           "headers": {},
           "body": {
             "alligator":{
-              "favouriteColours": ["red","blue","taupe"]
-            }
-          }
-        }
-      }
-    "#).unwrap();
-
-    let expected = Response::from_json(&pact.find("expected").unwrap(), &PactSpecification::V1);
-    println!("{:?}", expected);
-    let actual = Response::from_json(&pact.find("actual").unwrap(), &PactSpecification::V1);
-    println!("{:?}", actual);
-    let pact_match = pact.find("match").unwrap();
-    if pact_match.as_boolean().unwrap() {
-       expect!(match_response(expected, actual)).to(be_empty());
-    } else {
-       expect!(match_response(expected, actual)).to_not(be_empty());
-    }
-}
-
-#[test]
-fn unexpected_index_with_null_value() {
-    let pact = Json::from_str(r#"
-      {
-        "match": false,
-        "comment": "Unexpected favourite colour with null value",
-        "expected" : {
-          "headers": {},
-          "body": {
-            "alligator":{
-              "favouriteColours": ["red","blue"]
-            }
-          }
-        },
-        "actual": {
-          "headers": {},
-          "body": {
-            "alligator":{
-              "favouriteColours": ["red","blue", null]
-            }
-          }
-        }
-      }
-    "#).unwrap();
-
-    let expected = Response::from_json(&pact.find("expected").unwrap(), &PactSpecification::V1);
-    println!("{:?}", expected);
-    let actual = Response::from_json(&pact.find("actual").unwrap(), &PactSpecification::V1);
-    println!("{:?}", actual);
-    let pact_match = pact.find("match").unwrap();
-    if pact_match.as_boolean().unwrap() {
-       expect!(match_response(expected, actual)).to(be_empty());
-    } else {
-       expect!(match_response(expected, actual)).to_not(be_empty());
-    }
-}
-
-#[test]
-fn unexpected_key_with_not_null_value() {
-    let pact = Json::from_str(r#"
-      {
-        "match": true,
-        "comment": "Unexpected phone number",
-        "expected" : {
-          "headers": {},
-          "body": {
-            "alligator":{
-              "name": "Mary"
-            }
-          }
-        },
-        "actual": {
-          "headers": {},
-          "body": {
-            "alligator":{
-              "name": "Mary",
-              "phoneNumber": "12345678"
-            }
-          }
-        }
-      }
-    "#).unwrap();
-
-    let expected = Response::from_json(&pact.find("expected").unwrap(), &PactSpecification::V1);
-    println!("{:?}", expected);
-    let actual = Response::from_json(&pact.find("actual").unwrap(), &PactSpecification::V1);
-    println!("{:?}", actual);
-    let pact_match = pact.find("match").unwrap();
-    if pact_match.as_boolean().unwrap() {
-       expect!(match_response(expected, actual)).to(be_empty());
-    } else {
-       expect!(match_response(expected, actual)).to_not(be_empty());
-    }
-}
-
-#[test]
-fn unexpected_key_with_null_value() {
-    let pact = Json::from_str(r#"
-      {
-        "match": true,
-        "comment": "Unexpected phone number with null value",
-        "expected" : {
-          "headers": {},
-          "body": {
-            "alligator":{
-              "name": "Mary"
-            }
-          }
-        },
-        "actual": {
-          "headers": {},
-          "body": {
-            "alligator":{
-              "name": "Mary",
-              "phoneNumber": null
+              "favouriteColours": ["red","taupe"]
             }
           }
         }
@@ -963,6 +926,43 @@ fn deeply_nested_objects() {
       			}
       		}
       	}
+      }
+    "#).unwrap();
+
+    let expected = Response::from_json(&pact.find("expected").unwrap(), &PactSpecification::V1);
+    println!("{:?}", expected);
+    let actual = Response::from_json(&pact.find("actual").unwrap(), &PactSpecification::V1);
+    println!("{:?}", actual);
+    let pact_match = pact.find("match").unwrap();
+    if pact_match.as_boolean().unwrap() {
+       expect!(match_response(expected, actual)).to(be_empty());
+    } else {
+       expect!(match_response(expected, actual)).to_not(be_empty());
+    }
+}
+
+#[test]
+fn array_in_different_order() {
+    let pact = Json::from_str(r#"
+      {
+        "match": false,
+        "comment": "Favourite colours in wrong order",
+        "expected" : {
+          "headers": {},
+          "body": {
+            "alligator":{
+              "favouriteColours": ["red","blue"]
+            }
+          }
+        },
+        "actual": {
+          "headers": {},
+          "body": {
+            "alligator":{
+              "favouriteColours": ["blue", "red"]
+            }
+          }
+        }
       }
     "#).unwrap();
 
