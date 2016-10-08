@@ -16,7 +16,7 @@ fn is_true(object: &BTreeMap<String, Json>, field: &String) -> bool {
     match object.get(field) {
         Some(json) => match json {
             &Json::Boolean(b) => b,
-            _e => false
+            _ => false
         },
         None => false
     }
