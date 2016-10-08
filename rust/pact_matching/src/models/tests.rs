@@ -76,6 +76,16 @@ fn parse_query_string_handles_missing_values() {
 }
 
 #[test]
+fn parse_query_string_handles_equals_in_values() {
+    let query = "a=b&c=d=e=f".to_string();
+    let mut expected = HashMap::new();
+    expected.insert("a".to_string(), vec!["b".to_string()]);
+    expected.insert("c".to_string(), vec!["d=e=f".to_string()]);
+    let result = parse_query_string(&query);
+    assert_eq!(result, Some(expected));
+}
+
+#[test]
 fn parse_query_string_decodes_values() {
     let query = "a=a%20b%20c".to_string();
     let mut expected = HashMap::new();

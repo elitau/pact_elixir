@@ -978,7 +978,7 @@ pub fn parse_query_string(query: &String) -> Option<HashMap<String, Vec<String>>
             if kv.is_empty() {
                 vec![]
             } else if kv.contains("=") {
-                kv.split("=").collect::<Vec<&str>>()
+                kv.splitn(2, "=").collect::<Vec<&str>>()
             } else {
                 vec![kv]
             }
