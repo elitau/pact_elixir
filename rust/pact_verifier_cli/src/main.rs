@@ -11,7 +11,7 @@
 //! The pact verifier is bundled as a single binary executable `pact_verifier_cli`. Running this with out any options displays the standard help.
 //!
 //! ```console,ignore
-//! pact_verifier_cli v0.0.0
+//! pact_verifier_cli v0.1.0
 //! Standalone Pact verifier
 //!
 //! USAGE:
