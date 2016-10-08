@@ -248,7 +248,7 @@ fn handle_command_args() -> Result<(), i32> {
         Err(ref err) => {
             match err.kind {
                 ErrorKind::HelpDisplayed => {
-                    println!("");
+                    println!("{}", err.message);
                     Ok(())
                 },
                 ErrorKind::VersionDisplayed => {
@@ -257,7 +257,7 @@ fn handle_command_args() -> Result<(), i32> {
                     Ok(())
                 },
                 _ => {
-                    println!("");
+                    println!("{}", err.message);
                     err.exit()
                 }
             }
