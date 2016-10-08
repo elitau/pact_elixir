@@ -11,7 +11,7 @@ To use it, add it to your dev-dependencies in your cargo manifest and add an ext
 
 ```
 [dev-dependencies]
-pact_consumer = "0.0.0"
+pact_consumer = "0.1.0"
 ```
 
 Then in your main module

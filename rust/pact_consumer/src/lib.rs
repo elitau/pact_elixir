@@ -8,7 +8,7 @@
 //!
 //! ```ignore
 //! [dev-dependencies]
-//! pact_consumer = "0.0.0"
+//! pact_consumer = "0.1.0"
 //! ```
 //!
 //! Then in your main module
