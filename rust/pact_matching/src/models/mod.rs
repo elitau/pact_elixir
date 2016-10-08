@@ -15,6 +15,7 @@ use std::fs::File;
 use std::path::Path;
 use std::cmp::Ordering;
 use std::hash::{Hash, Hasher};
+use hyper::client::Client;
 
 /// Version of the library
 pub const VERSION: Option<&'static str> = option_env!("CARGO_PKG_VERSION");
@@ -143,6 +144,20 @@ lazy_static! {
     static ref HTMLREGEXP: Regex = Regex::new(r"^\s*(<!DOCTYPE)|(<HTML>).*").unwrap();
     static ref JSONREGEXP: Regex = Regex::new(r#"^\s*(true|false|null|[0-9]+|"\w*|\{\s*(}|"\w+)|\[\s*)"#).unwrap();
     static ref XMLREGEXP2: Regex = Regex::new(r#"^\s*<\w+\s*(:\w+=["”][^"”]+["”])?.*"#).unwrap();
+
+    static ref JSON_CONTENT_TYPE: Regex = Regex::new("application/.*json.*").unwrap();
+    static ref XML_CONTENT_TYPE: Regex = Regex::new("application/.*xml").unwrap();
+}
+
+/// Enumeration of general content types
+#[derive(PartialEq, Debug, Clone, Eq)]
+pub enum DetectedContentType {
+    /// Json content types
+    Json,
+    /// XML content types
+    Xml,
+    /// All other content types
+    Text
 }
 
 /// Trait to specify an HTTP part of a message. It encapsulates the shared parts of a request and
@@ -157,7 +172,7 @@ pub trait HttpPart {
 
     /// Determins the content type of the HTTP part. If a `Content-Type` header is present, the
     /// value of that header will be returned. Otherwise, the body will be inspected.
-    fn mimetype(&self) -> String {
+    fn content_type(&self) -> String {
         match *self.headers() {
             Some(ref h) => match h.iter().find(|kv| kv.0.to_lowercase() == s!("content-type")) {
                 Some(kv) => match strip_whitespace::<Vec<&str>>(kv.1, ";").first() {
@@ -189,6 +204,18 @@ pub trait HttpPart {
                 }
             },
             _ => s!("text/plain")
+        }
+    }
+
+    /// Returns the general content type (ignoring subtypes)
+    fn content_type_enum(&self) -> DetectedContentType {
+        let content_type = self.content_type();
+        if JSON_CONTENT_TYPE.is_match(&content_type) {
+            DetectedContentType::Json
+        } else if XML_CONTENT_TYPE.is_match(&content_type) {
+            DetectedContentType::Xml
+        } else {
+            DetectedContentType::Text
         }
     }
 }
@@ -267,11 +294,32 @@ fn headers_to_json(headers: &HashMap<String, String>) -> Json {
 }
 
 fn body_from_json(request: &Json) -> OptionalBody {
+    let content_type = match request.find("headers") {
+        Some(v) => match *v {
+            Json::Object(ref h) => match h.iter().find(|kv| kv.0.to_lowercase() == s!("content-type")) {
+                Some(kv) => {
+                    let key = match kv.1 {
+                        &Json::String(ref s) => s.clone(),
+                        _ => kv.1.to_string()
+                    };
+                    match strip_whitespace::<Vec<&str>>(&key, ";").first() {
+                        Some(v) => Some(s!(*v)),
+                        None => None
+                    }
+                },
+                None => None
+            },
+            _ => None
+        },
+        None => None
+    };
     match request.find("body") {
         Some(v) => match *v {
             Json::String(ref s) => {
                 if s.is_empty() {
                     OptionalBody::Empty
+                } else if content_type.unwrap_or(s!("application/json")) == "application/json" {
+                    OptionalBody::Present(format!("\"{}\"", s))
                 } else {
                     OptionalBody::Present(s.clone())
                 }
@@ -283,7 +331,8 @@ fn body_from_json(request: &Json) -> OptionalBody {
     }
 }
 
-fn build_query_string(query: HashMap<String, Vec<String>>) -> String {
+/// Converts a query string map into a query string
+pub fn build_query_string(query: HashMap<String, Vec<String>>) -> String {
     query.into_iter()
         .sorted_by(|a, b| Ord::cmp(&a.0, &b.0))
         .iter()
@@ -297,22 +346,22 @@ fn build_query_string(query: HashMap<String, Vec<String>>) -> String {
 
 impl Request {
     /// Builds a `Request` from a `Json` struct.
-    pub fn from_json(request: &Json, spec_version: &PactSpecification) -> Request {
-        let method_val = match request.find("method") {
+    pub fn from_json(request_json: &Json, spec_version: &PactSpecification) -> Request {
+        let method_val = match request_json.find("method") {
             Some(v) => match *v {
                 Json::String(ref s) => s.to_uppercase(),
                 _ => v.to_string().to_uppercase()
             },
             None => "GET".to_string()
         };
-        let path_val = match request.find("path") {
+        let path_val = match request_json.find("path") {
             Some(v) => match *v {
                 Json::String(ref s) => s.clone(),
                 _ => v.to_string()
             },
             None => "/".to_string()
         };
-        let query_val = match request.find("query") {
+        let query_val = match request_json.find("query") {
             Some(v) => match *v {
                 Json::String(ref s) => parse_query_string(s),
                 _ => {
@@ -327,8 +376,8 @@ impl Request {
             method: method_val,
             path: path_val,
             query: query_val,
-            headers: headers_from_json(request),
-            body: body_from_json(request),
+            headers: headers_from_json(request_json),
+            body: body_from_json(request_json),
             matching_rules: None
         }
     }
@@ -347,7 +396,7 @@ impl Request {
         }
         match self.body {
             OptionalBody::Present(ref body) => {
-                if self.mimetype() == "application/json" {
+                if self.content_type() == "application/json" {
                     match Json::from_str(body) {
                         Ok(json_body) => { json.insert(s!("body"), json_body); },
                         Err(err) => {
@@ -377,6 +426,30 @@ impl Request {
             matching_rules: None
         }
     }
+
+    /// Return a description of all the differences from the other request
+    pub fn differences_from(&self, other: &Request) -> Vec<String> {
+        let mut differences = vec![];
+        if self.method != other.method {
+            differences.push(format!("Request method {} != {}", self.method, other.method));
+        }
+        if self.path != other.path {
+            differences.push(format!("Request path {} != {}", self.path, other.path));
+        }
+        if self.query != other.query {
+            differences.push(format!("Request query {:?} != {:?}", self.query, other.query));
+        }
+        if self.headers != other.headers {
+            differences.push(format!("Request headers {:?} != {:?}", self.headers, other.headers));
+        }
+        if self.body != other.body {
+            differences.push(format!("Request body '{:?}' != '{:?}'", self.body, other.body));
+        }
+        if self.matching_rules != other.matching_rules {
+            differences.push(format!("Request matching rules {:?} != {:?}", self.matching_rules, other.matching_rules));
+        }
+        differences
+    }
 }
 
 /// Struct that defines the response.
@@ -393,9 +466,9 @@ pub struct Response {
 }
 
 impl Response {
+
     /// Build a `Response` from a `Json` struct.
-    #[allow(unused_variables)]
-    pub fn from_json(response: &Json, spec_version: &PactSpecification) -> Response {
+    pub fn from_json(response: &Json, _: &PactSpecification) -> Response {
         let status_val = match response.find("status") {
             Some(v) => v.as_u64().unwrap() as u16,
             None => 200
@@ -428,7 +501,7 @@ impl Response {
         }
         match self.body {
             OptionalBody::Present(ref body) => {
-                if self.mimetype() == "application/json" {
+                if self.content_type() == "application/json" {
                     match Json::from_str(body) {
                         Ok(json_body) => { json.insert(s!("body"), json_body); },
                         Err(err) => {
@@ -445,6 +518,24 @@ impl Response {
             OptionalBody::Null => { json.insert(s!("body"), Json::Null); }
         }
         Json::Object(json)
+    }
+
+    /// Return a description of all the differences from the other response
+    pub fn differences_from(&self, other: &Response) -> Vec<String> {
+        let mut differences = vec![];
+        if self.status != other.status {
+            differences.push(format!("Response status {} != {}", self.status, other.status));
+        }
+        if self.headers != other.headers {
+            differences.push(format!("Response headers {:?} != {:?}", self.headers, other.headers));
+        }
+        if self.body != other.body {
+            differences.push(format!("Response body '{:?}' != '{:?}'", self.body, other.body));
+        }
+        if self.matching_rules != other.matching_rules {
+            differences.push(format!("Response matching rules {:?} != {:?}", self.matching_rules, other.matching_rules));
+        }
+        differences
     }
 }
 
@@ -475,6 +566,15 @@ impl Hash for Response {
     }
 }
 
+/// Struct that defined an interaction conflict
+#[derive(Debug, Clone)]
+pub struct PactConflict {
+    /// Description of the interactions
+    pub interaction: String,
+    /// Conflict description
+    pub description: String
+}
+
 /// Struct that defines an interaction (request and response pair)
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct Interaction {
@@ -499,7 +599,7 @@ impl Interaction {
             },
             None => format!("Interaction {}", index)
         };
-        let provider_state = match pact_json.find("providerState") {
+        let provider_state = match pact_json.find("providerState").or(pact_json.find("provider_state")) {
             Some(v) => match *v {
                 Json::String(ref s) => if s.is_empty() {
                     None
@@ -540,15 +640,33 @@ impl Interaction {
         Json::Object(map)
     }
 
-    /// Returns true if this interaction conflicts with the other interaction.
+    /// Returns list of conflicts if this interaction conflicts with the other interaction.
     ///
     /// Two interactions conflict if they have the same description and provider state, but they request and
     /// responses are not equal
-    pub fn conflicts_with(&self, other: &Interaction) -> bool {
-        self.description == other.description && self.provider_state == other.provider_state &&
-            (self.request != other.request || self.response != other.response)
+    pub fn conflicts_with(&self, other: &Interaction) -> Vec<PactConflict> {
+        if self.description == other.description && self.provider_state == other.provider_state {
+            let mut conflicts = self.request.differences_from(&other.request).iter()
+                .map(|difference| PactConflict { interaction: self.description.clone(), description: difference.clone() } )
+                .collect::<Vec<PactConflict>>();
+            for difference in self.response.differences_from(&other.response) {
+                conflicts.push(PactConflict { interaction: self.description.clone(), description: difference.clone() });
+            }
+            conflicts
+        } else {
+            vec![]
+        }
     }
 
+    /// Creates a default interaction
+    pub fn default() -> Interaction {
+        Interaction {
+             description: s!("Default Interaction"),
+             provider_state: None,
+             request: Request::default_request(),
+             response: Response::default_response()
+        }
+    }
 }
 
 /// Struct that represents a pact between the consumer and provider of a service.
@@ -599,7 +717,7 @@ fn parse_interactions(pact_json: &Json, spec_version: PactSpecification) -> Vec<
     }
 }
 
-fn determin_spec_version(metadata: &BTreeMap<String, BTreeMap<String, String>>) -> PactSpecification {
+fn determin_spec_version(file: &String, metadata: &BTreeMap<String, BTreeMap<String, String>>) -> PactSpecification {
     match metadata.get("pact-specification") {
         Some(spec) => {
             match spec.get("version") {
@@ -609,28 +727,28 @@ fn determin_spec_version(metadata: &BTreeMap<String, BTreeMap<String, String>>) 
                             0 => PactSpecification::V1,
                             1 => PactSpecification::V1_1,
                             _ => {
-                                warn!("Unsupported specification version '{}' found in the metadata in the pact file, will try load it as a V1.1 specification", ver);
+                                warn!("Unsupported specification version '{}' found in the metadata in the pact file {:?}, will try load it as a V1.1 specification", ver, file);
                                 PactSpecification::Unknown
                             }
                         },
                         _ => {
-                            warn!("Unsupported specification version '{}' found in the metadata in the pact file, will try load it as a V1.1 specification", ver);
+                            warn!("Unsupported specification version '{}' found in the metadata in the pact file {:?}, will try load it as a V1.1 specification", ver, file);
                             PactSpecification::Unknown
                         }
                     },
                     Err(err) => {
-                        warn!("Could not parse specification version '{}' found in the metadata in the pact file, assuming V1.1 specification - {}", ver, err);
+                        warn!("Could not parse specification version '{}' found in the metadata in the pact file {:?}, assuming V1.1 specification - {}", ver, file, err);
                         PactSpecification::Unknown
                     }
                 },
                 None => {
-                    warn!("No specification version found in the metadata in the pact file, assuming V1.1 specification");
+                    warn!("No specification version found in the metadata in the pact file {:?}, assuming V1.1 specification", file);
                     PactSpecification::V1_1
                 }
             }
         },
         None => {
-            warn!("No metadata found in pact file, assuming V1.1 specification");
+            warn!("No metadata found in pact file {:?}, assuming V1 specification", file);
             PactSpecification::V1_1
         }
     }
@@ -639,9 +757,9 @@ fn determin_spec_version(metadata: &BTreeMap<String, BTreeMap<String, String>>) 
 impl Pact {
 
     /// Creates a `Pact` from a `Json` struct.
-    pub fn from_json(pact_json: &Json) -> Pact {
+    pub fn from_json(file: &String, pact_json: &Json) -> Pact {
         let metadata = parse_meta_data(pact_json);
-        let spec_version = determin_spec_version(&metadata);
+        let spec_version = determin_spec_version(file, &metadata);
 
         let consumer = match pact_json.find("consumer") {
             Some(v) => Consumer::from_json(v),
@@ -689,10 +807,20 @@ impl Pact {
     pub fn merge(&self, pact: &Pact) -> Result<Pact, String> {
         if self.consumer.name == pact.consumer.name && self.provider.name == pact.provider.name {
             let conflicts = iproduct!(self.interactions.clone(), pact.interactions.clone())
-                .filter(|i| i.0.conflicts_with(&i.1))
-                .count();
-            if conflicts > 0 {
-                Err(format!("Unable to merge pacts, as there were {} conflicts between the interactions", conflicts))
+                .map(|i| i.0.conflicts_with(&i.1))
+                .filter(|conflicts| !conflicts.is_empty())
+                .collect::<Vec<Vec<PactConflict>>>();
+            let num_conflicts = conflicts.len();
+            if num_conflicts > 0 {
+                warn!("The following conflicting interactions where found:");
+                for interaction_conflicts in conflicts {
+                    warn!(" Interaction '{}':", interaction_conflicts.first().unwrap().interaction);
+                    for conflict in interaction_conflicts {
+                        warn!("   {}", conflict.description);
+                    }
+                }
+                Err(format!("Unable to merge pacts, as there were {} conflict(s) between the interactions",
+                    num_conflicts))
             } else {
                 Ok(Pact {
                     provider: self.provider.clone(),
@@ -730,8 +858,25 @@ impl Pact {
         let mut f = try!(File::open(file));
         let pact_json = Json::from_reader(&mut f);
         match pact_json {
-            Ok(ref json) => Ok(Pact::from_json(json)),
+            Ok(ref json) => Ok(Pact::from_json(&format!("{:?}", file), json)),
             Err(err) => Err(Error::new(ErrorKind::Other, format!("Failed to parse Pact JSON - {}", err)))
+        }
+    }
+
+    /// Reads the pact file from a URL and parses the resulting JSON into a `Pact` struct
+    pub fn from_url(url: &String) -> Result<Pact, String> {
+        let client = Client::new();
+        match client.get(url).send() {
+            Ok(mut res) => if res.status.is_success() {
+                    let pact_json = Json::from_reader(&mut res);
+                    match pact_json {
+                        Ok(ref json) => Ok(Pact::from_json(url, json)),
+                        Err(err) => Err(format!("Failed to parse Pact JSON - {}", err))
+                    }
+                } else {
+                    Err(format!("Request failed with status - {}", res.status))
+                },
+            Err(err) => Err(format!("Request failed - {}", err))
         }
     }
 

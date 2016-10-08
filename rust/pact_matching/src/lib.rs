@@ -1,4 +1,4 @@
-//! The `libpact_matching` crate provides the core logic to performing matching on HTTP requests
+//! The `pact_matching` crate provides the core logic to performing matching on HTTP requests
 //! and responses. It implements the V1.1 Pact specification (https://github.com/pact-foundation/pact-specification/tree/version-1.1).
 
 #![warn(missing_docs)]
@@ -12,6 +12,9 @@ extern crate regex;
 extern crate semver;
 #[macro_use] extern crate itertools;
 extern crate rand;
+#[macro_use] extern crate hyper;
+extern crate ansi_term;
+extern crate difference;
 
 /// Simple macro to convert a string slice to a `String` struct.
 #[macro_export]
@@ -22,17 +25,23 @@ macro_rules! s {
 use std::collections::HashMap;
 use std::iter::FromIterator;
 use rustc_serialize::json::{Json, ToJson};
+use regex::Regex;
+use ansi_term::*;
+use ansi_term::Colour::*;
 
 pub mod models;
-mod json;
+pub mod json;
 
 fn strip_whitespace<'a, T: FromIterator<&'a str>>(val: &'a String, split_by: &'a str) -> T {
     val.split(split_by).map(|v| v.trim().clone() ).collect()
 }
 
-static BODY_MATCHERS: [(&'static str, fn(expected: &String, actual: &String, config: DiffConfig, mismatches: &mut Vec<Mismatch>)); 1] = [
-    ("application/json", json::match_json)
-];
+lazy_static! {
+    static ref BODY_MATCHERS: [(Regex, fn(expected: &String, actual: &String, config: DiffConfig, mismatches: &mut Vec<Mismatch>)); 2] = [
+        (Regex::new("application/.*json").unwrap(), json::match_json),
+        (Regex::new("application/json.*").unwrap(), json::match_json)
+    ];
+}
 
 /// Enum that defines the different types of mismatches that can occur.
 #[derive(Debug, Clone)]
@@ -185,6 +194,47 @@ impl Mismatch {
             Mismatch::HeaderMismatch { .. } => s!("HeaderMismatch"),
             Mismatch::BodyTypeMismatch { .. } => s!("BodyTypeMismatch"),
             Mismatch::BodyMismatch { .. } => s!("BodyMismatch")
+        }
+    }
+
+    /// Returns a summary string for this mismatch
+    pub fn summary(&self) -> String {
+        match *self {
+            Mismatch::MethodMismatch { expected: ref e, .. } => format!("is a {} request", e),
+            Mismatch::PathMismatch { expected: ref e, .. } => format!("to path '{}'", e),
+            Mismatch::StatusMismatch { expected: ref e, .. } => format!("has status code {}", e),
+            Mismatch::QueryMismatch { ref parameter, expected: ref e, .. } => format!("includes parameter '{}' with value '{}'", parameter, e),
+            Mismatch::HeaderMismatch { ref key, expected: ref e, .. } => format!("includes header '{}' with value '{}'", key, e),
+            Mismatch::BodyTypeMismatch { .. } => s!("has a matching body"),
+            Mismatch::BodyMismatch { .. } => s!("has a matching body")
+        }
+    }
+
+    /// Returns a formated string for this mismatch
+    pub fn description(&self) -> String {
+        match *self {
+            Mismatch::MethodMismatch { expected: ref e, actual: ref a } => format!("expected {} but was {}", e, a),
+            Mismatch::PathMismatch { expected: ref e, actual: ref a } => format!("expected '{}' but was '{}'", e, a),
+            Mismatch::StatusMismatch { expected: ref e, actual: ref a } => format!("expected {} but was {}", e, a),
+            Mismatch::QueryMismatch { ref mismatch, .. } => mismatch.clone(),
+            Mismatch::HeaderMismatch { ref mismatch, .. } => mismatch.clone(),
+            Mismatch::BodyTypeMismatch {  expected: ref e, actual: ref a } => format!("expected '{}' body but was '{}'", e, a),
+            Mismatch::BodyMismatch { ref path, ref mismatch, .. } => format!("{} -> {}", path, mismatch)
+        }
+    }
+
+    /// Returns a formated string with ansi escape codes for this mismatch
+    pub fn ansi_description(&self) -> String {
+        match *self {
+            Mismatch::MethodMismatch { expected: ref e, actual: ref a } => format!("expected {} but was {}", Red.paint(e.clone()), Green.paint(a.clone())),
+            Mismatch::PathMismatch { expected: ref e, actual: ref a } => format!("expected '{}' but was '{}'", Red.paint(e.clone()), Green.paint(a.clone())),
+            Mismatch::StatusMismatch { expected: ref e, actual: ref a } => format!("expected {} but was {}", Red.paint(e.to_string()), Green.paint(a.to_string())),
+            Mismatch::QueryMismatch { expected: ref e, actual: ref a, parameter: ref p, .. } => format!("Expected '{}' but received '{}' for query parameter '{}'",
+                Red.paint(e.to_string()), Green.paint(a.to_string()), Style::new().bold().paint(p.clone())),
+            Mismatch::HeaderMismatch { expected: ref e, actual: ref a, key: ref k, .. } => format!("Expected header '{}' to have value '{}' but was '{}'",
+                Style::new().bold().paint(k.clone()), Red.paint(e.to_string()), Green.paint(a.to_string())),
+            Mismatch::BodyTypeMismatch {  expected: ref e, actual: ref a } => format!("expected '{}' body but was '{}'", Red.paint(e.clone()), Green.paint(a.clone())),
+            Mismatch::BodyMismatch { ref path, ref mismatch, .. } => format!("{} -> {}", Style::new().bold().paint(path.clone()), mismatch)
         }
     }
 }
@@ -391,7 +441,7 @@ fn match_header_value(key: &String, expected: &String, actual: &String, mismatch
     }
 }
 
-fn find_entry(map: &HashMap<String, String>, key: &String) -> Option<(String, String)> {
+fn find_entry<T>(map: &HashMap<String, T>, key: &String) -> Option<(String, T)> where T: Clone {
     match map.keys().find(|k| k.to_lowercase() == key.to_lowercase() ) {
         Some(k) => map.get(k).map(|v| (key.clone(), v.clone()) ),
         None => None
@@ -429,7 +479,7 @@ pub fn match_headers(expected: Option<HashMap<String, String>>,
 
 fn compare_bodies(mimetype: String, expected: &String, actual: &String, config: DiffConfig,
     mismatches: &mut Vec<Mismatch>) {
-    match BODY_MATCHERS.iter().find(|mt| *mt.0 == mimetype) {
+    match BODY_MATCHERS.iter().find(|mt| mt.0.is_match(&mimetype)) {
         Some(ref match_fn) => match_fn.1(expected, actual, config, mismatches),
         None => match_text(expected, actual, mismatches)
     }
@@ -438,7 +488,7 @@ fn compare_bodies(mimetype: String, expected: &String, actual: &String, config: 
 /// Matches the actual body to the expected one. This takes into account the content type of each.
 pub fn match_body(expected: &models::HttpPart, actual: &models::HttpPart, config: DiffConfig,
     mismatches: &mut Vec<Mismatch>) {
-    if expected.mimetype() == actual.mimetype() {
+    if expected.content_type() == actual.content_type() {
         match (expected.body(), actual.body()) {
             (&models::OptionalBody::Missing, _) => (),
             (&models::OptionalBody::Null, &models::OptionalBody::Present(ref b)) => {
@@ -459,13 +509,13 @@ pub fn match_body(expected: &models::HttpPart, actual: &models::HttpPart, config
                     path: s!("/")});
             },
             (_, _) => {
-                compare_bodies(expected.mimetype(), &expected.body().value(), &actual.body().value(),
+                compare_bodies(expected.content_type(), &expected.body().value(), &actual.body().value(),
                     config, mismatches);
             }
         }
     } else if expected.body().is_present() {
-        mismatches.push(Mismatch::BodyTypeMismatch { expected: expected.mimetype(),
-            actual: actual.mimetype() });
+        mismatches.push(Mismatch::BodyTypeMismatch { expected: expected.content_type(),
+            actual: actual.content_type() });
     }
 }
 
@@ -480,6 +530,7 @@ pub fn match_request(expected: models::Request, actual: models::Request) -> Vec<
     match_query(expected.query, actual.query, &mut mismatches);
     match_headers(expected.headers, actual.headers, &mut mismatches);
 
+    debug!("--> Mismatches: {:?}", mismatches);
     mismatches
 }
 

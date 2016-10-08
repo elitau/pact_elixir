@@ -3,7 +3,7 @@
 This library implements the in-process mock server for matching HTTP requests and generating responses from a pact file.
 It implements the [V1.1 Pact specification](https://github.com/pact-foundation/pact-specification/tree/version-1.1).
 
-[Online rust docs](http://www.pact.io/reference/rust/libpact_mock_server-docs-latest/pact_mock_server/)
+[Online rust docs](https://docs.rs/pact_mock_server/)
 
 For an example of calling these functions, have a [look at the JavaScript reference](../../../javascript/README.md).
 

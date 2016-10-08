@@ -46,7 +46,7 @@ def projectProps = new File('Cargo.toml').text
 def versionMatch = projectProps =~ /(?m)version\s*=\s*"(.*)"/
 def version = versionMatch[0][1]
 
-def prevTag = 'git describe --abbrev=0  --tags --match=libpact_matching-*'.execute().text.trim()
+def prevTag = 'git describe --abbrev=0  --tags --match=pact_consumer-*'.execute().text.trim()
 def changelog = []
 executeOnShell("git log --pretty='* %h - %s (%an, %ad)' ${prevTag}..HEAD .".toString()) {
   println it
@@ -89,7 +89,7 @@ ask('Update Changelog?: [Y]') {
 
 ask('Tag and Push commits?: [Y]') {
   executeOnShell 'git push'
-  executeOnShell("git tag libpact_matching-v${releaseVer}")
+  executeOnShell("git tag pact_consumer-v${releaseVer}")
   executeOnShell 'git push --tags'
 }
 
@@ -98,23 +98,12 @@ ask('Publish library to crates.io?: [Y]') {
   executeOnShell 'cargo publish'
 }
 
-ask('Copy docs to pact foundation github pages project?: [Y]') {
-  def docDir = System.console().readLine('Copy the library docs to: [../../../../pact-foundation.github.io/reference/rust/]').trim()
-  if (docDir.empty) {
-    docDir = '../../../../pact-foundation.github.io/reference/rust/'
-  }
-
-  executeOnShell "mkdir -p $docDir/libpact_matching-docs-$releaseVer"
-  executeOnShell "cp -r target/doc/* $docDir/libpact_matching-docs-$releaseVer/"
-  executeOnShell "rm -r $docDir/libpact_matching-docs-latest/*"
-  executeOnShell "cp -r target/doc/* $docDir/libpact_matching-docs-latest/"
-}
-executeOnShell "tar cvfz libpact_matching-docs-${releaseVer}.tgz *", new File("./target/doc")
+executeOnShell "tar cvfz pact_consumer-docs-${releaseVer}.tgz *", new File("./target/doc")
 
 def nextVer = Version.valueOf(releaseVer).incrementPatchVersion()
 ask("Bump version to $nextVer?: [Y]") {
   executeOnShell "sed -i -e 's/version = \"${releaseVer}\"/version = \"${nextVer}\"/' Cargo.toml"
-  executeOnShell "sed -i -e 's/documentation = \"http:\\/\\/www.pact.io\\/reference\\/rust\\/libpact_matching-docs-${releaseVer}\\/pact_matching\\/\"/documentation = \"http:\\/\\/www.pact.io\\/reference\\/rust\\/libpact_matching-docs-${nextVer}\\/pact_matching\\/\"/' Cargo.toml"
+  executeOnShell "sed -i -e 's/documentation = \"https:\\/\\/docs.rs\\/pact_consumer\\/${releaseVer}\\/pact_consumer\\/\"/documentation = \"https:\\/\\/docs.rs\\/pact_consumer\\/${nextVer}\\/pact_consumer\\/\"/' Cargo.toml"
   executeOnShell("git add Cargo.toml")
   executeOnShell("git diff --cached")
   ask("Commit and push this change?: [Y]") {
