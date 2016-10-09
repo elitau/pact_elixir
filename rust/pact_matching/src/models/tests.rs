@@ -1,5 +1,5 @@
 use super::*;
-use super::matchers_from_json;
+use super::{matchers_from_json, body_from_json};
 use std::collections::HashMap;
 use std::fs::{self, File};
 use std::io;
@@ -1286,4 +1286,92 @@ fn write_pact_test_with_matchers() {
     "name": "write_pact_test_provider"
   }}
 }}"#, super::VERSION.unwrap())));
+}
+
+#[test]
+fn body_from_json_returns_missing_if_there_is_no_body() {
+    let json = Json::from_str(r#"
+      {
+          "path": "/",
+          "query": "",
+          "headers": {},
+          "matchingRules": {
+            "*.path": {}
+          }
+      }
+    "#).unwrap();
+    let body = body_from_json(&json);
+    expect!(body).to(be_equal_to(OptionalBody::Missing));
+}
+
+#[test]
+fn body_from_json_returns_null_if_the_body_is_null() {
+    let json = Json::from_str(r#"
+      {
+          "path": "/",
+          "query": "",
+          "headers": {},
+          "body": null
+      }
+    "#).unwrap();
+    let body = body_from_json(&json);
+    expect!(body).to(be_equal_to(OptionalBody::Null));
+}
+
+#[test]
+fn body_from_json_returns_json_string_if_the_body_is_json_but_not_a_string() {
+    let json = Json::from_str(r#"
+      {
+          "path": "/",
+          "query": "",
+          "headers": {},
+          "body": {
+            "test": true
+          }
+      }
+    "#).unwrap();
+    let body = body_from_json(&json);
+    expect!(body).to(be_equal_to(OptionalBody::Present(s!("{\"test\":true}"))));
+}
+
+#[test]
+fn body_from_json_returns_empty_if_the_body_is_an_empty_string() {
+    let json = Json::from_str(r#"
+      {
+          "path": "/",
+          "query": "",
+          "headers": {},
+          "body": ""
+      }
+    "#).unwrap();
+    let body = body_from_json(&json);
+    expect!(body).to(be_equal_to(OptionalBody::Empty));
+}
+
+#[test]
+fn body_from_json_returns_the_body_if_the_body_is_a_string() {
+    let json = Json::from_str(r#"
+      {
+          "path": "/",
+          "query": "",
+          "headers": {},
+          "body": "<?xml version=\"1.0\"?> <body></body>"
+      }
+    "#).unwrap();
+    let body = body_from_json(&json);
+    expect!(body).to(be_equal_to(OptionalBody::Present(s!("<?xml version=\"1.0\"?> <body></body>"))));
+}
+
+#[test]
+fn body_from_json_returns_the_a_json_formatted_body_if_the_body_is_a_string_and_the_content_type_is_json() {
+    let json = Json::from_str(r#"
+      {
+          "path": "/",
+          "query": "",
+          "headers": {"Content-Type": "application/json"},
+          "body": "{\"test\":true}"
+      }
+    "#).unwrap();
+    let body = body_from_json(&json);
+    expect!(body).to(be_equal_to(OptionalBody::Present(s!("{\"test\":true}"))));
 }

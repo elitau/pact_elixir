@@ -10,6 +10,52 @@ use rustc_serialize::json::Json;
 use expectest::prelude::*;
 
 #[test]
+fn additional_property_with_type_matcher_that_does_not_match() {
+    env_logger::init().unwrap_or(());
+    let pact = Json::from_str(r#"
+      {
+        "match": false,
+        "comment": "additional property with type matcher wildcards that don't match",
+        "expected": {
+          "headers": {},
+          "body" : {
+            "myPerson": {
+              "name": "Any name"
+            }
+          },
+          "matchingRules" : {
+            "$.body.myPerson.*" : {
+              "match": "type"
+            }
+          }
+        },
+        "actual": {
+          "headers": {},
+          "body": {
+            "myPerson": {
+              "name": "Jon Peterson",
+              "age": 39,
+              "nationality": "Australian"
+            }
+          }    
+        }
+      }
+    "#).unwrap();
+
+    let expected = Response::from_json(&pact.find("expected").unwrap(), &PactSpecification::V2);
+    println!("{:?}", expected);
+    let actual = Response::from_json(&pact.find("actual").unwrap(), &PactSpecification::V2);
+    println!("{:?}", actual);
+    let pact_match = pact.find("match").unwrap();
+    let result = match_response(expected, actual);
+    if pact_match.as_boolean().unwrap() {
+       expect!(result).to(be_empty());
+    } else {
+       expect!(result).to_not(be_empty());
+    }
+}
+
+#[test]
 fn additional_property_with_type_matcher() {
     env_logger::init().unwrap_or(());
     let pact = Json::from_str(r#"
@@ -2720,52 +2766,6 @@ fn value_found_in_array_when_empty_expected_xml() {
         "actual": {
           "headers": {"Content-Type": "application/xml"},
           "body": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><alligator><favouriteNumbers><favouriteNumber>1</favouriteNumber><favouriteNumber>2</favouriteNumber><favouriteNumber>3</favouriteNumber></favouriteNumbers></alligator>"
-        }
-      }
-    "#).unwrap();
-
-    let expected = Response::from_json(&pact.find("expected").unwrap(), &PactSpecification::V2);
-    println!("{:?}", expected);
-    let actual = Response::from_json(&pact.find("actual").unwrap(), &PactSpecification::V2);
-    println!("{:?}", actual);
-    let pact_match = pact.find("match").unwrap();
-    let result = match_response(expected, actual);
-    if pact_match.as_boolean().unwrap() {
-       expect!(result).to(be_empty());
-    } else {
-       expect!(result).to_not(be_empty());
-    }
-}
-
-#[test]
-fn additional_property_with_type_matcher_that_does_not_match() {
-    env_logger::init().unwrap_or(());
-    let pact = Json::from_str(r#"
-      {
-        "match": false,
-        "comment": "additional property with type matcher wildcards that don't match",
-        "expected": {
-          "headers": {},
-          "body" : {
-            "myPerson": {
-              "name": "Any name"
-            }
-          },
-          "matchingRules" : {
-            "$.body.myPerson.*" : {
-              "match": "type"
-            }
-          }
-        },
-        "actual": {
-          "headers": {},
-          "body": {
-            "myPerson": {
-              "name": "Jon Peterson",
-              "age": 39,
-              "nationality": "Australian"
-            }
-          }    
         }
       }
     "#).unwrap();

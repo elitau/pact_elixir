@@ -1,6 +1,8 @@
 #[allow(unused_imports)]
 use pact_matching::models::*;
 #[allow(unused_imports)]
+use env_logger;
+#[allow(unused_imports)]
 use pact_matching::match_response;
 #[allow(unused_imports)]
 use rustc_serialize::json::Json;
@@ -9,6 +11,7 @@ use expectest::prelude::*;
 
 #[test]
 fn whitespace_after_comma_different() {
+    env_logger::init().unwrap_or(());
     let pact = Json::from_str(r#"
       {
         "match": true,
@@ -31,15 +34,17 @@ fn whitespace_after_comma_different() {
     let actual = Response::from_json(&pact.find("actual").unwrap(), &PactSpecification::V1);
     println!("{:?}", actual);
     let pact_match = pact.find("match").unwrap();
+    let result = match_response(expected, actual);
     if pact_match.as_boolean().unwrap() {
-       expect!(match_response(expected, actual)).to(be_empty());
+       expect!(result).to(be_empty());
     } else {
-       expect!(match_response(expected, actual)).to_not(be_empty());
+       expect!(result).to_not(be_empty());
     }
 }
 
 #[test]
 fn unexpected_header_found() {
+    env_logger::init().unwrap_or(());
     let pact = Json::from_str(r#"
       {
         "match": true,
@@ -60,15 +65,17 @@ fn unexpected_header_found() {
     let actual = Response::from_json(&pact.find("actual").unwrap(), &PactSpecification::V1);
     println!("{:?}", actual);
     let pact_match = pact.find("match").unwrap();
+    let result = match_response(expected, actual);
     if pact_match.as_boolean().unwrap() {
-       expect!(match_response(expected, actual)).to(be_empty());
+       expect!(result).to(be_empty());
     } else {
-       expect!(match_response(expected, actual)).to_not(be_empty());
+       expect!(result).to_not(be_empty());
     }
 }
 
 #[test]
 fn order_of_comma_separated_header_values_different() {
+    env_logger::init().unwrap_or(());
     let pact = Json::from_str(r#"
       {
         "match": false,
@@ -91,15 +98,17 @@ fn order_of_comma_separated_header_values_different() {
     let actual = Response::from_json(&pact.find("actual").unwrap(), &PactSpecification::V1);
     println!("{:?}", actual);
     let pact_match = pact.find("match").unwrap();
+    let result = match_response(expected, actual);
     if pact_match.as_boolean().unwrap() {
-       expect!(match_response(expected, actual)).to(be_empty());
+       expect!(result).to(be_empty());
     } else {
-       expect!(match_response(expected, actual)).to_not(be_empty());
+       expect!(result).to_not(be_empty());
     }
 }
 
 #[test]
 fn matches() {
+    env_logger::init().unwrap_or(());
     let pact = Json::from_str(r#"
       {
         "match": true,
@@ -124,15 +133,17 @@ fn matches() {
     let actual = Response::from_json(&pact.find("actual").unwrap(), &PactSpecification::V1);
     println!("{:?}", actual);
     let pact_match = pact.find("match").unwrap();
+    let result = match_response(expected, actual);
     if pact_match.as_boolean().unwrap() {
-       expect!(match_response(expected, actual)).to(be_empty());
+       expect!(result).to(be_empty());
     } else {
-       expect!(match_response(expected, actual)).to_not(be_empty());
+       expect!(result).to_not(be_empty());
     }
 }
 
 #[test]
 fn header_value_is_different_case() {
+    env_logger::init().unwrap_or(());
     let pact = Json::from_str(r#"
       {
         "match": false,
@@ -155,15 +166,17 @@ fn header_value_is_different_case() {
     let actual = Response::from_json(&pact.find("actual").unwrap(), &PactSpecification::V1);
     println!("{:?}", actual);
     let pact_match = pact.find("match").unwrap();
+    let result = match_response(expected, actual);
     if pact_match.as_boolean().unwrap() {
-       expect!(match_response(expected, actual)).to(be_empty());
+       expect!(result).to(be_empty());
     } else {
-       expect!(match_response(expected, actual)).to_not(be_empty());
+       expect!(result).to_not(be_empty());
     }
 }
 
 #[test]
 fn header_name_is_different_case() {
+    env_logger::init().unwrap_or(());
     let pact = Json::from_str(r#"
       {
         "match": true,
@@ -186,15 +199,17 @@ fn header_name_is_different_case() {
     let actual = Response::from_json(&pact.find("actual").unwrap(), &PactSpecification::V1);
     println!("{:?}", actual);
     let pact_match = pact.find("match").unwrap();
+    let result = match_response(expected, actual);
     if pact_match.as_boolean().unwrap() {
-       expect!(match_response(expected, actual)).to(be_empty());
+       expect!(result).to(be_empty());
     } else {
-       expect!(match_response(expected, actual)).to_not(be_empty());
+       expect!(result).to_not(be_empty());
     }
 }
 
 #[test]
 fn empty_headers() {
+    env_logger::init().unwrap_or(());
     let pact = Json::from_str(r#"
       {
         "match": true,
@@ -214,9 +229,10 @@ fn empty_headers() {
     let actual = Response::from_json(&pact.find("actual").unwrap(), &PactSpecification::V1);
     println!("{:?}", actual);
     let pact_match = pact.find("match").unwrap();
+    let result = match_response(expected, actual);
     if pact_match.as_boolean().unwrap() {
-       expect!(match_response(expected, actual)).to(be_empty());
+       expect!(result).to(be_empty());
     } else {
-       expect!(match_response(expected, actual)).to_not(be_empty());
+       expect!(result).to_not(be_empty());
     }
 }

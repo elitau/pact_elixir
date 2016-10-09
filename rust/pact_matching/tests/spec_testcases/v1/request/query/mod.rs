@@ -1,6 +1,8 @@
 #[allow(unused_imports)]
 use pact_matching::models::*;
 #[allow(unused_imports)]
+use env_logger;
+#[allow(unused_imports)]
 use pact_matching::match_request;
 #[allow(unused_imports)]
 use rustc_serialize::json::Json;
@@ -9,6 +11,7 @@ use expectest::prelude::*;
 
 #[test]
 fn trailing_amperand() {
+    env_logger::init().unwrap_or(());
     let pact = Json::from_str(r#"
       {
         "match": true,
@@ -44,6 +47,7 @@ fn trailing_amperand() {
 
 #[test]
 fn matches() {
+    env_logger::init().unwrap_or(());
     let pact = Json::from_str(r#"
       {
         "match": true,
@@ -79,6 +83,7 @@ fn matches() {
 
 #[test]
 fn different_param_values() {
+    env_logger::init().unwrap_or(());
     let pact = Json::from_str(r#"
       {
         "match": false,
@@ -114,6 +119,7 @@ fn different_param_values() {
 
 #[test]
 fn different_param_order() {
+    env_logger::init().unwrap_or(());
     let pact = Json::from_str(r#"
       {
         "match": true,

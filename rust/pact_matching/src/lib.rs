@@ -370,7 +370,7 @@ fn strip_whitespace<'a, T: FromIterator<&'a str>>(val: &'a String, split_by: &'a
 
 lazy_static! {
     static ref BODY_MATCHERS: [(Regex, fn(expected: &String, actual: &String, config: DiffConfig,
-            mismatches: &mut Vec<Mismatch>, matchers: &Option<Matchers>)); 2] = [
+            mismatches: &mut Vec<Mismatch>, matchers: &Option<Matchers>)); 3] = [
         (Regex::new("application/.*json").unwrap(), json::match_json),
         (Regex::new("application/json.*").unwrap(), json::match_json),
         (Regex::new("application/.*xml").unwrap(), xml::match_xml)
@@ -551,7 +551,7 @@ impl Mismatch {
     pub fn description(&self) -> String {
         match *self {
             Mismatch::MethodMismatch { expected: ref e, actual: ref a } => format!("expected {} but was {}", e, a),
-            Mismatch::PathMismatch { expected: ref e, actual: ref a } => format!("expected '{}' but was '{}'", e, a),
+            Mismatch::PathMismatch { ref mismatch, .. } => mismatch.clone(),
             Mismatch::StatusMismatch { expected: ref e, actual: ref a } => format!("expected {} but was {}", e, a),
             Mismatch::QueryMismatch { ref mismatch, .. } => mismatch.clone(),
             Mismatch::HeaderMismatch { ref mismatch, .. } => mismatch.clone(),
@@ -564,7 +564,7 @@ impl Mismatch {
     pub fn ansi_description(&self) -> String {
         match *self {
             Mismatch::MethodMismatch { expected: ref e, actual: ref a } => format!("expected {} but was {}", Red.paint(e.clone()), Green.paint(a.clone())),
-            Mismatch::PathMismatch { expected: ref e, actual: ref a } => format!("expected '{}' but was '{}'", Red.paint(e.clone()), Green.paint(a.clone())),
+            Mismatch::PathMismatch { expected: ref e, actual: ref a, .. } => format!("expected '{}' but was '{}'", Red.paint(e.clone()), Green.paint(a.clone())),
             Mismatch::StatusMismatch { expected: ref e, actual: ref a } => format!("expected {} but was {}", Red.paint(e.to_string()), Green.paint(a.to_string())),
             Mismatch::QueryMismatch { expected: ref e, actual: ref a, parameter: ref p, .. } => format!("Expected '{}' but received '{}' for query parameter '{}'",
                 Red.paint(e.to_string()), Green.paint(a.to_string()), Style::new().bold().paint(p.clone())),
@@ -855,6 +855,8 @@ fn compare_bodies(mimetype: String, expected: &String, actual: &String, config: 
 /// Matches the actual body to the expected one. This takes into account the content type of each.
 pub fn match_body(expected: &models::HttpPart, actual: &models::HttpPart, config: DiffConfig,
     mismatches: &mut Vec<Mismatch>, matchers: &Option<Matchers>) {
+    debug!("expected content type = '{}', actual content type = '{}'", expected.content_type(),
+           actual.content_type());
     if expected.content_type() == actual.content_type() {
         match (expected.body(), actual.body()) {
             (&models::OptionalBody::Missing, _) => (),

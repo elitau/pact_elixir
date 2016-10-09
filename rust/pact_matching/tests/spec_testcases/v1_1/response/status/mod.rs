@@ -10,17 +10,17 @@ use rustc_serialize::json::Json;
 use expectest::prelude::*;
 
 #[test]
-fn different_status() {
+fn matches() {
     env_logger::init().unwrap_or(());
     let pact = Json::from_str(r#"
       {
-          "match": false,
-          "comment": "Status is incorrect",
+          "match": true,
+          "comment": "Status matches",
           "expected": {
               "status": 202
           },
           "actual": {
-              "status": 400
+              "status": 202
           }
       }
     "#).unwrap();
@@ -39,17 +39,17 @@ fn different_status() {
 }
 
 #[test]
-fn matches() {
+fn different_status() {
     env_logger::init().unwrap_or(());
     let pact = Json::from_str(r#"
       {
-          "match": true,
-          "comment": "Status matches",
+          "match": false,
+          "comment": "Status is incorrect",
           "expected": {
               "status": 202
           },
           "actual": {
-              "status": 202
+              "status": 400
           }
       }
     "#).unwrap();

@@ -198,6 +198,7 @@ pub trait HttpPart {
         match *self.body() {
             OptionalBody::Present(ref body) => {
                 let s: String = body.chars().take(32).collect();
+                debug!("Detecting content type from contents: '{}'", s);
                 if XMLREGEXP.is_match(s.as_str()) {
                     s!("application/xml")
                 } else if HTMLREGEXP.is_match(s.to_uppercase().as_str()) {
@@ -310,32 +311,11 @@ fn headers_to_json(headers: &HashMap<String, String>) -> Json {
 }
 
 fn body_from_json(request: &Json) -> OptionalBody {
-    let content_type = match request.find("headers") {
-        Some(v) => match *v {
-            Json::Object(ref h) => match h.iter().find(|kv| kv.0.to_lowercase() == s!("content-type")) {
-                Some(kv) => {
-                    let key = match kv.1 {
-                        &Json::String(ref s) => s.clone(),
-                        _ => kv.1.to_string()
-                    };
-                    match strip_whitespace::<Vec<&str>>(&key, ";").first() {
-                        Some(v) => Some(s!(*v)),
-                        None => None
-                    }
-                },
-                None => None
-            },
-            _ => None
-        },
-        None => None
-    };
     match request.find("body") {
         Some(v) => match *v {
             Json::String(ref s) => {
                 if s.is_empty() {
                     OptionalBody::Empty
-                } else if content_type.unwrap_or(s!("application/json")) == "application/json" {
-                    OptionalBody::Present(format!("\"{}\"", s))
                 } else {
                     OptionalBody::Present(s.clone())
                 }
