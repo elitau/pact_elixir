@@ -310,12 +310,31 @@ fn headers_to_json(headers: &HashMap<String, String>) -> Json {
     }))
 }
 
-fn body_from_json(request: &Json) -> OptionalBody {
+fn body_from_json(request: &Json, headers: &Option<HashMap<String, String>>) -> OptionalBody {
+    let content_type = match headers {
+        &Some(ref h) => match h.iter().find(|kv| kv.0.to_lowercase() == s!("content-type")) {
+            Some(kv) => {
+                match strip_whitespace::<Vec<&str>>(&kv.1, ";").first() {
+                    Some(v) => Some(v.to_lowercase()),
+                    None => None
+                }
+            },
+            None => None
+        },
+        &None => None
+    };
+
     match request.find("body") {
         Some(v) => match *v {
             Json::String(ref s) => {
                 if s.is_empty() {
                     OptionalBody::Empty
+                } else if content_type.unwrap_or(s!("")) == "application/json" {
+                    // fuck, that's all I have to say about this
+                    match Json::from_str(&s) {
+                        Ok(_) => OptionalBody::Present(s.clone()),
+                        Err(_) => OptionalBody::Present(format!("\"{}\"", s))
+                    }
                 } else {
                     OptionalBody::Present(s.clone())
                 }
@@ -410,12 +429,13 @@ impl Request {
             },
             None => None
         };
+        let headers = headers_from_json(request_json);
         Request {
             method: method_val,
             path: path_val,
             query: query_val,
-            headers: headers_from_json(request_json),
-            body: body_from_json(request_json),
+            headers: headers.clone(),
+            body: body_from_json(request_json, &headers),
             matching_rules: matchers_from_json(request_json, s!("requestMatchingRules"))
         }
     }
@@ -514,10 +534,11 @@ impl Response {
             Some(v) => v.as_u64().unwrap() as u16,
             None => 200
         };
+        let headers = headers_from_json(response);
         Response {
             status: status_val,
-            headers: headers_from_json(response),
-            body: body_from_json(response),
+            headers: headers.clone(),
+            body: body_from_json(response, &headers),
             matching_rules:  matchers_from_json(response, s!("responseMatchingRules"))
         }
     }

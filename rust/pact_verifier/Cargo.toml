@@ -1,9 +1,9 @@
 [package]
 name = "pact_verifier"
-version = "0.1.1"
+version = "0.2.0"
 authors = ["Ronald Holshausen <uglyog@gmail.com>"]
 description = "Pact-Rust support library that implements provider verification functions"
-documentation = "https://docs.rs/pact_verifier/0.1.1/pact_verifier/"
+documentation = "https://docs.rs/pact_verifier/0.2.0/pact_verifier/"
 homepage = "http://www.pact.io"
 repository = "https://github.com/pact-foundation/pact-reference/blob/master/rust/pact_verifier"
 readme = "README.md"
@@ -16,10 +16,10 @@ exclude = [
 [dependencies]
 libc = "0.2.9"
 rustc-serialize = "0.3"
-pact_matching = "0.1.1"
-# pact_matching = { path = "../pact_matching" }
-pact_consumer = "0.1.0"
-# pact_consumer = { path = "../pact_consumer" }
+# pact_matching = "0.2.1"
+pact_matching = { path = "../pact_matching" }
+# pact_consumer = "0.2.0"
+pact_consumer = { path = "../pact_consumer" }
 p-macro = "0.2.0"
 log = "0.3.5"
 maplit = "0.1.3"
