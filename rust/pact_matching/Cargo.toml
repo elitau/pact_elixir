@@ -1,9 +1,9 @@
 [package]
 name = "pact_matching"
-version = "0.2.1"
+version = "0.2.2"
 authors = ["Ronald Holshausen <uglyog@gmail.com>"]
 description = "Pact-Rust support library that implements request and response matching logic"
-documentation = "https://docs.rs/pact_matching/0.2.1/pact_matching/"
+documentation = "https://docs.rs/pact_matching/0.2.2/pact_matching/"
 homepage = "http://www.pact.io"
 repository = "https://github.com/pact-foundation/pact-reference/blob/master/rust/pact_matching"
 readme = "README.md"
