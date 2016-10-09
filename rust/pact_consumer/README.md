@@ -1,7 +1,7 @@
 # Pact test DSL for writing consumer pact tests in Rust
 
 This library provides a test DSL for writing consumer pact tests in Rust. It is based on the
-[V1.1 pact specification](https://github.com/pact-foundation/pact-specification/tree/version-1.1).
+[V2 pact specification](https://github.com/pact-foundation/pact-specification/tree/version-2).
 
 [Online rust docs](https://docs.rs/pact_consumer/)
 
@@ -11,7 +11,7 @@ To use it, add it to your dev-dependencies in your cargo manifest and add an ext
 
 ```
 [dev-dependencies]
-pact_consumer = "0.1.0"
+pact_consumer = "0.2.0"
 ```
 
 Then in your main module
