@@ -1,6 +1,6 @@
 //! # Standalone Pact Verifier
 //!
-//! This project provides a command line interface to verify pact files against a running provider. It is a single executable binary. It implements the [V1.1 Pact specification](https://github.com/pact-foundation/pact-specification/tree/version-1.1).
+//! This project provides a command line interface to verify pact files against a running provider. It is a single executable binary. It implements the [V2 Pact specification](https://github.com/pact-foundation/pact-specification/tree/version-2).
 //!
 //! [Online rust docs](https://docs.rs/pact_verifier_cli/)
 //!
@@ -11,7 +11,7 @@
 //! The pact verifier is bundled as a single binary executable `pact_verifier_cli`. Running this with out any options displays the standard help.
 //!
 //! ```console,ignore
-//! pact_verifier_cli v0.1.0
+//! pact_verifier_cli v0.2.0
 //! Standalone Pact verifier
 //!
 //! USAGE:
@@ -230,7 +230,7 @@ fn main() {
 
 fn print_version() {
     println!("\npact verifier version     : v{}", crate_version!());
-    println!("pact specification version: v{}", PactSpecification::V1_1.version_str());
+    println!("pact specification version: v{}", PactSpecification::V2.version_str());
 }
 
 fn integer_value(v: String) -> Result<(), String> {
