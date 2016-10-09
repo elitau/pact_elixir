@@ -1,9 +1,9 @@
 [package]
 name = "pact_consumer"
-version = "0.2.0"
+version = "0.2.1"
 authors = ["Ronald Holshausen <uglyog@gmail.com>"]
 description = "Pact-Rust module that provides support for writing consumer pact tests"
-documentation = "https://docs.rs/pact_consumer/0.2.0/pact_consumer/"
+documentation = "https://docs.rs/pact_consumer/0.2.1/pact_consumer/"
 homepage = "http://www.pact.io"
 repository = "https://github.com/pact-foundation/pact-reference/blob/master/rust/pact_consumer"
 readme = "README.md"
