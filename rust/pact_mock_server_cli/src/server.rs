@@ -27,7 +27,7 @@ fn start_provider(context: &mut WebmachineContext) -> Result<bool, u16> {
         Some(ref body) if !body.is_empty() => {
             match Json::from_str(body) {
                 Ok(ref json) => {
-                    let pact = Pact::from_json(json);
+                    let pact = Pact::from_json(&context.request.request_path, json);
                     let mock_server_id = Uuid::new_v4().simple().to_string();
                     match start_mock_server(mock_server_id.clone(), pact, 0) {
                         Ok(mock_server) => {

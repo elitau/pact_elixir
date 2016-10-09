@@ -66,10 +66,10 @@ fn setup_loggers(level: &str, command: &str, output: Option<&str>) -> Result<(),
             Some(p) => {
                 try!(fs::create_dir_all(p));
                 let mut path = PathBuf::from(p);
-                path.push("pact_v1_mock_server.log");
+                path.push("pact_mock_server.log");
                 path
             },
-            None => PathBuf::from("pact_v1_mock_server.log")
+            None => PathBuf::from("pact_mock_server.log")
         };
         let file = try!(OpenOptions::new()
             .read(false)
@@ -248,7 +248,7 @@ fn handle_command_args() -> Result<(), i32> {
         Err(ref err) => {
             match err.kind {
                 ErrorKind::HelpDisplayed => {
-                    println!("");
+                    println!("{}", err.message);
                     Ok(())
                 },
                 ErrorKind::VersionDisplayed => {
@@ -257,7 +257,7 @@ fn handle_command_args() -> Result<(), i32> {
                     Ok(())
                 },
                 _ => {
-                    println!("");
+                    println!("{}", err.message);
                     err.exit()
                 }
             }
