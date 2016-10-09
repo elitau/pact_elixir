@@ -1,6 +1,6 @@
 //! The `pact_mock_server` crate provides the in-process mock server for mocking HTTP requests
-//! and generating responses based on a pact file. It implements the V1 Pact specification
-//! (https://github.com/pact-foundation/pact-specification/tree/version-1).
+//! and generating responses based on a pact file. It implements the V1.1 Pact specification
+//! (https://github.com/pact-foundation/pact-specification/tree/version-1.1).
 
 #![warn(missing_docs)]
 
