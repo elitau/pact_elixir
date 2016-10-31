@@ -32,7 +32,9 @@ pub enum PactSpecification {
     /// Second version of the pact specification (https://github.com/pact-foundation/pact-specification/tree/version-1.1)
     V1_1,
     /// Version two of the pact specification (https://github.com/pact-foundation/pact-specification/tree/version-2)
-    V2
+    V2,
+    /// Version three of the pact specification (https://github.com/pact-foundation/pact-specification/tree/version-3)
+    V3
 }
 
 impl PactSpecification {
@@ -42,6 +44,7 @@ impl PactSpecification {
             PactSpecification::V1 => s!("1.0.0"),
             PactSpecification::V1_1 => s!("1.1.0"),
             PactSpecification::V2 => s!("2.0.0"),
+            PactSpecification::V3 => s!("3.0.0"),
             _ => s!("unknown")
         }
     }
@@ -52,6 +55,7 @@ impl PactSpecification {
             PactSpecification::V1 => s!("V1"),
             PactSpecification::V1_1 => s!("V1.1"),
             PactSpecification::V2 => s!("V2"),
+            PactSpecification::V3 => s!("V3"),
             _ => s!("unknown")
         }
     }
@@ -144,6 +148,16 @@ impl OptionalBody {
 
 }
 
+impl<'a> PartialEq<&'a str> for OptionalBody {
+    fn eq(&self, other: &&'a str) -> bool {
+        match self {
+            &OptionalBody::Present(ref s) => s == other,
+            &OptionalBody::Empty => other.is_empty(),
+            _ => false
+        }
+    }
+}
+
 lazy_static! {
     static ref XMLREGEXP: Regex = Regex::new(r"^\s*<\?xml\s*version.*").unwrap();
     static ref HTMLREGEXP: Regex = Regex::new(r"^\s*(<!DOCTYPE)|(<HTML>).*").unwrap();
@@ -165,8 +179,7 @@ pub enum DetectedContentType {
     Text
 }
 
-/// Data structure for representing a collection of matchers
-pub type Matchers = HashMap<String, HashMap<String, String>>;
+#[macro_use] pub mod matchingrules;
 
 /// Trait to specify an HTTP part of a message. It encapsulates the shared parts of a request and
 /// response.
@@ -176,7 +189,7 @@ pub trait HttpPart {
     /// Returns the body of the HTTP part.
     fn body(&self) -> &OptionalBody;
     /// Returns the matching rules of the HTTP part.
-    fn matching_rules(&self) -> &Option<Matchers>;
+    fn matching_rules(&self) -> &matchingrules::MatchingRules;
 
     /// Determins the content type of the HTTP part. If a `Content-Type` header is present, the
     /// value of that header will be returned. Otherwise, the body will be inspected.
@@ -193,7 +206,7 @@ pub trait HttpPart {
         }
     }
 
-    /// Tries to detect the content type of the body by matching some regular exptressions against
+    /// Tries to detect the content type of the body by matching some regular expressions against
     /// the first 32 characters. Default to `text/plain` if no match is found.
     fn detect_content_type(&self) -> String {
         match *self.body() {
@@ -242,8 +255,8 @@ pub struct Request {
     pub headers: Option<HashMap<String, String>>,
     /// Request body
     pub body: OptionalBody,
-    /// Request matching rules (currently not used)
-    pub matching_rules: Option<Matchers>
+    /// Request matching rules
+    pub matching_rules: matchingrules::MatchingRules
 }
 
 impl HttpPart for Request {
@@ -255,7 +268,7 @@ impl HttpPart for Request {
         &self.body
     }
 
-    fn matching_rules(&self) -> &Option<Matchers> {
+    fn matching_rules(&self) -> &matchingrules::MatchingRules {
         &self.matching_rules
     }
 }
@@ -277,15 +290,7 @@ impl Hash for Request {
             }
         }
         self.body.hash(state);
-        if self.matching_rules.is_some() {
-            for (k, map) in self.matching_rules.clone().unwrap() {
-                k.hash(state);
-                for (k2, v) in map.clone() {
-                    k2.hash(state);
-                    v.hash(state);
-                }
-            }
-        }
+        self.matching_rules.hash(state);
     }
 }
 
@@ -311,7 +316,7 @@ fn headers_to_json(headers: &HashMap<String, String>) -> Value {
     }))
 }
 
-fn body_from_json(request: &Value, headers: &Option<HashMap<String, String>>) -> OptionalBody {
+fn body_from_json(request: &Value, fieldname: &str, headers: &Option<HashMap<String, String>>) -> OptionalBody {
     let content_type = match headers {
         &Some(ref h) => match h.iter().find(|kv| kv.0.to_lowercase() == s!("content-type")) {
             Some(kv) => {
@@ -325,7 +330,7 @@ fn body_from_json(request: &Value, headers: &Option<HashMap<String, String>>) ->
         &None => None
     };
 
-    match request.get("body") {
+    match request.get(fieldname) {
         Some(v) => match *v {
             Value::String(ref s) => {
                 if s.is_empty() {
@@ -358,48 +363,6 @@ pub fn build_query_string(query: HashMap<String, Vec<String>>) -> String {
                 .collect_vec()
         })
         .join("&")
-}
-
-fn matchers_from_json(json: &Value, deprecated_name: String) -> Option<Matchers> {
-    let matchers_json = match (json.get("matchingRules"), json.get(&deprecated_name)) {
-        (Some(v), _) => Some(v),
-        (None, Some(v)) => Some(v),
-        (None, None) => None
-    };
-    let matchers = matchers_json.map(|v| {
-        match *v {
-            Value::Object(ref m) => m.iter().map(|(k, val)| {
-                (k.clone(), match *val {
-                    Value::Object(ref m2) => m2.iter().map(|(k2, v2)| {
-                        (k2.clone(), match v2 {
-                            &Value::String(ref s) => s.clone(),
-                            _ => v2.to_string()
-                        })
-                    }).collect(),
-                    _ => hashmap!{}
-                })
-            }).collect(),
-            _ => hashmap!{}
-        }
-    });
-    match matchers {
-        Some(m) => if m.is_empty() {
-            None
-        } else {
-            Some(m)
-        },
-        None => None
-    }
-}
-
-fn matchers_to_json(matchers: &Matchers) -> Value {
-    json!(matchers.iter().fold(BTreeMap::new(), |mut map, kv| {
-        map.insert(kv.0.clone(), json!(kv.1.clone().iter().fold(BTreeMap::new(), |mut map, kv| {
-            map.insert(kv.0.clone(), Value::String(kv.1.clone()));
-            map
-        })));
-        map
-    }))
 }
 
 impl Request {
@@ -436,8 +399,8 @@ impl Request {
             path: path_val,
             query: query_val,
             headers: headers.clone(),
-            body: body_from_json(request_json, &headers),
-            matching_rules: matchers_from_json(request_json, s!("requestMatchingRules"))
+            body: body_from_json(request_json, "body", &headers),
+            matching_rules: matchingrules::matchers_from_json(request_json, &Some(s!("requestMatchingRules")))
         }
     }
 
@@ -473,8 +436,9 @@ impl Request {
                 OptionalBody::Missing => (),
                 OptionalBody::Null => { map.insert(s!("body"), Value::Null); }
             }
-            if self.matching_rules.is_some() {
-                map.insert(s!("matchingRules"), matchers_to_json(&self.matching_rules.clone().unwrap()));
+            if self.matching_rules.is_not_empty() {
+                map.insert(s!("matchingRules"), matchingrules::matchers_to_json(
+                &self.matching_rules.clone(), &PactSpecification::V2));
             }
         }
         json
@@ -488,7 +452,7 @@ impl Request {
             query: None,
             headers: None,
             body: OptionalBody::Missing,
-            matching_rules: None
+            matching_rules: matchingrules::MatchingRules::default()
         }
     }
 
@@ -526,8 +490,8 @@ pub struct Response {
     pub headers: Option<HashMap<String, String>>,
     /// Response body
     pub body: OptionalBody,
-    /// Response matching rules (not currently used)
-    pub matching_rules: Option<Matchers>
+    /// Response matching rules
+    pub matching_rules: matchingrules::MatchingRules
 }
 
 impl Response {
@@ -542,8 +506,8 @@ impl Response {
         Response {
             status: status_val,
             headers: headers.clone(),
-            body: body_from_json(response, &headers),
-            matching_rules:  matchers_from_json(response, s!("responseMatchingRules"))
+            body: body_from_json(response, "body", &headers),
+            matching_rules:  matchingrules::matchers_from_json(response, &Some(s!("responseMatchingRules")))
         }
     }
 
@@ -553,7 +517,7 @@ impl Response {
             status: 200,
             headers: None,
             body: OptionalBody::Missing,
-            matching_rules: None
+            matching_rules: matchingrules::MatchingRules::default()
         }
     }
 
@@ -585,8 +549,9 @@ impl Response {
                 OptionalBody::Missing => (),
                 OptionalBody::Null => { map.insert(s!("body"), Value::Null); }
             }
-            if self.matching_rules.is_some() {
-                map.insert(s!("matchingRules"), matchers_to_json(&self.matching_rules.clone().unwrap()));
+            if self.matching_rules.is_not_empty() {
+                map.insert(s!("matchingRules"), matchingrules::matchers_to_json(
+              &self.matching_rules.clone(), &PactSpecification::V2));
             }
         }
         json
@@ -620,7 +585,7 @@ impl HttpPart for Response {
         &self.body
     }
 
-    fn matching_rules(&self) -> &Option<Matchers> {
+    fn matching_rules(&self) -> &matchingrules::MatchingRules {
         &self.matching_rules
     }
 }
@@ -635,15 +600,7 @@ impl Hash for Response {
             }
         }
         self.body.hash(state);
-        if self.matching_rules.is_some() {
-            for (k, map) in self.matching_rules.clone().unwrap() {
-                k.hash(state);
-                for (k2, v) in map.clone() {
-                    k2.hash(state);
-                    v.hash(state);
-                }
-            }
-        }
+        self.matching_rules.hash(state);
     }
 }
 
@@ -671,7 +628,7 @@ pub struct Interaction {
 }
 
 impl Interaction {
-    /// Constructs an `Interaction` from the `Json` struct.
+    /// Constructs an `Interaction` from the `Value` struct.
     pub fn from_json(index: usize, pact_json: &Value, spec_version: &PactSpecification) -> Interaction {
         let description = match pact_json.get("description") {
             Some(v) => match *v {
@@ -701,11 +658,11 @@ impl Interaction {
             None => Response::default_response()
         };
         Interaction {
-             description: description,
-             provider_state: provider_state,
-             request: request,
-             response: response
-         }
+             description,
+             provider_state,
+             request,
+             response
+        }
     }
 
     /// Converts this interaction to a `Value` struct.
@@ -750,6 +707,8 @@ impl Interaction {
         }
     }
 }
+
+pub mod message;
 
 /// Struct that represents a pact between the consumer and provider of a service.
 #[derive(Debug, Clone)]
@@ -855,10 +814,10 @@ impl Pact {
             None => Provider { name: s!("provider") }
         };
         Pact {
-            consumer: consumer,
-            provider: provider,
+            consumer,
+            provider,
             interactions: parse_interactions(pact_json, spec_version.clone()),
-            metadata: metadata,
+            metadata,
             specification_version: spec_version.clone()
         }
     }
@@ -942,7 +901,7 @@ impl Pact {
 
     /// Reads the pact file and parses the resulting JSON into a `Pact` struct
     pub fn read_pact(file: &Path) -> io::Result<Pact> {
-        let mut f = try!(File::open(file));
+        let mut f = File::open(file)?;
         let pact_json = serde_json::from_reader(&mut f);
         match pact_json {
             Ok(ref json) => Ok(Pact::from_json(&format!("{:?}", file), json)),
@@ -973,18 +932,18 @@ impl Pact {
     pub fn write_pact(&self, path: &Path) -> io::Result<()> {
         try!(fs::create_dir_all(path.parent().unwrap()));
         if path.exists() {
-            let existing_pact = try!(Pact::read_pact(path));
+            let existing_pact = Pact::read_pact(path)?;
             match existing_pact.merge(self) {
                 Ok(ref merged_pact) => {
-                    let mut file = try!(File::create(path));
-                    try!(file.write_all(format!("{}", serde_json::to_string_pretty(&merged_pact.to_json()).unwrap()).as_bytes()));
+                    let mut file = File::create(path)?;
+                    file.write_all(format!("{}", serde_json::to_string_pretty(&merged_pact.to_json()).unwrap()).as_bytes())?;
                     Ok(())
                 },
                 Err(ref message) => Err(Error::new(ErrorKind::Other, message.clone()))
             }
         } else {
-            let mut file = try!{ File::create(path) };
-            try!{ file.write_all(format!("{}", serde_json::to_string_pretty(&self.to_json()).unwrap()).as_bytes()) };
+            let mut file = File::create(path)?;
+            file.write_all(format!("{}", serde_json::to_string_pretty(&self.to_json()).unwrap()).as_bytes())?;
             Ok(())
         }
     }
@@ -999,7 +958,7 @@ impl Pact {
                 s!("pact-specification") => btreemap!{ s!("version") => PactSpecification::V1_1.version_str() },
                 s!("pact-rust") => btreemap!{ s!("version") => s!(VERSION.unwrap_or("unknown")) }
             },
-            specification_version: PactSpecification::V1_1
+            specification_version: PactSpecification::V2
         }
     }
 }

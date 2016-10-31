@@ -64,8 +64,9 @@ use std::ffi::CStr;
 use std::ffi::CString;
 use std::str;
 use std::panic::catch_unwind;
-use pact_matching::models::{Pact, Interaction, Request, OptionalBody};
+use pact_matching::models::{Pact, Interaction, Request, OptionalBody, PactSpecification};
 use pact_matching::models::parse_query_string;
+use pact_matching::models::matchingrules::*;
 use pact_matching::Mismatch;
 
 use std::collections::{BTreeMap, HashMap};
@@ -145,6 +146,7 @@ fn mismatches_to_json(request: &Request, mismatches: &Vec<Mismatch>) -> serde_js
 }
 
 /// Struct to represent a mock server
+#[derive(Debug, Clone)]
 pub struct MockServer {
     /// Mock server unique ID
     pub id: String,
@@ -193,7 +195,7 @@ impl MockServer {
         })
     }
 
-    /// Returns all the mismatches that have occured with this mock server
+    /// Returns all the mismatches that have occurred with this mock server
     pub fn mismatches(&self) -> Vec<MatchResult> {
         let mismatches = self.matches.iter()
             .filter(|m| !m.matched())
@@ -337,7 +339,7 @@ fn hyper_request_to_pact_request(req: &mut hyper::server::Request) -> Request {
         query: extract_query_string(&req.uri),
         headers: extract_headers(&req.headers),
         body: extract_body(req),
-        matching_rules: None
+        matching_rules: MatchingRules::default()
     }
 }
 

@@ -7,8 +7,9 @@ use pact_matching::Mismatch;
 #[test]
 fn match_request_returns_a_match_for_identical_requests() {
     let request = Request { method: s!("GET"), path: s!("/"), query: None,
-        headers: None, body: OptionalBody::Missing, matching_rules: None };
-    let response = Response { status: 200, headers: None, body: OptionalBody::Missing, matching_rules: None };
+        headers: None, body: OptionalBody::Missing, matching_rules: MatchingRules::default() };
+    let response = Response { status: 200, headers: None, body: OptionalBody::Missing,
+      matching_rules: MatchingRules::default() };
     let interaction = Interaction { description: s!("test"), provider_state: None,
         request: request.clone(), response: response.clone() };
     let interactions = vec![interaction.clone()];
@@ -19,7 +20,7 @@ fn match_request_returns_a_match_for_identical_requests() {
 #[test]
 fn match_request_returns_a_not_found_for_no_interactions() {
     let request = Request { method: s!("GET"), path: s!("/"), query: None,
-        headers: None, body: OptionalBody::Missing, matching_rules: None };
+        headers: None, body: OptionalBody::Missing, matching_rules: MatchingRules::default() };
     let interactions = vec![];
     let result = match_request(&request, &interactions);
     expect!(result).to(be_equal_to(MatchResult::RequestNotFound(request)));
@@ -28,8 +29,9 @@ fn match_request_returns_a_not_found_for_no_interactions() {
 #[test]
 fn match_request_returns_a_match_for_multiple_identical_requests() {
     let request = Request { method: s!("GET"), path: s!("/"), query: None,
-        headers: None, body: OptionalBody::Missing, matching_rules: None };
-    let response = Response { status: 200, headers: None, body: OptionalBody::Missing, matching_rules: None };
+        headers: None, body: OptionalBody::Missing, matching_rules: MatchingRules::default() };
+    let response = Response { status: 200, headers: None, body: OptionalBody::Missing,
+      matching_rules: MatchingRules::default() };
     let interaction = Interaction { description: s!("test"), provider_state: None,
         request: request.clone(), response: response.clone() };
     let interactions = vec![interaction.clone(),
@@ -42,10 +44,11 @@ fn match_request_returns_a_match_for_multiple_identical_requests() {
 #[test]
 fn match_request_returns_a_match_for_multiple_requests() {
     let request = Request { method: s!("GET"), path: s!("/"), query: None,
-        headers: None, body: OptionalBody::Missing, matching_rules: None };
+        headers: None, body: OptionalBody::Missing, matching_rules: MatchingRules::default() };
     let request2 = Request { method: s!("POST"), path: s!("/post"), query: None,
-        headers: None, body: OptionalBody::Missing, matching_rules: None };
-    let response = Response { status: 200, headers: None, body: OptionalBody::Missing, matching_rules: None };
+        headers: None, body: OptionalBody::Missing, matching_rules: MatchingRules::default() };
+    let response = Response { status: 200, headers: None, body: OptionalBody::Missing,
+      matching_rules: MatchingRules::default() };
     let interaction = Interaction { description: s!("test"), provider_state: None,
         request: request.clone(), response: response.clone() };
     let interactions = vec![interaction.clone(),
@@ -58,11 +61,12 @@ fn match_request_returns_a_match_for_multiple_requests() {
 #[test]
 fn match_request_returns_a_mismatch_for_incorrect_request() {
     let request = Request { method: s!("GET"), path: s!("/"), query: None,
-        headers: None, body: OptionalBody::Missing, matching_rules: None };
-    let response = Response { status: 200, headers: None, body: OptionalBody::Missing, matching_rules: None };
+        headers: None, body: OptionalBody::Missing, matching_rules: MatchingRules::default() };
+    let response = Response { status: 200, headers: None, body: OptionalBody::Missing,
+      matching_rules: MatchingRules::default() };
     let expected_request = Request { method: s!("GET"), path: s!("/"), query: Some(hashmap!{
         s!("QueryA") => vec![s!("Value A")]
-        }), headers: None, body: OptionalBody::Missing, matching_rules: None };
+        }), headers: None, body: OptionalBody::Missing, matching_rules: MatchingRules::default() };
     let interactions = vec![Interaction { description: s!("test"), provider_state: None,
         request: expected_request, response: response.clone() }];
     let result = match_request(&request, &interactions);
@@ -72,10 +76,11 @@ fn match_request_returns_a_mismatch_for_incorrect_request() {
 #[test]
 fn match_request_returns_request_not_found_if_method_or_path_do_not_match() {
     let request = Request { method: s!("GET"), path: s!("/path"), query: None,
-        headers: None, body: OptionalBody::Missing, matching_rules: None };
-    let response = Response { status: 200, headers: None, body: OptionalBody::Missing, matching_rules: None };
+        headers: None, body: OptionalBody::Missing, matching_rules: MatchingRules::default() };
+    let response = Response { status: 200, headers: None, body: OptionalBody::Missing,
+      matching_rules: MatchingRules::default() };
     let expected_request = Request { method: s!("POST"), path: s!("/otherpath"), query: None,
-        headers: None, body: OptionalBody::Missing, matching_rules: None };
+        headers: None, body: OptionalBody::Missing, matching_rules: MatchingRules::default() };
     let interactions = vec![Interaction { description: s!("test"), provider_state: None,
         request: expected_request, response: response.clone() }];
     let result = match_request(&request, &interactions);
@@ -85,14 +90,17 @@ fn match_request_returns_request_not_found_if_method_or_path_do_not_match() {
 #[test]
 fn match_request_returns_the_most_appropriate_mismatch_for_multiple_requests() {
     let request = Request { method: s!("GET"), path: s!("/"), query: None,
-        headers: None, body: OptionalBody::Present(s!("This is a body")), matching_rules: None };
+        headers: None, body: OptionalBody::Present(s!("This is a body")),
+      matching_rules: MatchingRules::default() };
     let request2 = Request { method: s!("GET"), path: s!("/"), query: Some(hashmap!{
         s!("QueryA") => vec![s!("Value A")]
-        }), headers: None, body: OptionalBody::Present(s!("This is a body")), matching_rules: None };
+        }), headers: None, body: OptionalBody::Present(s!("This is a body")),
+      matching_rules: MatchingRules::default() };
     let request3 = Request { method: s!("GET"), path: s!("/"), query: Some(hashmap!{
         s!("QueryA") => vec![s!("Value A")]
-        }), headers: None, body: OptionalBody::Missing, matching_rules: None };
-    let response = Response { status: 200, headers: None, body: OptionalBody::Missing, matching_rules: None };
+        }), headers: None, body: OptionalBody::Missing, matching_rules: MatchingRules::default() };
+    let response = Response { status: 200, headers: None, body: OptionalBody::Missing,
+      matching_rules: MatchingRules::default() };
     let interaction = Interaction { description: s!("test"), provider_state: None,
         request: request.clone(), response: response.clone() };
     let interaction2 = Interaction { description: s!("test2"), provider_state: None,
@@ -114,8 +122,9 @@ fn match_request_supports_v2_matchers() {
                 "b": "one hundred"
             }
             "#)
-        ), matching_rules: None };
-    let response = Response { status: 200, headers: None, body: OptionalBody::Missing, matching_rules: None };
+        ), matching_rules: MatchingRules::default() };
+    let response = Response { status: 200, headers: None, body: OptionalBody::Missing,
+      matching_rules: MatchingRules::default() };
     let expected_request = Request { method: s!("GET"), path: s!("/"), query: None,
         headers: Some(hashmap!{ s!("Content-Type") => s!("application/json") }),
         body: OptionalBody::Present(
@@ -125,9 +134,12 @@ fn match_request_supports_v2_matchers() {
                 "b": "One Thousand"
             }
             "#)
-        ), matching_rules: Some(hashmap!{
-            s!("$.body.*") => hashmap!{ s!("match") => s!("type") }
-        }) };
+        ), matching_rules: matchingrules!{
+          "body" => {
+            "$.*" => [ MatchingRule::Type ]
+          }
+        }
+    };
     let interaction = Interaction { description: s!("test"), provider_state: None,
         request: expected_request, response: response.clone() };
     let result = match_request(&request, &vec![interaction.clone()]);
@@ -141,17 +153,21 @@ fn match_request_supports_v2_matchers_with_xml() {
             s!(r#"<?xml version="1.0" encoding="UTF-8"?>
             <foo>hello<bar/>world</foo>
             "#)
-        ), matching_rules: None };
-    let response = Response { status: 200, headers: None, body: OptionalBody::Missing, matching_rules: None };
+        ), matching_rules: MatchingRules::default() };
+    let response = Response { status: 200, headers: None, body: OptionalBody::Missing,
+      matching_rules: MatchingRules::default() };
     let expected_request = Request { method: s!("GET"), path: s!("/"), query: None,
         headers: Some(hashmap!{ s!("Content-Type") => s!("application/xml") }),
         body: OptionalBody::Present(
             s!(r#"<?xml version="1.0" encoding="UTF-8"?>
             <foo>hello<bar/>mars </foo>
             "#)
-        ), matching_rules: Some(hashmap!{
-            s!("$.body.foo['#text']") => hashmap!{ s!("match") => s!("regex"), s!("regex") => s!("[a-z]+") }
-        }) };
+        ), matching_rules: matchingrules!{
+          "body" => {
+            "$.foo['#text']" => [ MatchingRule::Regex(s!("[a-z]+")) ]
+          }
+        }
+    };
     let interaction = Interaction { description: s!("test"), provider_state: None,
         request: expected_request, response: response.clone() };
     let result = match_request(&request, &vec![interaction.clone()]);

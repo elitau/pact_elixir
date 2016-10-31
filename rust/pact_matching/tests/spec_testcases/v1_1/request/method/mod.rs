@@ -1,7 +1,9 @@
 #[allow(unused_imports)]
-use pact_matching::models::*;
-#[allow(unused_imports)]
 use env_logger;
+#[allow(unused_imports)]
+use pact_matching::models::PactSpecification;
+#[allow(unused_imports)]
+use pact_matching::models::Request;
 #[allow(unused_imports)]
 use pact_matching::match_request;
 #[allow(unused_imports)]
@@ -37,10 +39,11 @@ fn different_method() {
     let actual = Request::from_json(&pact.get("actual").unwrap(), &PactSpecification::V1_1);
     println!("{:?}", actual);
     let pact_match = pact.get("match").unwrap();
+    let result = match_request(expected, actual);
     if pact_match.as_bool().unwrap() {
-       expect!(match_request(expected, actual)).to(be_empty());
+       expect!(result.iter()).to(be_empty());
     } else {
-       expect!(match_request(expected, actual)).to_not(be_empty());
+       expect!(result.iter()).to_not(be_empty());
     }
 }
 
@@ -72,10 +75,11 @@ fn matches() {
     let actual = Request::from_json(&pact.get("actual").unwrap(), &PactSpecification::V1_1);
     println!("{:?}", actual);
     let pact_match = pact.get("match").unwrap();
+    let result = match_request(expected, actual);
     if pact_match.as_bool().unwrap() {
-       expect!(match_request(expected, actual)).to(be_empty());
+       expect!(result.iter()).to(be_empty());
     } else {
-       expect!(match_request(expected, actual)).to_not(be_empty());
+       expect!(result.iter()).to_not(be_empty());
     }
 }
 
@@ -107,9 +111,10 @@ fn method_is_different_case() {
     let actual = Request::from_json(&pact.get("actual").unwrap(), &PactSpecification::V1_1);
     println!("{:?}", actual);
     let pact_match = pact.get("match").unwrap();
+    let result = match_request(expected, actual);
     if pact_match.as_bool().unwrap() {
-       expect!(match_request(expected, actual)).to(be_empty());
+       expect!(result.iter()).to(be_empty());
     } else {
-       expect!(match_request(expected, actual)).to_not(be_empty());
+       expect!(result.iter()).to_not(be_empty());
     }
 }

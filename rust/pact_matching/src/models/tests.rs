@@ -1,13 +1,14 @@
 use super::*;
-use super::{matchers_from_json, body_from_json, headers_from_json};
+use super::{body_from_json, headers_from_json};
+use models::matchingrules::{MatchingRule, matchers_from_json};
 use std::collections::HashMap;
+use std::collections::hash_map::DefaultHasher;
 use std::fs::{self, File};
 use std::io;
-use std::io::prelude::*;
 use std::env;
 use expectest::prelude::*;
 use rand;
-use std::hash::{Hash, Hasher, SipHasher};
+use std::hash::{Hash, Hasher};
 
 #[test]
 fn request_from_json_defaults_to_get() {
@@ -18,8 +19,8 @@ fn request_from_json_defaults_to_get() {
           "headers": {}
       }
      "#).unwrap();
-    let request = Request::from_json(&request_json, &PactSpecification::V1_1);
-    assert_eq!(request.method, "GET".to_string());
+    let request = Request::from_json(&request_json, &PactSpecification::V1);
+    expect!(request.method).to(be_equal_to("GET"));
 }
 
 #[test]
@@ -136,7 +137,7 @@ fn quickcheck_parse_query_string() {
 #[test]
 fn request_mimetype_is_based_on_the_content_type_header() {
     let request = Request { method: s!("GET"), path: s!("/"), query: None, headers: None,
-        body: OptionalBody::Missing, matching_rules: None };
+        body: OptionalBody::Missing, matching_rules: matchingrules!{} };
     expect!(request.content_type()).to(be_equal_to("text/plain"));
     expect!(Request {
         headers: Some(hashmap!{ s!("Content-Type") => s!("text/html") }), .. request.clone() }.content_type())
@@ -182,7 +183,7 @@ fn request_mimetype_is_based_on_the_content_type_header() {
 #[test]
 fn content_type_enum_test() {
     let request = Request { method: s!("GET"), path: s!("/"), query: None, headers: None,
-        body: OptionalBody::Missing, matching_rules: None };
+        body: OptionalBody::Missing, matching_rules: matchingrules!{} };
     expect!(request.content_type_enum()).to(be_equal_to(DetectedContentType::Text));
     expect!(Request {
         headers: Some(hashmap!{ s!("Content-Type") => s!("text/html") }), .. request.clone() }.content_type_enum())
@@ -365,13 +366,13 @@ fn load_basic_pact() {
         query: Some(hashmap!{ s!("name") => vec![s!("ron")], s!("status") => vec![s!("good")] }),
         headers: None,
         body: OptionalBody::Missing,
-        matching_rules: None
+        matching_rules: matchingrules!{}
     }));
     expect!(interaction.response).to(be_equal_to(Response {
         status: 200,
         headers: Some(hashmap!{ s!("Content-Type") => s!("text/html") }),
         body: OptionalBody::Present(s!("\"That is some good Mallory.\"")),
-        matching_rules: None
+        matching_rules: matchingrules!{}
     }));
     expect!(pact.specification_version).to(be_equal_to(PactSpecification::V2));
     expect!(pact.metadata.iter()).to(have_count(0));
@@ -437,13 +438,13 @@ fn load_pact() {
         query: Some(hashmap!{ s!("q") => vec![s!("p"), s!("p2")], s!("r") => vec![s!("s")] }),
         headers: Some(hashmap!{ s!("testreqheader") => s!("testreqheadervalue") }),
         body: OptionalBody::Present(s!("{\"test\":true}")),
-        matching_rules: None
+        matching_rules: matchingrules!{}
     }));
     expect!(interaction.response).to(be_equal_to(Response {
         status: 200,
         headers: Some(hashmap!{ s!("testreqheader") => s!("testreqheaderval") }),
         body: OptionalBody::Present(s!("{\"responsetest\":true}")),
-        matching_rules: None
+        matching_rules: matchingrules!{}
     }));
 }
 
@@ -501,7 +502,7 @@ fn load_pact_encoded_query_string() {
             s!("description") => vec![s!("hello world!")] }),
         headers: Some(hashmap!{ s!("testreqheader") => s!("testreqheadervalue") }),
         body: OptionalBody::Present(s!("{\"test\":true}")),
-        matching_rules: None
+        matching_rules: matchingrules!{}
     }));
 }
 
@@ -530,7 +531,7 @@ fn load_pact_converts_methods_to_uppercase() {
         query: None,
         headers: None,
         body: OptionalBody::Missing,
-        matching_rules: None
+        matching_rules: matchingrules!{}
     }));
 }
 
@@ -790,7 +791,7 @@ fn write_pact_test_should_merge_pacts() {
 
     expect!(result).to(be_ok());
     expect!(result2).to(be_ok());
-    expect(pact_file).to(be_equal_to(format!(r#"{{
+    expect!(pact_file).to(be_equal_to(format!(r#"{{
   "consumer": {{
     "name": "merge_consumer"
   }},
@@ -873,7 +874,7 @@ fn write_pact_test_should_not_merge_pacts_with_conflicts() {
 
     expect!(result).to(be_ok());
     expect!(result2).to(be_err());
-    expect(pact_file).to(be_equal_to(format!(r#"{{
+    expect!(pact_file).to(be_equal_to(format!(r#"{{
   "consumer": {{
     "name": "write_pact_test_consumer"
   }},
@@ -1020,7 +1021,7 @@ fn interactions_do_not_conflict_if_they_have_different_descriptions() {
         request: Request::default_request(),
         response: Response::default_response()
     };
-    expect(interaction1.conflicts_with(&interaction2)).to(be_empty());
+    expect!(interaction1.conflicts_with(&interaction2).iter()).to(be_empty());
 }
 
 #[test]
@@ -1037,7 +1038,7 @@ fn interactions_do_not_conflict_if_they_have_different_provider_states() {
         request: Request::default_request(),
         response: Response::default_response()
     };
-    expect(interaction1.conflicts_with(&interaction2)).to(be_empty());
+    expect!(interaction1.conflicts_with(&interaction2).iter()).to(be_empty());
 }
 
 #[test]
@@ -1054,7 +1055,7 @@ fn interactions_do_not_conflict_if_they_have_the_same_requests_and_responses() {
         request: Request::default_request(),
         response: Response::default_response()
     };
-    expect(interaction1.conflicts_with(&interaction2)).to(be_empty());
+    expect!(interaction1.conflicts_with(&interaction2).iter()).to(be_empty());
 }
 
 #[test]
@@ -1071,7 +1072,7 @@ fn interactions_conflict_if_they_have_different_requests() {
         request: Request { method: s!("POST"), .. Request::default_request() },
         response: Response::default_response()
     };
-    expect(interaction1.conflicts_with(&interaction2)).to_not(be_empty());
+    expect!(interaction1.conflicts_with(&interaction2).iter()).to_not(be_empty());
 }
 
 #[test]
@@ -1088,11 +1089,11 @@ fn interactions_conflict_if_they_have_different_responses() {
         request: Request::default_request(),
         response: Response { status: 400, .. Response::default_response() }
     };
-    expect(interaction1.conflicts_with(&interaction2)).to_not(be_empty());
+    expect!(interaction1.conflicts_with(&interaction2).iter()).to_not(be_empty());
 }
 
 fn hash<T: Hash>(t: &T) -> u64 {
-    let mut s = SipHasher::new();
+    let mut s = DefaultHasher::new();
     t.hash(&mut s);
     s.finish()
 }
@@ -1138,8 +1139,8 @@ fn matchers_from_json_handles_missing_matchers() {
           "headers": {}
       }
      "#).unwrap();
-    let matchers = matchers_from_json(&json, s!("deprecatedName"));
-    expect!(matchers).to(be_none());
+    let matchers = matchers_from_json(&json, &Some(s!("deprecatedName")));
+    expect!(matchers.rules.iter()).to(be_empty());
 }
 
 #[test]
@@ -1152,8 +1153,8 @@ fn matchers_from_json_handles_empty_matchers() {
           "matchingRules": {}
       }
      "#).unwrap();
-    let matchers = matchers_from_json(&json, s!("deprecatedName"));
-    expect!(matchers).to(be_none());
+    let matchers = matchers_from_json(&json, &Some(s!("deprecatedName")));
+    expect!(matchers.rules.iter()).to(be_empty());
 }
 
 #[test]
@@ -1164,13 +1165,15 @@ fn matchers_from_json_handles_matcher_with_no_matching_rules() {
           "query": "",
           "headers": {},
           "matchingRules": {
-            "*.path": {}
+            "$.body.*.path": {}
           }
       }
      "#).unwrap();
-    let matchers = matchers_from_json(&json, s!("deprecatedName"));
-    expect!(matchers).to(be_some().value(hashmap!{
-        s!("*.path") => hashmap!{}
+    let matchers = matchers_from_json(&json, &Some(s!("deprecatedName")));
+    expect!(matchers).to(be_equal_to(matchingrules!{
+        "body" => {
+            "$.*.path" => [ ]
+        }
     }));
 }
 
@@ -1182,18 +1185,17 @@ fn matchers_from_json_loads_matchers_correctly() {
           "query": "",
           "headers": {},
           "matchingRules": {
-            "*.path": {
+            "$.body.*.path": {
                 "match": "regex",
                 "regex": "\\d+"
             }
           }
       }
      "#).unwrap();
-    let matchers = matchers_from_json(&json, s!("deprecatedName"));
-    expect!(matchers).to(be_some().value(hashmap!{
-        s!("*.path") => hashmap!{
-            s!("match") => s!("regex"),
-            s!("regex") => s!(r#"\d+"#)
+    let matchers = matchers_from_json(&json, &Some(s!("deprecatedName")));
+    expect!(matchers).to(be_equal_to(matchingrules!{
+        "body" => {
+            "$.*.path" => [ MatchingRule::Regex(s!("\\d+")) ]
         }
     }));
 }
@@ -1206,18 +1208,17 @@ fn matchers_from_json_loads_matchers_from_deprecated_name() {
           "query": "",
           "headers": {},
           "deprecatedName": {
-            "*.path": {
+              "$.body.*.path": {
                 "match": "regex",
                 "regex": "\\d+"
-            }
+              }
           }
       }
      "#).unwrap();
-    let matchers = matchers_from_json(&json, s!("deprecatedName"));
-    expect!(matchers).to(be_some().value(hashmap!{
-        s!("*.path") => hashmap!{
-            s!("match") => s!("regex"),
-            s!("regex") => s!(r#"\d+"#)
+    let matchers = matchers_from_json(&json, &Some(s!("deprecatedName")));
+    expect!(matchers).to(be_equal_to(matchingrules!{
+        "body" => {
+            "$.*.path" => [ MatchingRule::Regex(s!(r#"\d+"#)) ]
         }
     }));
 }
@@ -1231,9 +1232,11 @@ fn write_pact_test_with_matchers() {
                 description: s!("Test Interaction"),
                 provider_state: Some(s!("Good state to be in")),
                 request: Request {
-                    matching_rules: Some(hashmap!{
-                        s!("*.body") => hashmap!{ s!("match") => s!("type") }
-                    }),
+                    matching_rules: matchingrules!{
+                        "body" => {
+                            "" => [ MatchingRule::Type ]
+                        }
+                    },
                     .. Request::default_request()
                 },
                 response: Response::default_response()
@@ -1251,7 +1254,7 @@ fn write_pact_test_with_matchers() {
     fs::remove_dir_all(dir.parent().unwrap()).unwrap_or(());
 
     expect!(result).to(be_ok());
-    expect(pact_file).to(be_equal_to(format!(r#"{{
+    expect!(pact_file).to(be_equal_to(format!(r#"{{
   "consumer": {{
     "name": "write_pact_test_consumer"
   }},
@@ -1261,7 +1264,7 @@ fn write_pact_test_with_matchers() {
       "providerState": "Good state to be in",
       "request": {{
         "matchingRules": {{
-          "*.body": {{
+          "$.body": {{
             "match": "type"
           }}
         }},
@@ -1299,7 +1302,7 @@ fn body_from_json_returns_missing_if_there_is_no_body() {
           }
       }
      "#).unwrap();
-    let body = body_from_json(&json, &None);
+    let body = body_from_json(&json, "body", &None);
     expect!(body).to(be_equal_to(OptionalBody::Missing));
 }
 
@@ -1313,7 +1316,7 @@ fn body_from_json_returns_null_if_the_body_is_null() {
           "body": null
       }
      "#).unwrap();
-    let body = body_from_json(&json, &None);
+    let body = body_from_json(&json, "body", &None);
     expect!(body).to(be_equal_to(OptionalBody::Null));
 }
 
@@ -1329,7 +1332,7 @@ fn body_from_json_returns_json_string_if_the_body_is_json_but_not_a_string() {
           }
       }
      "#).unwrap();
-    let body = body_from_json(&json, &None);
+    let body = body_from_json(&json, "body", &None);
     expect!(body).to(be_equal_to(OptionalBody::Present(s!("{\"test\":true}"))));
 }
 
@@ -1343,7 +1346,7 @@ fn body_from_json_returns_empty_if_the_body_is_an_empty_string() {
           "body": ""
       }
      "#).unwrap();
-    let body = body_from_json(&json, &None);
+    let body = body_from_json(&json, "body", &None);
     expect!(body).to(be_equal_to(OptionalBody::Empty));
 }
 
@@ -1357,7 +1360,7 @@ fn body_from_json_returns_the_body_if_the_body_is_a_string() {
           "body": "<?xml version=\"1.0\"?> <body></body>"
       }
      "#).unwrap();
-    let body = body_from_json(&json, &None);
+    let body = body_from_json(&json, "body", &None);
     expect!(body).to(be_equal_to(OptionalBody::Present(s!("<?xml version=\"1.0\"?> <body></body>"))));
 }
 
@@ -1372,7 +1375,7 @@ fn body_from_json_returns_the_a_json_formatted_body_if_the_body_is_a_string_and_
       }
      "#).unwrap();
     let headers = headers_from_json(&json);
-    let body = body_from_json(&json, &headers);
+    let body = body_from_json(&json, "body", &headers);
     expect!(body).to(be_equal_to(OptionalBody::Present(s!("\"This is actually a JSON string\""))));
 }
 
@@ -1387,6 +1390,6 @@ fn body_from_json_returns_the_body_if_the_content_type_is_json() {
       }
      "#).unwrap();
     let headers = headers_from_json(&json);
-    let body = body_from_json(&json, &headers);
+    let body = body_from_json(&json, "body", &headers);
     expect!(body).to(be_equal_to(OptionalBody::Present(s!("{\"test\":true}"))));
 }
