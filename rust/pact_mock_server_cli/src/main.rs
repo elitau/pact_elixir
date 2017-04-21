@@ -13,11 +13,11 @@ extern crate pact_mock_server;
 extern crate simplelog;
 extern crate uuid;
 extern crate rustc_serialize;
-#[macro_use] extern crate hyper;
+extern crate hyper;
 extern crate rand;
 extern crate webmachine_rust;
 extern crate regex;
-#[macro_use] extern crate lazy_static;
+extern crate lazy_static;
 
 #[cfg(test)]
 extern crate quickcheck;
@@ -29,10 +29,10 @@ extern crate expectest;
 use clap::{Arg, App, SubCommand, AppSettings, ErrorKind, ArgMatches};
 use std::env;
 use std::str::FromStr;
-use std::fs;
+use std::fs::{self, File};
 use std::io;
 use log::{LogLevelFilter};
-use simplelog::{CombinedLogger, TermLogger, FileLogger};
+use simplelog::{CombinedLogger, TermLogger, WriteLogger, Config};
 use std::path::PathBuf;
 use std::fs::OpenOptions;
 use uuid::Uuid;
@@ -40,7 +40,7 @@ use pact_matching::models::PactSpecification;
 
 fn display_error(error: String, matches: &ArgMatches) -> ! {
     println!("ERROR: {}", error);
-    println!("");
+    println!();
     println!("{}", matches.usage());
     panic!("{}", error)
 }
@@ -56,35 +56,53 @@ fn print_version() {
     println!("pact specification version: v{}", PactSpecification::V2.version_str());
 }
 
-fn setup_loggers(level: &str, command: &str, output: Option<&str>) -> Result<(), io::Error> {
+fn setup_log_file(output: Option<&str>) -> Result<File, io::Error> {
+  let log_file = match output {
+    Some(p) => {
+      fs::create_dir_all(p)?;
+      let mut path = PathBuf::from(p);
+      path.push("pact_mock_server.log");
+      path
+    },
+    None => PathBuf::from("pact_mock_server.log")
+  };
+  OpenOptions::new()
+    .read(false)
+    .write(true)
+    .append(true)
+    .create(true)
+    .open(log_file)
+}
+
+fn setup_loggers(level: &str, command: &str, output: Option<&str>, no_file_log: bool, no_console_log: bool) -> Result<(), io::Error> {
     let log_level = match level {
         "none" => LogLevelFilter::Off,
         _ => LogLevelFilter::from_str(level).unwrap()
     };
+
     if command == "start" {
-        let log_file = match output {
-            Some(p) => {
-                try!(fs::create_dir_all(p));
-                let mut path = PathBuf::from(p);
-                path.push("pact_mock_server.log");
-                path
-            },
-            None => PathBuf::from("pact_mock_server.log")
-        };
-        let file = try!(OpenOptions::new()
-            .read(false)
-            .write(true)
-            .append(true)
-            .create(true)
-            .open(log_file));
-        CombinedLogger::init(
-            vec![
-                TermLogger::new(log_level),
-                FileLogger::new(log_level, file)
-            ]
-        ).unwrap();
+      match (no_file_log, no_console_log) {
+        (true, true) => {
+          TermLogger::init(LogLevelFilter::Off, Config::default()).unwrap();
+        },
+        (true, false) => {
+          TermLogger::init(log_level, Config::default()).unwrap();
+        },
+        (false, true) => {
+          let log_file = setup_log_file(output)?;
+          WriteLogger::init(log_level, Config::default(), log_file).unwrap();
+        },
+        _ => {
+          let log_file = setup_log_file(output)?;
+          match TermLogger::new(log_level, Config::default()) {
+            Some(logger) => CombinedLogger::init(vec![logger, WriteLogger::new(log_level,
+                               Config::default(), log_file)]).unwrap(),
+            None => WriteLogger::init(log_level, Config::default(), log_file).unwrap()
+          };
+        }
+      }
     } else {
-        TermLogger::init(log_level).unwrap();
+        TermLogger::init(log_level, Config::default()).unwrap();
     }
     Ok(())
 }
@@ -102,6 +120,10 @@ fn lookup_global_option<'a>(option: &str, matches: &'a ArgMatches<'a>) -> Option
         },
         (None, None) => None
     }
+}
+
+fn global_option_present(option: &str, matches: &ArgMatches) -> bool {
+  matches.is_present(option) || matches.subcommand().1.unwrap().is_present(option)
 }
 
 fn integer_value(v: String) -> Result<(), String> {
@@ -155,6 +177,14 @@ fn handle_command_args() -> Result<(), i32> {
             .global(true)
             .possible_values(&["error", "warn", "info", "debug", "trace", "none"])
             .help("Log level for mock servers to write to the log file (defaults to info)"))
+        .arg(Arg::with_name("no-console-log")
+          .long("no-console-log")
+          .global(true)
+          .help("Do not log to the console via standout out"))
+        .arg(Arg::with_name("no-file-log")
+          .long("no-file-log")
+          .global(true)
+          .help("Do not log to an output file"))
         .subcommand(SubCommand::with_name("start")
                 .about("Starts the master mock server")
                 .setting(AppSettings::ColoredHelp)
@@ -224,7 +254,9 @@ fn handle_command_args() -> Result<(), i32> {
             let log_level = lookup_global_option("loglevel", matches);
             if let Err(err) = setup_loggers(log_level.unwrap_or("info"),
                 matches.subcommand_name().unwrap(),
-                matches.subcommand().1.unwrap().value_of("output")) {
+                matches.subcommand().1.unwrap().value_of("output"),
+                global_option_present("no-file-log", matches),
+                global_option_present("no-console-log", matches)) {
                 display_error(format!("Could not setup loggers: {}", err), matches);
             }
             let port = lookup_global_option("port", matches).unwrap_or("8080");
@@ -253,7 +285,7 @@ fn handle_command_args() -> Result<(), i32> {
                 },
                 ErrorKind::VersionDisplayed => {
                     print_version();
-                    println!("");
+                    println!();
                     Ok(())
                 },
                 _ => {
