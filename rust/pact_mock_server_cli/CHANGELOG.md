@@ -1,5 +1,10 @@
 To generate the log, run `git log --pretty='* %h - %s (%an, %ad)' TAGNAME..HEAD .` replacing TAGNAME and HEAD as appropriate.
 
+# 0.2.3 - Bugfix Release
+
+* 224ad98 - Change no-console-log to no-term-log and use a simple logger if it is set #6 (Ronald Holshausen, Sun Apr 23 17:19:53 2017 +1000)
+* cec2358 - bump version to 0.2.3 (Ronald Holshausen, Fri Apr 21 14:33:13 2017 +1000)
+
 # 0.2.2 - Bugfix Release
 
 * 53074cf - Merge branch 'v1.1-spec' into v2-spec (Ronald Holshausen, Fri Apr 21 14:17:05 2017 +1000)
