@@ -273,6 +273,65 @@ fn content_type_header_does_match_when_charsets_is_missing_from_expected_header(
 }
 
 #[test]
+fn mismatched_header_description_reports_content_type_mismatches_correctly() {
+    let mut mismatches = vec![];
+    match_header_value(&"CONTENT-TYPE".to_string(), &"CONTENT-TYPE-VALUE".to_string(), &"HEADER2".to_string(),
+                       &mut mismatches, &None);
+
+    let ref raised_mismatch = mismatches[0];
+    match(*raised_mismatch) {
+        Mismatch::HeaderMismatch {ref key, ref expected, ref actual, ref mismatch} =>
+            assert_eq!(mismatch, "Expected header 'CONTENT-TYPE' to have value 'CONTENT-TYPE-VALUE' but was 'HEADER2'"),
+        _ => panic!("Unexpected mismatch response")
+    }
+}
+
+#[test]
+fn accept_header_matches_when_headers_are_equal() {
+    let mut mismatches = vec![];
+    match_header_value(&"ACCEPT".to_string(), &"application/hal+json;charset=utf-8".to_string(),
+                       &"application/hal+json;charset=utf-8".to_string(), &mut mismatches, &None);
+    expect!(mismatches).to(be_empty());
+}
+
+#[test]
+fn accept_header_does_not_match_when_actual_is_empty() {
+    let mut mismatches = vec![];
+    match_header_value(&"ACCEPT".to_string(), &"application/hal+json".to_string(),
+                       &"".to_string(), &mut mismatches, &None);
+    expect!(mismatches).to_not(be_empty());
+}
+
+#[test]
+fn accept_header_does_match_when_charset_is_missing_from_expected_header() {
+    let mut mismatches = vec![];
+    match_header_value(&"ACCEPT".to_string(), &"application/hal+json".to_string(),
+        &"application/hal+json;charset=utf-8".to_string(), &mut mismatches, &None);
+    expect!(mismatches).to(be_empty());
+}
+
+#[test]
+fn accept_header_does_not_match_when_charsets_are_not_equal() {
+    let mut mismatches = vec![];
+    match_header_value(&"ACCEPT".to_string(), &"application/hal+json;charset=utf-8".to_string(),
+        &"application/hal+json;charset=utf-16".to_string(), &mut mismatches, &None);
+    expect!(mismatches).to_not(be_empty());
+}
+
+#[test]
+fn mismatched_header_description_reports_accept_header_mismatches_correctly() {
+    let mut mismatches = vec![];
+    match_header_value(&"ACCEPT".to_string(), &"ACCEPT-VALUE".to_string(), &"HEADER2".to_string(),
+                       &mut mismatches, &None);
+    let ref raised_mismatch = mismatches[0];
+    match(*raised_mismatch) {
+        Mismatch::HeaderMismatch { ref key, ref expected, ref actual, ref mismatch } =>
+            assert_eq!(mismatch, "Expected header 'ACCEPT' to have value 'ACCEPT-VALUE' but was 'HEADER2'"),
+        _ => panic!("Unexpected mismatch response")
+    }
+}
+
+#[test]
 fn body_does_not_match_if_different_content_types() {
     let mut mismatches = vec![];
     let expected = Request { method: s!("GET"), path: s!("/"), query: None,
