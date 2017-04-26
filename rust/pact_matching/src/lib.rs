@@ -802,7 +802,8 @@ fn match_header_value(key: &String, expected: &String, actual: &String, mismatch
         Err(message) => mismatches.push(Mismatch::HeaderMismatch { key: key.clone(),
                 expected: expected.clone(),
                 actual: actual.clone(),
-                mismatch: message }),
+                mismatch:
+                    format!("Expected header '{}' to have value '{}' but was '{}'", &key, expected, actual)}),
         Ok(_) => ()
     }
 }

@@ -183,7 +183,21 @@ fn matching_headers_be_false_when_headers_are_not_equal() {
     assert!(!mismatches.is_empty());
     assert_eq!(mismatches[0], Mismatch::HeaderMismatch { key: "HEADER".to_string(),
         expected: "HEADER".to_string(), actual: "HEADER2".to_string(),
-        mismatch: "Expected header 'HEADER' to have value 'HEADER' but was 'HEADER2'".to_string() });
+        mismatch: "".to_string() });
+}
+
+#[test]
+fn mismatch_message_generated_when_headers_are_not_equal() {
+    let mut mismatches = vec![];
+    match_header_value(&"HEADER".to_string(), &"HEADER_VALUE".to_string(), &"HEADER2".to_string(),
+                       &mut mismatches, &None);
+
+    let ref raised_mismatch = mismatches[0];
+    match(*raised_mismatch) {
+        Mismatch::HeaderMismatch {ref key, ref expected, ref actual, ref mismatch} =>
+            assert_eq!(mismatch, "Expected header 'HEADER' to have value 'HEADER_VALUE' but was 'HEADER2'"),
+        _ => panic!("Unexpected mismatch response")
+    }
 }
 
 #[test]
