@@ -764,7 +764,7 @@ fn match_parameter_header(expected: &String, actual: &String, mismatches: &mut V
     let actual_values: Vec<&str> = strip_whitespace(actual, ";");
     let expected_parameters = expected_values.as_slice().split_first().unwrap();
     let actual_parameters = actual_values.as_slice().split_first().unwrap();
-    let header_mismatch = Mismatch::HeaderMismatch { key: header.to_string(),
+    let header_mismatch = Mismatch::HeaderMismatch { key: header.clone(),
         expected: format!("{}", expected),
         actual: format!("{}", actual),
         mismatch: format!("Expected header '{}' to have value '{}' but was '{}'",
