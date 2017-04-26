@@ -192,8 +192,8 @@ fn mismatch_message_generated_when_headers_are_not_equal() {
     match_header_value(&s!("HEADER"), &s!("HEADER_VALUE"), &s!("HEADER2"),
                        &mut mismatches, &None);
 
-    match(mismatches[0]) {
-        Mismatch::HeaderMismatch {ref key, ref expected, ref actual, ref mismatch} =>
+    match mismatches[0]  {
+        Mismatch::HeaderMismatch {key: _, expected: _, actual: _, ref mismatch} =>
             assert_eq!(mismatch, "Expected header 'HEADER' to have value 'HEADER_VALUE' but was 'HEADER2'"),
         _ => panic!("Unexpected mismatch response")
     }
@@ -277,9 +277,8 @@ fn mismatched_header_description_reports_content_type_mismatches_correctly() {
     match_header_value(&s!("CONTENT-TYPE"), &s!("CONTENT-TYPE-VALUE"), &s!("HEADER2"),
                        &mut mismatches, &None);
 
-    let ref raised_mismatch = mismatches[0];
-    match(*raised_mismatch) {
-        Mismatch::HeaderMismatch {ref key, ref expected, ref actual, ref mismatch} =>
+    match mismatches[0] {
+        Mismatch::HeaderMismatch {key: _, expected: _, actual: _, ref mismatch} =>
             assert_eq!(mismatch, "Expected header 'CONTENT-TYPE' to have value 'CONTENT-TYPE-VALUE' but was 'HEADER2'"),
         _ => panic!("Unexpected mismatch response")
     }
@@ -322,9 +321,8 @@ fn mismatched_header_description_reports_accept_header_mismatches_correctly() {
     let mut mismatches = vec![];
     match_header_value(&s!("ACCEPT"), &s!("ACCEPT-VALUE"), &s!("HEADER2"),
                        &mut mismatches, &None);
-    let ref raised_mismatch = mismatches[0];
-    match(*raised_mismatch) {
-        Mismatch::HeaderMismatch { ref key, ref expected, ref actual, ref mismatch } =>
+    match mismatches[0] {
+        Mismatch::HeaderMismatch { key: _, expected: _, actual: _, ref mismatch } =>
             assert_eq!(mismatch, "Expected header 'ACCEPT' to have value 'ACCEPT-VALUE' but was 'HEADER2'"),
         _ => panic!("Unexpected mismatch response")
     }

@@ -802,7 +802,7 @@ fn match_header_value(key: &String, expected: &String, actual: &String, mismatch
         expected.matches(&actual, &Matcher::EqualityMatcher)
     };
     match matcher_result {
-        Err(message) => mismatches.push(Mismatch::HeaderMismatch { key: key.clone(),
+        Err(_) => mismatches.push(Mismatch::HeaderMismatch { key: key.clone(),
                 expected: expected.clone(),
                 actual: actual.clone(),
                 mismatch:
