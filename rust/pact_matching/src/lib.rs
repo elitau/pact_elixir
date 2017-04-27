@@ -377,6 +377,8 @@ lazy_static! {
     ];
 }
 
+static PARAMETERISED_HEADER_TYPES: [&'static str; 2] = ["accept", "content-type"];
+
 /// Enum that defines the different types of mismatches that can occur.
 #[derive(Debug, Clone)]
 pub enum Mismatch {
@@ -757,16 +759,16 @@ fn parse_charset_parameters(parameters: &[&str]) -> HashMap<String, String> {
         })
 }
 
-fn match_content_type(expected: &String, actual: &String, mismatches: &mut Vec<Mismatch>) {
+fn match_parameter_header(expected: &String, actual: &String, mismatches: &mut Vec<Mismatch>, header: &String) {
     let expected_values: Vec<&str> = strip_whitespace(expected, ";");
     let actual_values: Vec<&str> = strip_whitespace(actual, ";");
     let expected_parameters = expected_values.as_slice().split_first().unwrap();
     let actual_parameters = actual_values.as_slice().split_first().unwrap();
-    let header_mismatch = Mismatch::HeaderMismatch { key: "Content-Type".to_string(),
+    let header_mismatch = Mismatch::HeaderMismatch { key: header.clone(),
         expected: format!("{}", expected),
         actual: format!("{}", actual),
-        mismatch: format!("Expected header 'Content-Type' to have value '{}' but was '{}'",
-            expected, actual) };
+        mismatch: format!("Expected header '{}' to have value '{}' but was '{}'",
+            header, expected, actual) };
 
     if expected_parameters.0 == actual_parameters.0 {
         let expected_parameter_map = parse_charset_parameters(expected_parameters.1);
@@ -790,19 +792,21 @@ fn match_header_value(key: &String, expected: &String, actual: &String, mismatch
     let path = vec![s!("$"), s!("headers"), key.clone()];
     let expected = strip_whitespace::<String>(expected, ",");
     let actual = strip_whitespace::<String>(actual, ",");
+
     let matcher_result = if matchers::matcher_is_defined(&path, matchers) {
         matchers::match_values(&path, matchers.clone().unwrap(), &expected, &actual)
-    } else if key.to_lowercase() == "content-type" {
-        match_content_type(&expected, &actual, mismatches);
+    } else if PARAMETERISED_HEADER_TYPES.contains(&key.to_lowercase().as_str()) {
+        match_parameter_header(&expected, &actual, mismatches, &key);
         Ok(())
     } else {
         expected.matches(&actual, &Matcher::EqualityMatcher)
     };
     match matcher_result {
-        Err(message) => mismatches.push(Mismatch::HeaderMismatch { key: key.clone(),
+        Err(_) => mismatches.push(Mismatch::HeaderMismatch { key: key.clone(),
                 expected: expected.clone(),
                 actual: actual.clone(),
-                mismatch: message }),
+                mismatch:
+                    format!("Expected header '{}' to have value '{}' but was '{}'", &key, expected, actual)}),
         Ok(_) => ()
     }
 }
