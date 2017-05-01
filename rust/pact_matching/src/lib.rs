@@ -328,6 +328,7 @@
 #![warn(missing_docs)]
 
 extern crate rustc_serialize;
+#[macro_use] extern crate serde_json;
 #[macro_use] extern crate log;
 #[macro_use] extern crate p_macro;
 #[macro_use] extern crate maplit;

@@ -1,7 +1,7 @@
 //! The `json` module provides functions to compare and display the differences between JSON bodies
 
-use rustc_serialize::json::Json;
-use rustc_serialize::json::ToJson;
+use serde_json;
+use serde_json::value::Value;
 use std::collections::btree_map::*;
 use super::Mismatch;
 use super::DiffConfig;
@@ -11,27 +11,27 @@ use std::str::FromStr;
 use models::Matchers;
 use matchers::*;
 
-fn type_of(json: &Json) -> String {
+fn type_of(json: &Value) -> String {
     match json {
-        &Json::Object(_) => s!("Map"),
-        &Json::Array(_) => s!("List"),
+        &Value::Object(_) => s!("Map"),
+        &Value::Array(_) => s!("List"),
         _ => s!("")
     }
 }
 
-fn value_of(json: &Json) -> String {
+fn value_of(json: &Value) -> String {
     match json {
-        &Json::String(ref s) => s.clone(),
+        &Value::String(ref s) => s.clone(),
         _ => format!("{}", json)
     }
 }
 
-impl Matches<Json> for Json {
-    fn matches(&self, actual: &Json, matcher: &Matcher) -> Result<(), String> {
+impl Matches<Value> for Value {
+    fn matches(&self, actual: &Value, matcher: &Matcher) -> Result<(), String> {
         let result = match *matcher {
            Matcher::RegexMatcher(ref regex) => {
                let actual_str = match actual {
-                   &Json::String(ref s) => s.clone(),
+                   &Value::String(ref s) => s.clone(),
                    _ => actual.to_string()
                };
                if regex.is_match(&actual_str) {
@@ -42,48 +42,44 @@ impl Matches<Json> for Json {
            },
            Matcher::TypeMatcher => {
                match (self, actual) {
-                   (&Json::Array(_), &Json::Array(_)) => Ok(()),
-                   (&Json::Boolean(_), &Json::Boolean(_)) => Ok(()),
-                   (&Json::F64(_), &Json::F64(_)) => Ok(()),
-                   (&Json::I64(_), &Json::I64(_)) => Ok(()),
-                   (&Json::Null, &Json::Null) => Ok(()),
-                   (&Json::Object(_), &Json::Object(_)) => Ok(()),
-                   (&Json::String(_), &Json::String(_)) => Ok(()),
-                   (&Json::U64(_), &Json::U64(_)) => Ok(()),
+                   (&Value::Array(_), &Value::Array(_)) => Ok(()),
+                   (&Value::Bool(_), &Value::Bool(_)) => Ok(()),
+                   (&Value::Number(_), &Value::Number(_)) => Ok(()),
+                   (&Value::Null, &Value::Null) => Ok(()),
+                   (&Value::Object(_), &Value::Object(_)) => Ok(()),
+                   (&Value::String(_), &Value::String(_)) => Ok(()),
                    (_, _) => Err(format!("Expected '{}' to be the same type as '{}'", value_of(self), value_of(actual))),
                }
            },
            Matcher::MinTypeMatcher(min) => {
                match (self, actual) {
-                   (&Json::Array(_), &Json::Array(ref actual_array)) => if actual_array.len() < min {
+                   (&Value::Array(_), &Value::Array(ref actual_array)) => if actual_array.len() < min {
                        Err(format!("Expected '{}' to have at least {} item(s)", value_of(actual), min))
                    } else {
                        Ok(())
                    },
-                   (&Json::Boolean(_), &Json::Boolean(_)) => Ok(()),
-                   (&Json::F64(_), &Json::F64(_)) => Ok(()),
-                   (&Json::I64(_), &Json::I64(_)) => Ok(()),
-                   (&Json::Null, &Json::Null) => Ok(()),
-                   (&Json::Object(_), &Json::Object(_)) => Ok(()),
-                   (&Json::String(_), &Json::String(_)) => Ok(()),
-                   (&Json::U64(_), &Json::U64(_)) => Ok(()),
+                   (&Value::Array(_), &Value::Array(_)) => Ok(()),
+                   (&Value::Bool(_), &Value::Bool(_)) => Ok(()),
+                   (&Value::Number(_), &Value::Number(_)) => Ok(()),
+                   (&Value::Null, &Value::Null) => Ok(()),
+                   (&Value::Object(_), &Value::Object(_)) => Ok(()),
+                   (&Value::String(_), &Value::String(_)) => Ok(()),
                    (_, _) => Err(format!("Expected '{}' to be the same type as '{}'", value_of(self), value_of(actual))),
                }
            },
            Matcher::MaxTypeMatcher(max) => {
                match (self, actual) {
-                   (&Json::Array(_), &Json::Array(ref actual_array)) => if actual_array.len() > max {
+                   (&Value::Array(_), &Value::Array(ref actual_array)) => if actual_array.len() > max {
                        Err(format!("Expected '{}' to have at most {} item(s)", value_of(actual), max))
                    } else {
                        Ok(())
                    },
-                   (&Json::Boolean(_), &Json::Boolean(_)) => Ok(()),
-                   (&Json::F64(_), &Json::F64(_)) => Ok(()),
-                   (&Json::I64(_), &Json::I64(_)) => Ok(()),
-                   (&Json::Null, &Json::Null) => Ok(()),
-                   (&Json::Object(_), &Json::Object(_)) => Ok(()),
-                   (&Json::String(_), &Json::String(_)) => Ok(()),
-                   (&Json::U64(_), &Json::U64(_)) => Ok(()),
+                   (&Value::Array(_), &Value::Array(_)) => Ok(()),
+                   (&Value::Bool(_), &Value::Bool(_)) => Ok(()),
+                   (&Value::Number(_), &Value::Number(_)) => Ok(()),
+                   (&Value::Null, &Value::Null) => Ok(()),
+                   (&Value::Object(_), &Value::Object(_)) => Ok(()),
+                   (&Value::String(_), &Value::String(_)) => Ok(()),
                    (_, _) => Err(format!("Expected '{}' to be the same type as '{}'", value_of(self), value_of(actual))),
                }
            },
@@ -100,27 +96,27 @@ impl Matches<Json> for Json {
     }
 }
 
-impl Matches<Vec<Json>> for Vec<Json> {
-    fn matches(&self, actual: &Vec<Json>, matcher: &Matcher) -> Result<(), String> {
+impl Matches<Vec<Value>> for Vec<Value> {
+    fn matches(&self, actual: &Vec<Value>, matcher: &Matcher) -> Result<(), String> {
         let result = match *matcher {
            Matcher::RegexMatcher(ref regex) => {
-               if regex.is_match(&Json::Array(actual.clone()).to_string()) {
+               if regex.is_match(&Value::Array(actual.clone()).to_string()) {
                    Ok(())
                } else {
-                   Err(format!("Expected '{:?}' to match '{}'", value_of(&Json::Array(actual.clone())), regex))
+                   Err(format!("Expected '{:?}' to match '{}'", value_of(&Value::Array(actual.clone())), regex))
                }
            },
            Matcher::TypeMatcher => Ok(()),
            Matcher::MinTypeMatcher(min) => {
                if actual.len() < min {
-                   Err(format!("Expected '{}' to have a minimum length of {}", value_of(&Json::Array(actual.clone())), min))
+                   Err(format!("Expected '{}' to have a minimum length of {}", value_of(&Value::Array(actual.clone())), min))
                } else {
                    Ok(())
                }
            },
            Matcher::MaxTypeMatcher(max) => {
                if actual.len() > max {
-                   Err(format!("Expected '{}' to have a maximum length of {}", value_of(&Json::Array(actual.clone())), max))
+                   Err(format!("Expected '{}' to have a maximum length of {}", value_of(&Value::Array(actual.clone())), max))
                } else {
                    Ok(())
                }
@@ -129,8 +125,8 @@ impl Matches<Vec<Json>> for Vec<Json> {
                if self == actual {
                    Ok(())
                } else {
-                   Err(format!("Expected '{}' to be equal to '{}'", value_of(&Json::Array(self.clone())),
-                    value_of(&&Json::Array(actual.clone()))))
+                   Err(format!("Expected '{}' to be equal to '{}'", value_of(&Value::Array(self.clone())),
+                    value_of(&&Value::Array(actual.clone()))))
                }
            }
        };
@@ -142,8 +138,8 @@ impl Matches<Vec<Json>> for Vec<Json> {
 /// Matches the expected JSON to the actual, and populates the mismatches vector with any differences
 pub fn match_json(expected: &String, actual: &String, config: DiffConfig,
     mismatches: &mut Vec<super::Mismatch>, matchers: &Option<Matchers>) {
-    let expected_json = Json::from_str(expected);
-    let actual_json = Json::from_str(actual);
+    let expected_json = Value::from_str(expected);
+    let actual_json = Value::from_str(actual);
 
     if expected_json.is_err() || actual_json.is_err() {
         match expected_json {
@@ -168,11 +164,11 @@ pub fn match_json(expected: &String, actual: &String, config: DiffConfig,
     }
 }
 
-fn walk_json(json: &Json, path: &mut Iterator<Item=&str>) -> Option<Json> {
+fn walk_json(json: &Value, path: &mut Iterator<Item=&str>) -> Option<Value> {
     match path.next() {
         Some(p) => match json {
-            &Json::Object(_) => json.find(p).map(|json| json.clone()),
-            &Json::Array(ref array) => match usize::from_str(p) {
+            &Value::Object(_) => json.get(p).map(|json| json.clone()),
+            &Value::Array(ref array) => match usize::from_str(p) {
                 Ok(index) => array.get(index).map(|json| json.clone()),
                 Err(_) => None
             },
@@ -184,15 +180,15 @@ fn walk_json(json: &Json, path: &mut Iterator<Item=&str>) -> Option<Json> {
 
 /// Returns a diff of the expected versus the actual JSON bodies, focusing on a particular path
 pub fn display_diff(expected: &String, actual: &String, path: &String) -> String {
-    let expected_body = Json::from_str(expected).unwrap();
-    let actual_body = Json::from_str(actual).unwrap();
+    let expected_body = Value::from_str(expected).unwrap();
+    let actual_body = Value::from_str(actual).unwrap();
     let path = path.split('.').skip(2);
     let expected_fragment = match walk_json(&expected_body, &mut path.clone()) {
-        Some(json) => format!("{}", json.pretty()),
+        Some(json) => format!("{:?}", serde_json::to_string_pretty(&json)),
         None => s!("")
     };
     let actual_fragment = match walk_json(&actual_body, &mut path.clone()) {
-        Some(json) => format!("{}", json.pretty()),
+        Some(json) => format!("{:?}", serde_json::to_string_pretty(&json)),
         None => s!("")
     };
     let (_dist, changeset) = diff(&expected_fragment, &actual_fragment, "\n");
@@ -207,20 +203,20 @@ pub fn display_diff(expected: &String, actual: &String, path: &String) -> String
     output
 }
 
-fn compare(path: &Vec<String>, expected: &Json, actual: &Json, config: &DiffConfig,
+fn compare(path: &Vec<String>, expected: &Value, actual: &Value, config: &DiffConfig,
     mismatches: &mut Vec<super::Mismatch>, matchers: &Option<Matchers>) {
     debug!("Comparing path {}", path.join("."));
     match (expected, actual) {
-        (&Json::Object(ref emap), &Json::Object(ref amap)) => compare_maps(path, emap, amap, config, mismatches, matchers),
-        (&Json::Object(_), _) => {
+        (&Value::Object(ref emap), &Value::Object(ref amap)) => compare_maps(path, emap, amap, config, mismatches, matchers),
+        (&Value::Object(_), _) => {
             mismatches.push(Mismatch::BodyMismatch { path: path.join("."),
                 expected: Some(value_of(expected)),
                 actual: Some(value_of(actual)),
                 mismatch: format!("Type mismatch: Expected {} {} but received {} {}",
                     type_of(expected), expected, type_of(actual), actual)});
         },
-        (&Json::Array(ref elist), &Json::Array(ref alist)) => compare_lists(path, elist, alist, config, mismatches, matchers),
-        (&Json::Array(_), _) => {
+        (&Value::Array(ref elist), &Value::Array(ref alist)) => compare_lists(path, elist, alist, config, mismatches, matchers),
+        (&Value::Array(_), _) => {
             mismatches.push(Mismatch::BodyMismatch { path: path.join("."),
                 expected: Some(value_of(expected)),
                 actual: Some(value_of(actual)),
@@ -231,26 +227,27 @@ fn compare(path: &Vec<String>, expected: &Json, actual: &Json, config: &DiffConf
     }
 }
 
-fn compare_maps(path: &Vec<String>, expected: &BTreeMap<String, Json>, actual: &BTreeMap<String, Json>,
+fn compare_maps(path: &Vec<String>, expected: &serde_json::Map<String, Value>, actual: &serde_json::Map<String, Value>,
     config: &DiffConfig, mismatches: &mut Vec<super::Mismatch>, matchers: &Option<Matchers>) {
+
     if expected.is_empty() && !actual.is_empty() {
       mismatches.push(Mismatch::BodyMismatch { path: path.join("."),
-          expected: Some(value_of(&expected.to_json())),
-          actual: Some(value_of(&actual.to_json())),
-          mismatch: format!("Expected an empty Map but received {}", value_of(&actual.to_json()))});
+          expected: Some(value_of(&json!(serde_json::to_string(expected).unwrap()))),
+          actual: Some(value_of(&json!(serde_json::to_string(actual).unwrap()))),
+          mismatch: format!("Expected an empty Map but received {}", value_of(&json!(serde_json::to_string(actual).unwrap())))});
     } else {
         match config {
             &DiffConfig::AllowUnexpectedKeys if expected.len() > actual.len() => {
                 mismatches.push(Mismatch::BodyMismatch { path: path.join("."),
-                    expected: Some(value_of(&expected.to_json())),
-                    actual: Some(value_of(&actual.to_json())),
+                    expected: Some(value_of(&json!(serde_json::to_string(expected).unwrap()))),
+                    actual: Some(value_of(&json!(serde_json::to_string(&actual).unwrap()))),
                     mismatch: format!("Expected a Map with at least {} elements but received {} elements",
                     expected.len(), actual.len())});
             },
             &DiffConfig::NoUnexpectedKeys if expected.len() != actual.len() => {
                 mismatches.push(Mismatch::BodyMismatch { path: path.join("."),
-                    expected: Some(value_of(&expected.to_json())),
-                    actual: Some(value_of(&actual.to_json())),
+                    expected: Some(value_of(&json!(serde_json::to_string(expected).unwrap()))),
+                    actual: Some(value_of(&json!(serde_json::to_string(&actual).unwrap()))),
                     mismatch: format!("Expected a Map with {} elements but received {} elements",
                     expected.len(), actual.len())});
             },
@@ -277,8 +274,8 @@ fn compare_maps(path: &Vec<String>, expected: &BTreeMap<String, Json>, actual: &
                     compare(&p, value, &actual[key], config, mismatches, matchers);
                 } else {
                     mismatches.push(Mismatch::BodyMismatch { path: path.join("."),
-                        expected: Some(value_of(&expected.to_json())),
-                        actual: Some(value_of(&actual.to_json())),
+                        expected: Some(value_of(&json!(serde_json::to_string(expected).unwrap()))),
+                        actual: Some(value_of(&json!(serde_json::to_string(&actual).unwrap()))),
                         mismatch: format!("Expected entry {}={} but was missing", key, value_of(value))});
                 }
             }
@@ -286,13 +283,13 @@ fn compare_maps(path: &Vec<String>, expected: &BTreeMap<String, Json>, actual: &
     }
 }
 
-fn compare_lists(path: &Vec<String>, expected: &Vec<Json>, actual: &Vec<Json>, config: &DiffConfig,
+fn compare_lists(path: &Vec<String>, expected: &Vec<Value>, actual: &Vec<Value>, config: &DiffConfig,
     mismatches: &mut Vec<super::Mismatch>, matchers: &Option<Matchers>) {
     let spath = path.join(".");
     if matcher_is_defined(&path, matchers) {
         debug!("compare_lists: matcher defined for path '{}'", spath);
-        let expected_json = Json::Array(expected.clone());
-        let actual_json = Json::Array(actual.clone());
+        let expected_json = Value::Array(expected.clone());
+        let actual_json = Value::Array(actual.clone());
         match match_values(path, matchers.clone().unwrap(), &expected_json, &actual_json) {
             Err(message) => mismatches.push(Mismatch::BodyMismatch { path: path.join("."),
                 expected: Some(expected_json.to_string()),
@@ -307,15 +304,15 @@ fn compare_lists(path: &Vec<String>, expected: &Vec<Json>, actual: &Vec<Json>, c
     } else {
         if expected.is_empty() && !actual.is_empty() {
             mismatches.push(Mismatch::BodyMismatch { path: spath,
-                expected: Some(value_of(&expected.to_json())),
-                actual: Some(value_of(&actual.to_json())),
-                mismatch: format!("Expected an empty List but received {}", value_of(&actual.to_json()))});
+                expected: Some(value_of(&json!(serde_json::to_string(expected).unwrap()))),
+                actual: Some(value_of(&json!(serde_json::to_string(actual).unwrap()))),
+                mismatch: format!("Expected an empty List but received {}", value_of(&json!(serde_json::to_string(actual).unwrap())))});
         } else {
             compare_list_content(path, expected, actual, config, mismatches, matchers);
             if expected.len() != actual.len() {
                 mismatches.push(Mismatch::BodyMismatch { path: spath,
-                    expected: Some(value_of(&expected.to_json())),
-                    actual: Some(value_of(&actual.to_json())),
+                    expected: Some(value_of(&json!(serde_json::to_string(expected).unwrap()))),
+                    actual: Some(value_of(&json!(serde_json::to_string(actual).unwrap()))),
                     mismatch: format!("Expected a List with {} elements but received {} elements",
                         expected.len(), actual.len())});
             }
@@ -323,7 +320,7 @@ fn compare_lists(path: &Vec<String>, expected: &Vec<Json>, actual: &Vec<Json>, c
     }
 }
 
-fn compare_list_content(path: &Vec<String>, expected: &Vec<Json>, actual: &Vec<Json>, config: &DiffConfig,
+fn compare_list_content(path: &Vec<String>, expected: &Vec<Value>, actual: &Vec<Value>, config: &DiffConfig,
     mismatches: &mut Vec<super::Mismatch>, matchers: &Option<Matchers>) {
     for (index, value) in expected.iter().enumerate() {
       let ps = index.to_string();
@@ -334,14 +331,14 @@ fn compare_list_content(path: &Vec<String>, expected: &Vec<Json>, actual: &Vec<J
           compare(&p, value, &actual[index], config, mismatches, matchers);
       } else if !matcher_is_defined(&p, matchers) {
           mismatches.push(Mismatch::BodyMismatch { path: path.join("."),
-              expected: Some(value_of(&expected.to_json())),
-              actual: Some(value_of(&actual.to_json())),
+              expected: Some(value_of(&json!(serde_json::to_string(expected).unwrap()))),
+              actual: Some(value_of(&json!(serde_json::to_string(actual).unwrap()))),
               mismatch: format!("Expected {} but was missing", value_of(value))});
       }
     }
 }
 
-fn compare_values(path: &Vec<String>, expected: &Json, actual: &Json, mismatches: &mut Vec<super::Mismatch>,
+fn compare_values(path: &Vec<String>, expected: &Value, actual: &Value, mismatches: &mut Vec<super::Mismatch>,
     matchers: &Option<Matchers>) {
     let matcher_result = if matcher_is_defined(&path, matchers) {
         match_values(path, matchers.clone().unwrap(), expected, actual)
@@ -365,7 +362,6 @@ mod tests {
     use Mismatch;
     use DiffConfig;
     use matchers::*;
-    use rustc_serialize::json::Json;
     use regex::Regex;
 
     #[test]
@@ -658,45 +654,43 @@ mod tests {
     #[test]
     fn equality_matcher_test() {
         let matcher = Matcher::EqualityMatcher;
-        expect!(Json::String(s!("100")).matches(&Json::String(s!("100")), &matcher)).to(be_ok());
-        expect!(Json::String(s!("100")).matches(&Json::String(s!("101")), &matcher)).to(be_err());
-        expect!(Json::String(s!("100")).matches(&Json::U64(100), &matcher)).to(be_err());
+        expect!(Value::String(s!("100")).matches(&Value::String(s!("100")), &matcher)).to(be_ok());
+        expect!(Value::String(s!("100")).matches(&Value::String(s!("101")), &matcher)).to(be_err());
+        expect!(Value::String(s!("100")).matches(&json!(100), &matcher)).to(be_err());
     }
 
     #[test]
     fn regex_matcher_test() {
         let matcher = Matcher::RegexMatcher(Regex::new("^\\d+$").unwrap());
-        expect!(Json::String(s!("100")).matches(&Json::String(s!("100")), &matcher)).to(be_ok());
-        expect!(Json::String(s!("100")).matches(&Json::String(s!("101")), &matcher)).to(be_ok());
-        expect!(Json::String(s!("100")).matches(&Json::String(s!("10a")), &matcher)).to(be_err());
-        expect!(Json::String(s!("100")).matches(&Json::U64(100), &matcher)).to(be_ok());
-        expect!(Json::String(s!("100")).matches(&Json::F64(100.02), &matcher)).to(be_err());
+        expect!(Value::String(s!("100")).matches(&Value::String(s!("100")), &matcher)).to(be_ok());
+        expect!(Value::String(s!("100")).matches(&Value::String(s!("101")), &matcher)).to(be_ok());
+        expect!(Value::String(s!("100")).matches(&Value::String(s!("10a")), &matcher)).to(be_err());
+        expect!(Value::String(s!("100")).matches(&json!(100), &matcher)).to(be_ok());
     }
 
     #[test]
     fn type_matcher_test() {
         let matcher = Matcher::TypeMatcher;
-        expect!(Json::String(s!("100")).matches(&Json::String(s!("100")), &matcher)).to(be_ok());
-        expect!(Json::String(s!("100")).matches(&Json::String(s!("101")), &matcher)).to(be_ok());
-        expect!(Json::String(s!("100")).matches(&Json::String(s!("10a")), &matcher)).to(be_ok());
-        expect!(Json::String(s!("100")).matches(&Json::U64(100), &matcher)).to(be_err());
-        expect!(Json::String(s!("100")).matches(&Json::F64(100f64), &matcher)).to(be_err());
+        expect!(Value::String(s!("100")).matches(&Value::String(s!("100")), &matcher)).to(be_ok());
+        expect!(Value::String(s!("100")).matches(&Value::String(s!("101")), &matcher)).to(be_ok());
+        expect!(Value::String(s!("100")).matches(&Value::String(s!("10a")), &matcher)).to(be_ok());
+        expect!(Value::String(s!("100")).matches(&json!(100), &matcher)).to(be_err());
     }
 
     #[test]
     fn min_type_matcher_test() {
         let matcher = Matcher::MinTypeMatcher(2);
-        expect!(Json::Array(vec![]).matches(&Json::Array(vec![Json::U64(100), Json::U64(100)]), &matcher)).to(be_ok());
-        expect!(Json::Array(vec![]).matches(&Json::Array(vec![Json::U64(100)]), &matcher)).to(be_err());
-        expect!(Json::String(s!("100")).matches(&Json::String(s!("101")), &matcher)).to(be_ok());
+        expect!(Value::Array(vec![]).matches(&Value::Array(vec![json!(100), json!(100)]), &matcher)).to(be_ok());
+        expect!(Value::Array(vec![]).matches(&Value::Array(vec![json!(100)]), &matcher)).to(be_err());
+        expect!(Value::String(s!("100")).matches(&Value::String(s!("101")), &matcher)).to(be_ok());
     }
 
     #[test]
     fn max_type_matcher_test() {
         let matcher = Matcher::MaxTypeMatcher(1);
-        expect!(Json::Array(vec![]).matches(&Json::Array(vec![Json::U64(100), Json::U64(100)]), &matcher)).to(be_err());
-        expect!(Json::Array(vec![]).matches(&Json::Array(vec![Json::U64(100)]), &matcher)).to(be_ok());
-        expect!(Json::String(s!("100")).matches(&Json::String(s!("101")), &matcher)).to(be_ok());
+        expect!(Value::Array(vec![]).matches(&Value::Array(vec![json!(100), json!(100)]), &matcher)).to(be_err());
+        expect!(Value::Array(vec![]).matches(&Value::Array(vec![json!(100)]), &matcher)).to(be_ok());
+        expect!(Value::String(s!("100")).matches(&Value::String(s!("101")), &matcher)).to(be_ok());
     }
 
     #[test]
