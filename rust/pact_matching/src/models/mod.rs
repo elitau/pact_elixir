@@ -943,7 +943,7 @@ impl Pact {
     /// Reads the pact file and parses the resulting JSON into a `Pact` struct
     pub fn read_pact(file: &Path) -> io::Result<Pact> {
         let mut f = try!(File::open(file));
-        let pact_json = serde_json::de::from_reader(&mut f);
+        let pact_json = serde_json::from_reader(&mut f);
         match pact_json {
             Ok(ref json) => Ok(Pact::from_json(&format!("{:?}", file), json)),
             Err(err) => Err(Error::new(ErrorKind::Other, format!("Failed to parse Pact JSON - {}", err)))
@@ -977,14 +977,14 @@ impl Pact {
             match existing_pact.merge(self) {
                 Ok(ref merged_pact) => {
                     let mut file = try!(File::create(path));
-                    try!(file.write_all(format!("{:?}", serde_json::to_string_pretty(&merged_pact.to_json())).as_bytes()));
+                    try!(file.write_all(format!("{}", serde_json::to_string_pretty(&merged_pact.to_json()).unwrap()).as_bytes()));
                     Ok(())
                 },
                 Err(ref message) => Err(Error::new(ErrorKind::Other, message.clone()))
             }
         } else {
             let mut file = try!{ File::create(path) };
-            try!{ file.write_all(format!("{:?}", serde_json::to_string_pretty(&self.to_json())).as_bytes()) };
+            try!{ file.write_all(format!("{}", serde_json::to_string_pretty(&self.to_json()).unwrap()).as_bytes()) };
             Ok(())
         }
     }
