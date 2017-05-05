@@ -334,7 +334,7 @@ fn body_from_json(request: &Value, headers: &Option<HashMap<String, String>>) ->
                     OptionalBody::Empty
                 } else if content_type.unwrap_or(s!("")) == "application/json" {
                     // fuck, that's all I have to say about this
-                    match serde_json::from_str::<String>(&s) {
+                    match serde_json::from_str::<HashMap<String, Value>>(&s) {
                         Ok(_) => OptionalBody::Present(s.clone()),
                         Err(_) => OptionalBody::Present(format!("\"{}\"", s))
                     }
