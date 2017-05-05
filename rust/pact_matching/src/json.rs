@@ -232,22 +232,22 @@ fn compare_maps(path: &Vec<String>, expected: &serde_json::Map<String, Value>, a
 
     if expected.is_empty() && !actual.is_empty() {
       mismatches.push(Mismatch::BodyMismatch { path: path.join("."),
-          expected: Some(value_of(&json!(serde_json::to_string(expected).unwrap()))),
-          actual: Some(value_of(&json!(serde_json::to_string(actual).unwrap()))),
-          mismatch: format!("Expected an empty Map but received {}", value_of(&json!(serde_json::to_string(actual).unwrap())))});
+          expected: Some(value_of(&json!(expected))),
+          actual: Some(value_of(&json!(actual))),
+          mismatch: format!("Expected an empty Map but received {}", value_of(&json!(actual)))});
     } else {
         match config {
             &DiffConfig::AllowUnexpectedKeys if expected.len() > actual.len() => {
                 mismatches.push(Mismatch::BodyMismatch { path: path.join("."),
-                    expected: Some(value_of(&json!(serde_json::to_string(expected).unwrap()))),
-                    actual: Some(value_of(&json!(serde_json::to_string(&actual).unwrap()))),
+                    expected: Some(value_of(&json!(expected))),
+                    actual: Some(value_of(&json!(&actual))),
                     mismatch: format!("Expected a Map with at least {} elements but received {} elements",
                     expected.len(), actual.len())});
             },
             &DiffConfig::NoUnexpectedKeys if expected.len() != actual.len() => {
                 mismatches.push(Mismatch::BodyMismatch { path: path.join("."),
-                    expected: Some(value_of(&json!(serde_json::to_string(expected).unwrap()))),
-                    actual: Some(value_of(&json!(serde_json::to_string(&actual).unwrap()))),
+                    expected: Some(value_of(&json!(expected))),
+                    actual: Some(value_of(&json!(&actual))),
                     mismatch: format!("Expected a Map with {} elements but received {} elements",
                     expected.len(), actual.len())});
             },
@@ -274,8 +274,8 @@ fn compare_maps(path: &Vec<String>, expected: &serde_json::Map<String, Value>, a
                     compare(&p, value, &actual[key], config, mismatches, matchers);
                 } else {
                     mismatches.push(Mismatch::BodyMismatch { path: path.join("."),
-                        expected: Some(value_of(&json!(serde_json::to_string(expected).unwrap()))),
-                        actual: Some(value_of(&json!(serde_json::to_string(&actual).unwrap()))),
+                        expected: Some(value_of(&json!(expected))),
+                        actual: Some(value_of(&json!(&actual))),
                         mismatch: format!("Expected entry {}={} but was missing", key, value_of(value))});
                 }
             }
@@ -304,15 +304,15 @@ fn compare_lists(path: &Vec<String>, expected: &Vec<Value>, actual: &Vec<Value>,
     } else {
         if expected.is_empty() && !actual.is_empty() {
             mismatches.push(Mismatch::BodyMismatch { path: spath,
-                expected: Some(value_of(&json!(serde_json::to_string(expected).unwrap()))),
-                actual: Some(value_of(&json!(serde_json::to_string(actual).unwrap()))),
-                mismatch: format!("Expected an empty List but received {}", value_of(&json!(serde_json::to_string(actual).unwrap())))});
+                expected: Some(value_of(&json!(expected))),
+                actual: Some(value_of(&json!(actual))),
+                mismatch: format!("Expected an empty List but received {}", value_of(&json!(actual)))});
         } else {
             compare_list_content(path, expected, actual, config, mismatches, matchers);
             if expected.len() != actual.len() {
                 mismatches.push(Mismatch::BodyMismatch { path: spath,
-                    expected: Some(value_of(&json!(serde_json::to_string(expected).unwrap()))),
-                    actual: Some(value_of(&json!(serde_json::to_string(actual).unwrap()))),
+                    expected: Some(value_of(&json!(expected))),
+                    actual: Some(value_of(&json!(actual))),
                     mismatch: format!("Expected a List with {} elements but received {} elements",
                         expected.len(), actual.len())});
             }
@@ -331,8 +331,8 @@ fn compare_list_content(path: &Vec<String>, expected: &Vec<Value>, actual: &Vec<
           compare(&p, value, &actual[index], config, mismatches, matchers);
       } else if !matcher_is_defined(&p, matchers) {
           mismatches.push(Mismatch::BodyMismatch { path: path.join("."),
-              expected: Some(value_of(&json!(serde_json::to_string(expected).unwrap()))),
-              actual: Some(value_of(&json!(serde_json::to_string(actual).unwrap()))),
+              expected: Some(value_of(&json!(expected))),
+              actual: Some(value_of(&json!(actual))),
               mismatch: format!("Expected {} but was missing", value_of(value))});
       }
     }
