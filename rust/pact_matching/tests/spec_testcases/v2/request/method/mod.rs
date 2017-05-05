@@ -5,14 +5,12 @@ use env_logger;
 #[allow(unused_imports)]
 use pact_matching::match_request;
 #[allow(unused_imports)]
-use rustc_serialize::json::Json;
-#[allow(unused_imports)]
 use expectest::prelude::*;
 
 #[test]
 fn different_method() {
     env_logger::init().unwrap_or(());
-    let pact = Json::from_str(r#"
+    let pact = json!(r#"
       {
         "match": false,
         "comment": "Methods is incorrect",
@@ -30,14 +28,14 @@ fn different_method() {
       
         }
       }
-    "#).unwrap();
+    "#);
 
-    let expected = Request::from_json(&pact.find("expected").unwrap(), &PactSpecification::V2);
+    let expected = Request::from_json(&pact.get("expected").unwrap(), &PactSpecification::V2);
     println!("{:?}", expected);
-    let actual = Request::from_json(&pact.find("actual").unwrap(), &PactSpecification::V2);
+    let actual = Request::from_json(&pact.get("actual").unwrap(), &PactSpecification::V2);
     println!("{:?}", actual);
-    let pact_match = pact.find("match").unwrap();
-    if pact_match.as_boolean().unwrap() {
+    let pact_match = pact.get("match").unwrap();
+    if pact_match.as_bool().unwrap() {
        expect!(match_request(expected, actual)).to(be_empty());
     } else {
        expect!(match_request(expected, actual)).to_not(be_empty());
@@ -47,7 +45,7 @@ fn different_method() {
 #[test]
 fn matches() {
     env_logger::init().unwrap_or(());
-    let pact = Json::from_str(r#"
+    let pact = json!(r#"
       {
         "match": true,
         "comment": "Methods match",
@@ -65,14 +63,14 @@ fn matches() {
       
         }
       }
-    "#).unwrap();
+    "#);
 
-    let expected = Request::from_json(&pact.find("expected").unwrap(), &PactSpecification::V2);
+    let expected = Request::from_json(&pact.get("expected").unwrap(), &PactSpecification::V2);
     println!("{:?}", expected);
-    let actual = Request::from_json(&pact.find("actual").unwrap(), &PactSpecification::V2);
+    let actual = Request::from_json(&pact.get("actual").unwrap(), &PactSpecification::V2);
     println!("{:?}", actual);
-    let pact_match = pact.find("match").unwrap();
-    if pact_match.as_boolean().unwrap() {
+    let pact_match = pact.get("match").unwrap();
+    if pact_match.as_bool().unwrap() {
        expect!(match_request(expected, actual)).to(be_empty());
     } else {
        expect!(match_request(expected, actual)).to_not(be_empty());
@@ -82,7 +80,7 @@ fn matches() {
 #[test]
 fn method_is_different_case() {
     env_logger::init().unwrap_or(());
-    let pact = Json::from_str(r#"
+    let pact = json!(r#"
       {
         "match": true,
         "comment": "Methods case does not matter",
@@ -100,14 +98,14 @@ fn method_is_different_case() {
       
         }
       }
-    "#).unwrap();
+    "#);
 
-    let expected = Request::from_json(&pact.find("expected").unwrap(), &PactSpecification::V2);
+    let expected = Request::from_json(&pact.get("expected").unwrap(), &PactSpecification::V2);
     println!("{:?}", expected);
-    let actual = Request::from_json(&pact.find("actual").unwrap(), &PactSpecification::V2);
+    let actual = Request::from_json(&pact.get("actual").unwrap(), &PactSpecification::V2);
     println!("{:?}", actual);
-    let pact_match = pact.find("match").unwrap();
-    if pact_match.as_boolean().unwrap() {
+    let pact_match = pact.get("match").unwrap();
+    if pact_match.as_bool().unwrap() {
        expect!(match_request(expected, actual)).to(be_empty());
     } else {
        expect!(match_request(expected, actual)).to_not(be_empty());

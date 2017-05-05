@@ -5,14 +5,13 @@ use env_logger;
 #[allow(unused_imports)]
 use pact_matching::match_response;
 #[allow(unused_imports)]
-use rustc_serialize::json::Json;
-#[allow(unused_imports)]
 use expectest::prelude::*;
+use serde_json;
 
 #[test]
 fn different_status() {
     env_logger::init().unwrap_or(());
-    let pact = Json::from_str(r#"
+    let pact = json!(r#"
       {
         "match": false,
         "comment": "Status is incorrect",
@@ -23,15 +22,15 @@ fn different_status() {
           "status": 400
         }
       }
-    "#).unwrap();
+    "#);
 
-    let expected = Response::from_json(&pact.find("expected").unwrap(), &PactSpecification::V2);
+    let expected = Response::from_json(&pact.get("expected").unwrap(), &PactSpecification::V2);
     println!("{:?}", expected);
-    let actual = Response::from_json(&pact.find("actual").unwrap(), &PactSpecification::V2);
+    let actual = Response::from_json(&pact.get("actual").unwrap(), &PactSpecification::V2);
     println!("{:?}", actual);
-    let pact_match = pact.find("match").unwrap();
+    let pact_match = pact.get("match").unwrap();
     let result = match_response(expected, actual);
-    if pact_match.as_boolean().unwrap() {
+    if pact_match.as_bool().unwrap() {
        expect!(result).to(be_empty());
     } else {
        expect!(result).to_not(be_empty());
@@ -41,7 +40,7 @@ fn different_status() {
 #[test]
 fn matches() {
     env_logger::init().unwrap_or(());
-    let pact = Json::from_str(r#"
+    let pact = json!(r#"
       {
       	"match": true,
       	"comment": "Status matches",
@@ -52,15 +51,15 @@ fn matches() {
       		"status" : 202
       	}
       }
-    "#).unwrap();
+    "#);
 
-    let expected = Response::from_json(&pact.find("expected").unwrap(), &PactSpecification::V2);
+    let expected = Response::from_json(&pact.get("expected").unwrap(), &PactSpecification::V2);
     println!("{:?}", expected);
-    let actual = Response::from_json(&pact.find("actual").unwrap(), &PactSpecification::V2);
+    let actual = Response::from_json(&pact.get("actual").unwrap(), &PactSpecification::V2);
     println!("{:?}", actual);
-    let pact_match = pact.find("match").unwrap();
+    let pact_match = pact.get("match").unwrap();
     let result = match_response(expected, actual);
-    if pact_match.as_boolean().unwrap() {
+    if pact_match.as_bool().unwrap() {
        expect!(result).to(be_empty());
     } else {
        expect!(result).to_not(be_empty());

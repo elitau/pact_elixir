@@ -5,14 +5,12 @@ use env_logger;
 #[allow(unused_imports)]
 use pact_matching::match_request;
 #[allow(unused_imports)]
-use rustc_serialize::json::Json;
-#[allow(unused_imports)]
 use expectest::prelude::*;
 
 #[test]
 fn trailing_amperand() {
     env_logger::init().unwrap_or(());
-    let pact = Json::from_str(r#"
+    let pact = json!(r#"
       {
         "match": true,
         "comment": "Query strings are matched using basic string equality, these are not equal. (not supported)",
@@ -31,14 +29,14 @@ fn trailing_amperand() {
       
         }
       }
-    "#).unwrap();
+    "#);
 
-    let expected = Request::from_json(&pact.find("expected").unwrap(), &PactSpecification::V1);
+    let expected = Request::from_json(&pact.get("expected").unwrap(), &PactSpecification::V1);
     println!("{:?}", expected);
-    let actual = Request::from_json(&pact.find("actual").unwrap(), &PactSpecification::V1);
+    let actual = Request::from_json(&pact.get("actual").unwrap(), &PactSpecification::V1);
     println!("{:?}", actual);
-    let pact_match = pact.find("match").unwrap();
-    if pact_match.as_boolean().unwrap() {
+    let pact_match = pact.get("match").unwrap();
+    if pact_match.as_bool().unwrap() {
        expect!(match_request(expected, actual)).to(be_empty());
     } else {
        expect!(match_request(expected, actual)).to_not(be_empty());
@@ -48,7 +46,7 @@ fn trailing_amperand() {
 #[test]
 fn matches() {
     env_logger::init().unwrap_or(());
-    let pact = Json::from_str(r#"
+    let pact = json!(r#"
       {
         "match": true,
         "comment": "Queries are the same",
@@ -67,14 +65,14 @@ fn matches() {
       
         }
       }
-    "#).unwrap();
+    "#);
 
-    let expected = Request::from_json(&pact.find("expected").unwrap(), &PactSpecification::V1);
+    let expected = Request::from_json(&pact.get("expected").unwrap(), &PactSpecification::V1);
     println!("{:?}", expected);
-    let actual = Request::from_json(&pact.find("actual").unwrap(), &PactSpecification::V1);
+    let actual = Request::from_json(&pact.get("actual").unwrap(), &PactSpecification::V1);
     println!("{:?}", actual);
-    let pact_match = pact.find("match").unwrap();
-    if pact_match.as_boolean().unwrap() {
+    let pact_match = pact.get("match").unwrap();
+    if pact_match.as_bool().unwrap() {
        expect!(match_request(expected, actual)).to(be_empty());
     } else {
        expect!(match_request(expected, actual)).to_not(be_empty());
@@ -84,7 +82,7 @@ fn matches() {
 #[test]
 fn different_param_values() {
     env_logger::init().unwrap_or(());
-    let pact = Json::from_str(r#"
+    let pact = json!(r#"
       {
         "match": false,
         "comment": "Queries are not the same - hippo is Fred instead of John",
@@ -103,14 +101,14 @@ fn different_param_values() {
       
         }
       }
-    "#).unwrap();
+    "#);
 
-    let expected = Request::from_json(&pact.find("expected").unwrap(), &PactSpecification::V1);
+    let expected = Request::from_json(&pact.get("expected").unwrap(), &PactSpecification::V1);
     println!("{:?}", expected);
-    let actual = Request::from_json(&pact.find("actual").unwrap(), &PactSpecification::V1);
+    let actual = Request::from_json(&pact.get("actual").unwrap(), &PactSpecification::V1);
     println!("{:?}", actual);
-    let pact_match = pact.find("match").unwrap();
-    if pact_match.as_boolean().unwrap() {
+    let pact_match = pact.get("match").unwrap();
+    if pact_match.as_bool().unwrap() {
        expect!(match_request(expected, actual)).to(be_empty());
     } else {
        expect!(match_request(expected, actual)).to_not(be_empty());
@@ -120,7 +118,7 @@ fn different_param_values() {
 #[test]
 fn different_param_order() {
     env_logger::init().unwrap_or(());
-    let pact = Json::from_str(r#"
+    let pact = json!(r#"
       {
         "match": true,
         "comment": "Query strings are matched using basic string equality, these are not equal. (Not supported)",
@@ -139,14 +137,14 @@ fn different_param_order() {
       
         }
       }
-    "#).unwrap();
+    "#);
 
-    let expected = Request::from_json(&pact.find("expected").unwrap(), &PactSpecification::V1);
+    let expected = Request::from_json(&pact.get("expected").unwrap(), &PactSpecification::V1);
     println!("{:?}", expected);
-    let actual = Request::from_json(&pact.find("actual").unwrap(), &PactSpecification::V1);
+    let actual = Request::from_json(&pact.get("actual").unwrap(), &PactSpecification::V1);
     println!("{:?}", actual);
-    let pact_match = pact.find("match").unwrap();
-    if pact_match.as_boolean().unwrap() {
+    let pact_match = pact.get("match").unwrap();
+    if pact_match.as_bool().unwrap() {
        expect!(match_request(expected, actual)).to(be_empty());
     } else {
        expect!(match_request(expected, actual)).to_not(be_empty());

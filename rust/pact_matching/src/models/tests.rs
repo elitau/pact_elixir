@@ -5,33 +5,32 @@ use std::fs::{self, File};
 use std::io;
 use std::io::prelude::*;
 use std::env;
-use rustc_serialize::json::Json;
 use expectest::prelude::*;
 use rand;
 use std::hash::{Hash, Hasher, SipHasher};
 
 #[test]
 fn request_from_json_defaults_to_get() {
-    let request_json = Json::from_str(r#"
+    let request_json = json!(r#"
       {
           "path": "/",
           "query": "",
           "headers": {}
       }
-    "#).unwrap();
+    "#);
     let request = Request::from_json(&request_json, &PactSpecification::V1_1);
     assert_eq!(request.method, "GET".to_string());
 }
 
 #[test]
 fn request_from_json_defaults_to_root_for_path() {
-    let request_json = Json::from_str(r#"
+    let request_json = json!(r#"
       {
           "method": "PUT",
           "query": "",
           "headers": {}
       }
-    "#).unwrap();
+    "#);
     println!("request_json: {}", request_json);
     let request = Request::from_json(&request_json, &PactSpecification::V1_1);
     assert_eq!(request.path, "/".to_string());
@@ -39,11 +38,11 @@ fn request_from_json_defaults_to_root_for_path() {
 
 #[test]
 fn response_from_json_defaults_to_status_200() {
-    let response_json = Json::from_str(r#"
+    let response_json = json!(r#"
       {
           "headers": {}
       }
-    "#).unwrap();
+    "#);
     let response = Response::from_json(&response_json, &PactSpecification::V1_1);
     assert_eq!(response.status, 200);
 }
@@ -211,7 +210,7 @@ fn loading_interaction_from_json() {
         "description": "String",
         "providerState": "provider state"
     }"#;
-    let interaction = Interaction::from_json(0, &Json::from_str(interaction_json).unwrap(), &PactSpecification::V1_1);
+    let interaction = Interaction::from_json(0, &json!(interaction_json), &PactSpecification::V1_1);
     expect!(interaction.description).to(be_equal_to("String"));
     expect!(interaction.provider_state).to(be_some().value("provider state"));
 }
@@ -221,7 +220,7 @@ fn defaults_to_number_if_no_description() {
     let interaction_json = r#"{
         "providerState": "provider state"
     }"#;
-    let interaction = Interaction::from_json(0, &Json::from_str(interaction_json).unwrap(), &PactSpecification::V1_1);
+    let interaction = Interaction::from_json(0, &json!(interaction_json), &PactSpecification::V1_1);
     expect!(interaction.description).to(be_equal_to("Interaction 0"));
     expect!(interaction.provider_state).to(be_some().value("provider state"));
 }
@@ -230,7 +229,7 @@ fn defaults_to_number_if_no_description() {
 fn defaults_to_none_if_no_provider_state() {
     let interaction_json = r#"{
     }"#;
-    let interaction = Interaction::from_json(0, &Json::from_str(interaction_json).unwrap(), &PactSpecification::V1_1);
+    let interaction = Interaction::from_json(0, &json!(interaction_json), &PactSpecification::V1_1);
     expect!(interaction.provider_state).to(be_none());
 }
 
@@ -239,14 +238,14 @@ fn defaults_to_none_if_provider_state_null() {
     let interaction_json = r#"{
         "providerState": null
     }"#;
-    let interaction = Interaction::from_json(0, &Json::from_str(interaction_json).unwrap(), &PactSpecification::V1_1);
+    let interaction = Interaction::from_json(0, &json!(interaction_json), &PactSpecification::V1_1);
     expect!(interaction.provider_state).to(be_none());
 }
 
 #[test]
 fn load_empty_pact() {
     let pact_json = r#"{}"#;
-    let pact = Pact::from_json(&s!(""), &Json::from_str(pact_json).unwrap());
+    let pact = Pact::from_json(&s!(""), &json!(pact_json));
     expect!(pact.provider.name).to(be_equal_to("provider"));
     expect!(pact.consumer.name).to(be_equal_to("consumer"));
     expect!(pact.interactions.iter()).to(have_count(0));
@@ -257,7 +256,7 @@ fn load_empty_pact() {
 #[test]
 fn missing_metadata() {
     let pact_json = r#"{}"#;
-    let pact = Pact::from_json(&s!(""), &Json::from_str(pact_json).unwrap());
+    let pact = Pact::from_json(&s!(""), &json!(pact_json));
     expect!(pact.specification_version).to(be_equal_to(PactSpecification::V2));
 }
 
@@ -267,7 +266,7 @@ fn missing_spec_version() {
         "metadata" : {
         }
     }"#;
-    let pact = Pact::from_json(&s!(""), &Json::from_str(pact_json).unwrap());
+    let pact = Pact::from_json(&s!(""), &json!(pact_json));
     expect!(pact.specification_version).to(be_equal_to(PactSpecification::V2));
 }
 
@@ -280,7 +279,7 @@ fn missing_version_in_spec_version() {
             }
         }
     }"#;
-    let pact = Pact::from_json(&s!(""), &Json::from_str(pact_json).unwrap());
+    let pact = Pact::from_json(&s!(""), &json!(pact_json));
     expect!(pact.specification_version).to(be_equal_to(PactSpecification::V2));
 }
 
@@ -293,7 +292,7 @@ fn empty_version_in_spec_version() {
             }
         }
     }"#;
-    let pact = Pact::from_json(&s!(""), &Json::from_str(pact_json).unwrap());
+    let pact = Pact::from_json(&s!(""), &json!(pact_json));
     expect!(pact.specification_version).to(be_equal_to(PactSpecification::Unknown));
 }
 
@@ -306,7 +305,7 @@ fn correct_version_in_spec_version() {
             }
         }
     }"#;
-    let pact = Pact::from_json(&s!(""), &Json::from_str(pact_json).unwrap());
+    let pact = Pact::from_json(&s!(""), &json!(pact_json));
     expect!(pact.specification_version).to(be_equal_to(PactSpecification::V1));
 }
 
@@ -319,7 +318,7 @@ fn invalid_version_in_spec_version() {
             }
         }
     }"#;
-    let pact = Pact::from_json(&s!(""), &Json::from_str(pact_json).unwrap());
+    let pact = Pact::from_json(&s!(""), &json!(pact_json));
     expect!(pact.specification_version).to(be_equal_to(PactSpecification::Unknown));
 }
 
@@ -353,7 +352,7 @@ fn load_basic_pact() {
         ]
     }
     "#;
-    let pact = Pact::from_json(&s!(""), &Json::from_str(pact_json).unwrap());
+    let pact = Pact::from_json(&s!(""), &json!(pact_json));
     expect!(&pact.provider.name).to(be_equal_to("Alice Service"));
     expect!(&pact.consumer.name).to(be_equal_to("Consumer"));
     expect!(pact.interactions.iter()).to(have_count(1));
@@ -422,7 +421,7 @@ fn load_pact() {
       }
     }
     "#;
-    let pact = Pact::from_json(&s!(""), &Json::from_str(pact_json).unwrap());
+    let pact = Pact::from_json(&s!(""), &json!(pact_json));
     expect!(&pact.provider.name).to(be_equal_to("test_provider"));
     expect!(&pact.consumer.name).to(be_equal_to("test_consumer"));
     expect!(pact.metadata.iter()).to(have_count(2));
@@ -492,7 +491,7 @@ fn load_pact_encoded_query_string() {
       }
     }
     "#;
-    let pact = Pact::from_json(&s!(""), &Json::from_str(pact_json).unwrap());
+    let pact = Pact::from_json(&s!(""), &json!(pact_json));
     expect!(pact.interactions.iter()).to(have_count(1));
     let interaction = pact.interactions[0].clone();
     expect!(interaction.request).to(be_equal_to(Request {
@@ -522,7 +521,7 @@ fn load_pact_converts_methods_to_uppercase() {
       "metadata" : {}
     }
     "#;
-    let pact = Pact::from_json(&s!(""), &Json::from_str(pact_json).unwrap());
+    let pact = Pact::from_json(&s!(""), &json!(pact_json));
     expect!(pact.interactions.iter()).to(have_count(1));
     let interaction = pact.interactions[0].clone();
     expect!(interaction.request).to(be_equal_to(Request {
@@ -1132,34 +1131,34 @@ fn hash_for_response() {
 
 #[test]
 fn matchers_from_json_handles_missing_matchers() {
-    let json = Json::from_str(r#"
+    let json = json!(r#"
       {
           "path": "/",
           "query": "",
           "headers": {}
       }
-    "#).unwrap();
+    "#);
     let matchers = matchers_from_json(&json, s!("deprecatedName"));
     expect!(matchers).to(be_none());
 }
 
 #[test]
 fn matchers_from_json_handles_empty_matchers() {
-    let json = Json::from_str(r#"
+    let json = json!(r#"
       {
           "path": "/",
           "query": "",
           "headers": {},
           "matchingRules": {}
       }
-    "#).unwrap();
+    "#);
     let matchers = matchers_from_json(&json, s!("deprecatedName"));
     expect!(matchers).to(be_none());
 }
 
 #[test]
 fn matchers_from_json_handles_matcher_with_no_matching_rules() {
-    let json = Json::from_str(r#"
+    let json = json!(r#"
       {
           "path": "/",
           "query": "",
@@ -1168,7 +1167,7 @@ fn matchers_from_json_handles_matcher_with_no_matching_rules() {
             "*.path": {}
           }
       }
-    "#).unwrap();
+    "#);
     let matchers = matchers_from_json(&json, s!("deprecatedName"));
     expect!(matchers).to(be_some().value(hashmap!{
         s!("*.path") => hashmap!{}
@@ -1177,7 +1176,7 @@ fn matchers_from_json_handles_matcher_with_no_matching_rules() {
 
 #[test]
 fn matchers_from_json_loads_matchers_correctly() {
-    let json = Json::from_str(r#"
+    let json = json!(r#"
       {
           "path": "/",
           "query": "",
@@ -1189,7 +1188,7 @@ fn matchers_from_json_loads_matchers_correctly() {
             }
           }
       }
-    "#).unwrap();
+    "#);
     let matchers = matchers_from_json(&json, s!("deprecatedName"));
     expect!(matchers).to(be_some().value(hashmap!{
         s!("*.path") => hashmap!{
@@ -1201,7 +1200,7 @@ fn matchers_from_json_loads_matchers_correctly() {
 
 #[test]
 fn matchers_from_json_loads_matchers_from_deprecated_name() {
-    let json = Json::from_str(r#"
+    let json = json!(r#"
       {
           "path": "/",
           "query": "",
@@ -1213,7 +1212,7 @@ fn matchers_from_json_loads_matchers_from_deprecated_name() {
             }
           }
       }
-    "#).unwrap();
+    "#);
     let matchers = matchers_from_json(&json, s!("deprecatedName"));
     expect!(matchers).to(be_some().value(hashmap!{
         s!("*.path") => hashmap!{
@@ -1290,7 +1289,7 @@ fn write_pact_test_with_matchers() {
 
 #[test]
 fn body_from_json_returns_missing_if_there_is_no_body() {
-    let json = Json::from_str(r#"
+    let json = json!(r#"
       {
           "path": "/",
           "query": "",
@@ -1299,28 +1298,28 @@ fn body_from_json_returns_missing_if_there_is_no_body() {
             "*.path": {}
           }
       }
-    "#).unwrap();
+    "#);
     let body = body_from_json(&json, &None);
     expect!(body).to(be_equal_to(OptionalBody::Missing));
 }
 
 #[test]
 fn body_from_json_returns_null_if_the_body_is_null() {
-    let json = Json::from_str(r#"
+    let json = json!(r#"
       {
           "path": "/",
           "query": "",
           "headers": {},
           "body": null
       }
-    "#).unwrap();
+    "#);
     let body = body_from_json(&json, &None);
     expect!(body).to(be_equal_to(OptionalBody::Null));
 }
 
 #[test]
 fn body_from_json_returns_json_string_if_the_body_is_json_but_not_a_string() {
-    let json = Json::from_str(r#"
+    let json = json!(r#"
       {
           "path": "/",
           "query": "",
@@ -1329,49 +1328,49 @@ fn body_from_json_returns_json_string_if_the_body_is_json_but_not_a_string() {
             "test": true
           }
       }
-    "#).unwrap();
+    "#);
     let body = body_from_json(&json, &None);
     expect!(body).to(be_equal_to(OptionalBody::Present(s!("{\"test\":true}"))));
 }
 
 #[test]
 fn body_from_json_returns_empty_if_the_body_is_an_empty_string() {
-    let json = Json::from_str(r#"
+    let json = json!(r#"
       {
           "path": "/",
           "query": "",
           "headers": {},
           "body": ""
       }
-    "#).unwrap();
+    "#);
     let body = body_from_json(&json, &None);
     expect!(body).to(be_equal_to(OptionalBody::Empty));
 }
 
 #[test]
 fn body_from_json_returns_the_body_if_the_body_is_a_string() {
-    let json = Json::from_str(r#"
+    let json = json!(r#"
       {
           "path": "/",
           "query": "",
           "headers": {},
           "body": "<?xml version=\"1.0\"?> <body></body>"
       }
-    "#).unwrap();
+    "#);
     let body = body_from_json(&json, &None);
     expect!(body).to(be_equal_to(OptionalBody::Present(s!("<?xml version=\"1.0\"?> <body></body>"))));
 }
 
 #[test]
 fn body_from_json_returns_the_a_json_formatted_body_if_the_body_is_a_string_and_the_content_type_is_json() {
-    let json = Json::from_str(r#"
+    let json = json!(r#"
       {
           "path": "/",
           "query": "",
           "headers": {"Content-Type": "application/json"},
           "body": "This is actually a JSON string"
       }
-    "#).unwrap();
+    "#);
     let headers = headers_from_json(&json);
     let body = body_from_json(&json, &headers);
     expect!(body).to(be_equal_to(OptionalBody::Present(s!("\"This is actually a JSON string\""))));
@@ -1379,14 +1378,14 @@ fn body_from_json_returns_the_a_json_formatted_body_if_the_body_is_a_string_and_
 
 #[test]
 fn body_from_json_returns_the_body_if_the_content_type_is_json() {
-    let json = Json::from_str(r#"
+    let json = json!(r#"
       {
           "path": "/",
           "query": "",
           "headers": {"Content-Type": "application/json"},
           "body": "{\"test\":true}"
       }
-    "#).unwrap();
+    "#);
     let headers = headers_from_json(&json);
     let body = body_from_json(&json, &headers);
     expect!(body).to(be_equal_to(OptionalBody::Present(s!("{\"test\":true}"))));
