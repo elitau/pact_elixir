@@ -11,7 +11,7 @@ use serde_json;
 #[test]
 fn different_status() {
     env_logger::init().unwrap_or(());
-    let pact = json!(r#"
+    let pact : serde_json::Value = serde_json::from_str(r#"
       {
         "match": false,
         "comment": "Status is incorrect",
@@ -22,7 +22,7 @@ fn different_status() {
           "status": 400
         }
       }
-    "#);
+    "#).unwrap();
 
     let expected = Response::from_json(&pact.get("expected").unwrap(), &PactSpecification::V2);
     println!("{:?}", expected);
@@ -40,7 +40,7 @@ fn different_status() {
 #[test]
 fn matches() {
     env_logger::init().unwrap_or(());
-    let pact = json!(r#"
+    let pact : serde_json::Value = serde_json::from_str(r#"
       {
       	"match": true,
       	"comment": "Status matches",
@@ -51,7 +51,7 @@ fn matches() {
       		"status" : 202
       	}
       }
-    "#);
+    "#).unwrap();
 
     let expected = Response::from_json(&pact.get("expected").unwrap(), &PactSpecification::V2);
     println!("{:?}", expected);

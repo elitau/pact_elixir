@@ -6,11 +6,12 @@ use env_logger;
 use pact_matching::match_request;
 #[allow(unused_imports)]
 use expectest::prelude::*;
+use serde_json;
 
 #[test]
 fn empty_path_found_when_forward_slash_expected() {
     env_logger::init().unwrap_or(());
-    let pact = json!(r#"
+    let pact : serde_json::Value = serde_json::from_str(r#"
       {
         "match": false,
         "comment": "Empty path found when forward slash expected",
@@ -29,7 +30,7 @@ fn empty_path_found_when_forward_slash_expected() {
       
         }
       }
-    "#);
+    "#).unwrap();
 
     let expected = Request::from_json(&pact.get("expected").unwrap(), &PactSpecification::V2);
     println!("{:?}", expected);
@@ -46,7 +47,7 @@ fn empty_path_found_when_forward_slash_expected() {
 #[test]
 fn forward_slash_found_when_empty_path_expected() {
     env_logger::init().unwrap_or(());
-    let pact = json!(r#"
+    let pact : serde_json::Value = serde_json::from_str(r#"
       {
         "match": false,
         "comment": "Foward slash found when empty path expected",
@@ -55,17 +56,17 @@ fn forward_slash_found_when_empty_path_expected() {
           "path": "",
           "query": "",
           "headers": {}
-      
+
         },
         "actual": {
           "method": "POST",
           "path": "/",
           "query": "",
           "headers": {}
-      
+
         }
       }
-    "#);
+    "#).unwrap();
 
     let expected = Request::from_json(&pact.get("expected").unwrap(), &PactSpecification::V2);
     println!("{:?}", expected);
@@ -82,7 +83,7 @@ fn forward_slash_found_when_empty_path_expected() {
 #[test]
 fn incorrect_path() {
     env_logger::init().unwrap_or(());
-    let pact = json!(r#"
+    let pact : serde_json::Value = serde_json::from_str(r#"
       {
         "match": false,
         "comment": "Paths do not match",
@@ -91,17 +92,17 @@ fn incorrect_path() {
           "path": "/path/to/something",
           "query": "",
           "headers": {}
-      
+
         },
         "actual": {
           "method": "POST",
           "path": "/path/to/something/else",
           "query": "",
           "headers": {}
-      
+
         }
       }
-    "#);
+    "#).unwrap();
 
     let expected = Request::from_json(&pact.get("expected").unwrap(), &PactSpecification::V2);
     println!("{:?}", expected);
@@ -118,7 +119,7 @@ fn incorrect_path() {
 #[test]
 fn matches() {
     env_logger::init().unwrap_or(());
-    let pact = json!(r#"
+    let pact : serde_json::Value = serde_json::from_str(r#"
       {
         "match": true,
         "comment": "Paths match",
@@ -127,17 +128,17 @@ fn matches() {
           "path": "/path/to/something",
           "query": "",
           "headers": {}
-      
+
         },
         "actual": {
           "method": "POST",
           "path": "/path/to/something",
           "query": "",
           "headers": {}
-      
+
         }
       }
-    "#);
+    "#).unwrap();
 
     let expected = Request::from_json(&pact.get("expected").unwrap(), &PactSpecification::V2);
     println!("{:?}", expected);
@@ -154,7 +155,7 @@ fn matches() {
 #[test]
 fn missing_trailing_slash_in_path() {
     env_logger::init().unwrap_or(());
-    let pact = json!(r#"
+    let pact : serde_json::Value = serde_json::from_str(r#"
       {
         "match": false,
         "comment": "Path is missing trailing slash, trailing slashes can matter",
@@ -163,17 +164,17 @@ fn missing_trailing_slash_in_path() {
           "path": "/path/to/something/",
           "query": "",
           "headers": {}
-      
+
         },
         "actual": {
           "method": "POST",
           "path": "/path/to/something",
           "query": "",
           "headers": {}
-      
+
         }
       }
-    "#);
+    "#).unwrap();
 
     let expected = Request::from_json(&pact.get("expected").unwrap(), &PactSpecification::V2);
     println!("{:?}", expected);
@@ -190,7 +191,7 @@ fn missing_trailing_slash_in_path() {
 #[test]
 fn unexpected_trailing_slash_in_path() {
     env_logger::init().unwrap_or(());
-    let pact = json!(r#"
+    let pact : serde_json::Value = serde_json::from_str(r#"
       {
         "match": false,
         "comment": "Path has unexpected trailing slash, trailing slashes can matter",
@@ -199,17 +200,17 @@ fn unexpected_trailing_slash_in_path() {
           "path": "/path/to/something",
           "query": "",
           "headers": {}
-      
+
         },
         "actual": {
           "method": "POST",
           "path": "/path/to/something/",
           "query": "",
           "headers": {}
-      
+
         }
       }
-    "#);
+    "#).unwrap();
 
     let expected = Request::from_json(&pact.get("expected").unwrap(), &PactSpecification::V2);
     println!("{:?}", expected);

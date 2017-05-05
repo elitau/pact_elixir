@@ -6,11 +6,12 @@ use env_logger;
 use pact_matching::match_request;
 #[allow(unused_imports)]
 use expectest::prelude::*;
+use serde_json;
 
 #[test]
 fn trailing_amperand() {
     env_logger::init().unwrap_or(());
-    let pact = json!(r#"
+    let pact : serde_json::Value = serde_json::from_str(r#"
       {
         "match": true,
         "comment": "Query strings are matched using basic string equality, these are not equal. (not supported)",
@@ -29,7 +30,7 @@ fn trailing_amperand() {
       
         }
       }
-    "#);
+    "#).unwrap();
 
     let expected = Request::from_json(&pact.get("expected").unwrap(), &PactSpecification::V1);
     println!("{:?}", expected);
@@ -46,7 +47,7 @@ fn trailing_amperand() {
 #[test]
 fn matches() {
     env_logger::init().unwrap_or(());
-    let pact = json!(r#"
+    let pact : serde_json::Value = serde_json::from_str(r#"
       {
         "match": true,
         "comment": "Queries are the same",
@@ -65,7 +66,7 @@ fn matches() {
       
         }
       }
-    "#);
+    "#).unwrap();
 
     let expected = Request::from_json(&pact.get("expected").unwrap(), &PactSpecification::V1);
     println!("{:?}", expected);
@@ -82,7 +83,7 @@ fn matches() {
 #[test]
 fn different_param_values() {
     env_logger::init().unwrap_or(());
-    let pact = json!(r#"
+    let pact : serde_json::Value = serde_json::from_str(r#"
       {
         "match": false,
         "comment": "Queries are not the same - hippo is Fred instead of John",
@@ -101,7 +102,7 @@ fn different_param_values() {
       
         }
       }
-    "#);
+    "#).unwrap();
 
     let expected = Request::from_json(&pact.get("expected").unwrap(), &PactSpecification::V1);
     println!("{:?}", expected);
@@ -118,7 +119,7 @@ fn different_param_values() {
 #[test]
 fn different_param_order() {
     env_logger::init().unwrap_or(());
-    let pact = json!(r#"
+    let pact : serde_json::Value = serde_json::from_str(r#"
       {
         "match": true,
         "comment": "Query strings are matched using basic string equality, these are not equal. (Not supported)",
@@ -137,7 +138,7 @@ fn different_param_order() {
       
         }
       }
-    "#);
+    "#).unwrap();
 
     let expected = Request::from_json(&pact.get("expected").unwrap(), &PactSpecification::V1);
     println!("{:?}", expected);

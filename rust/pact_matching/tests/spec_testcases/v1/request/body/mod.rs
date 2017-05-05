@@ -6,11 +6,12 @@ use env_logger;
 use pact_matching::match_request;
 #[allow(unused_imports)]
 use expectest::prelude::*;
+use serde_json;
 
 #[test]
 fn unexpected_key_with_null_value() {
     env_logger::init().unwrap_or(());
-    let pact = json!(r#"
+    let pact : serde_json::Value = serde_json::from_str(r#"
       {
         "match": false,
         "comment": "Unexpected phone number with null value",
@@ -38,7 +39,7 @@ fn unexpected_key_with_null_value() {
           }
         }
       }
-    "#);
+    "#).unwrap();
 
     let expected = Request::from_json(&pact.get("expected").unwrap(), &PactSpecification::V1);
     println!("{:?}", expected);
@@ -55,7 +56,7 @@ fn unexpected_key_with_null_value() {
 #[test]
 fn unexpected_key_with_not_null_value() {
     env_logger::init().unwrap_or(());
-    let pact = json!(r#"
+    let pact : serde_json::Value = serde_json::from_str(r#"
       {
         "match": false,
         "comment": "Unexpected phone number",
@@ -83,7 +84,7 @@ fn unexpected_key_with_not_null_value() {
           }
         }
       }
-    "#);
+    "#).unwrap();
 
     let expected = Request::from_json(&pact.get("expected").unwrap(), &PactSpecification::V1);
     println!("{:?}", expected);
@@ -100,7 +101,7 @@ fn unexpected_key_with_not_null_value() {
 #[test]
 fn unexpected_index_with_null_value() {
     env_logger::init().unwrap_or(());
-    let pact = json!(r#"
+    let pact : serde_json::Value = serde_json::from_str(r#"
       {
         "match": false,
         "comment": "Unexpected favourite colour with null value",
@@ -127,7 +128,7 @@ fn unexpected_index_with_null_value() {
           }
         }
       }
-    "#);
+    "#).unwrap();
 
     let expected = Request::from_json(&pact.get("expected").unwrap(), &PactSpecification::V1);
     println!("{:?}", expected);
@@ -144,7 +145,7 @@ fn unexpected_index_with_null_value() {
 #[test]
 fn unexpected_index_with_not_null_value() {
     env_logger::init().unwrap_or(());
-    let pact = json!(r#"
+    let pact : serde_json::Value = serde_json::from_str(r#"
       {
         "match": false,
         "comment": "Unexpected favourite colour",
@@ -171,7 +172,7 @@ fn unexpected_index_with_not_null_value() {
           }
         }
       }
-    "#);
+    "#).unwrap();
 
     let expected = Request::from_json(&pact.get("expected").unwrap(), &PactSpecification::V1);
     println!("{:?}", expected);
@@ -188,7 +189,7 @@ fn unexpected_index_with_not_null_value() {
 #[test]
 fn string_found_in_array_when_number_expected() {
     env_logger::init().unwrap_or(());
-    let pact = json!(r#"
+    let pact : serde_json::Value = serde_json::from_str(r#"
       {
         "match": false,
         "comment": "Favourite Numbers expected to be numbers, but 2 is a string",
@@ -215,7 +216,7 @@ fn string_found_in_array_when_number_expected() {
           }
         }
       }
-    "#);
+    "#).unwrap();
 
     let expected = Request::from_json(&pact.get("expected").unwrap(), &PactSpecification::V1);
     println!("{:?}", expected);
@@ -232,7 +233,7 @@ fn string_found_in_array_when_number_expected() {
 #[test]
 fn string_found_at_key_when_number_expected() {
     env_logger::init().unwrap_or(());
-    let pact = json!(r#"
+    let pact : serde_json::Value = serde_json::from_str(r#"
       {
         "match": false,
         "comment": "Number of feet expected to be number but was string",
@@ -259,7 +260,7 @@ fn string_found_at_key_when_number_expected() {
           }
         }
       }
-    "#);
+    "#).unwrap();
 
     let expected = Request::from_json(&pact.get("expected").unwrap(), &PactSpecification::V1);
     println!("{:?}", expected);
@@ -276,7 +277,7 @@ fn string_found_at_key_when_number_expected() {
 #[test]
 fn plain_text_that_matches() {
     env_logger::init().unwrap_or(());
-    let pact = json!(r#"
+    let pact : serde_json::Value = serde_json::from_str(r#"
       {
         "match": true,
         "comment": "Plain text that matches",
@@ -295,7 +296,7 @@ fn plain_text_that_matches() {
           "body": "alligator named mary"
         }
       }
-    "#);
+    "#).unwrap();
 
     let expected = Request::from_json(&pact.get("expected").unwrap(), &PactSpecification::V1);
     println!("{:?}", expected);
@@ -312,7 +313,7 @@ fn plain_text_that_matches() {
 #[test]
 fn plain_text_that_does_not_match() {
     env_logger::init().unwrap_or(());
-    let pact = json!(r#"
+    let pact : serde_json::Value = serde_json::from_str(r#"
       {
         "match": false,
         "comment": "Plain text that does not match",
@@ -331,7 +332,7 @@ fn plain_text_that_does_not_match() {
           "body": "alligator named fred"
         }
       }
-    "#);
+    "#).unwrap();
 
     let expected = Request::from_json(&pact.get("expected").unwrap(), &PactSpecification::V1);
     println!("{:?}", expected);
@@ -348,7 +349,7 @@ fn plain_text_that_does_not_match() {
 #[test]
 fn number_found_in_array_when_string_expected() {
     env_logger::init().unwrap_or(());
-    let pact = json!(r#"
+    let pact : serde_json::Value = serde_json::from_str(r#"
       {
         "match": false,
         "comment": "Favourite colours expected to be strings found a number",
@@ -375,7 +376,7 @@ fn number_found_in_array_when_string_expected() {
           }
         }
       }
-    "#);
+    "#).unwrap();
 
     let expected = Request::from_json(&pact.get("expected").unwrap(), &PactSpecification::V1);
     println!("{:?}", expected);
@@ -392,7 +393,7 @@ fn number_found_in_array_when_string_expected() {
 #[test]
 fn number_found_at_key_when_string_expected() {
     env_logger::init().unwrap_or(());
-    let pact = json!(r#"
+    let pact : serde_json::Value = serde_json::from_str(r#"
       {
         "match": false,
         "comment": "Number of feet expected to be string but was number",
@@ -419,7 +420,7 @@ fn number_found_at_key_when_string_expected() {
           }
         }
       }
-    "#);
+    "#).unwrap();
 
     let expected = Request::from_json(&pact.get("expected").unwrap(), &PactSpecification::V1);
     println!("{:?}", expected);
@@ -436,7 +437,7 @@ fn number_found_at_key_when_string_expected() {
 #[test]
 fn null_found_in_array_when_not_null_expected() {
     env_logger::init().unwrap_or(());
-    let pact = json!(r#"
+    let pact : serde_json::Value = serde_json::from_str(r#"
       {
         "match": false,
         "comment": "Favourite colours expected to be strings found a null",
@@ -463,7 +464,7 @@ fn null_found_in_array_when_not_null_expected() {
           }
         }
       }
-    "#);
+    "#).unwrap();
 
     let expected = Request::from_json(&pact.get("expected").unwrap(), &PactSpecification::V1);
     println!("{:?}", expected);
@@ -480,7 +481,7 @@ fn null_found_in_array_when_not_null_expected() {
 #[test]
 fn null_found_at_key_where_not_null_expected() {
     env_logger::init().unwrap_or(());
-    let pact = json!(r#"
+    let pact : serde_json::Value = serde_json::from_str(r#"
       {
         "match": false,
         "comment": "Name should be null",
@@ -507,7 +508,7 @@ fn null_found_at_key_where_not_null_expected() {
           }
         }
       }
-    "#);
+    "#).unwrap();
 
     let expected = Request::from_json(&pact.get("expected").unwrap(), &PactSpecification::V1);
     println!("{:?}", expected);
@@ -524,7 +525,7 @@ fn null_found_at_key_where_not_null_expected() {
 #[test]
 fn not_null_found_in_array_when_null_expected() {
     env_logger::init().unwrap_or(());
-    let pact = json!(r#"
+    let pact : serde_json::Value = serde_json::from_str(r#"
       {
         "match": false,
         "comment": "Favourite colours expected to contain null, but not null found",
@@ -551,7 +552,7 @@ fn not_null_found_in_array_when_null_expected() {
           }
         }
       }
-    "#);
+    "#).unwrap();
 
     let expected = Request::from_json(&pact.get("expected").unwrap(), &PactSpecification::V1);
     println!("{:?}", expected);
@@ -568,7 +569,7 @@ fn not_null_found_in_array_when_null_expected() {
 #[test]
 fn not_null_found_at_key_when_null_expected() {
     env_logger::init().unwrap_or(());
-    let pact = json!(r#"
+    let pact : serde_json::Value = serde_json::from_str(r#"
       {
         "match": false,
         "comment": "Name should be null",
@@ -595,7 +596,7 @@ fn not_null_found_at_key_when_null_expected() {
           }
         }
       }
-    "#);
+    "#).unwrap();
 
     let expected = Request::from_json(&pact.get("expected").unwrap(), &PactSpecification::V1);
     println!("{:?}", expected);
@@ -612,7 +613,7 @@ fn not_null_found_at_key_when_null_expected() {
 #[test]
 fn missing_key() {
     env_logger::init().unwrap_or(());
-    let pact = json!(r#"
+    let pact : serde_json::Value = serde_json::from_str(r#"
       {
         "match": false,
         "comment": "Missing key alligator name",
@@ -640,7 +641,7 @@ fn missing_key() {
           }
         }
       }
-    "#);
+    "#).unwrap();
 
     let expected = Request::from_json(&pact.get("expected").unwrap(), &PactSpecification::V1);
     println!("{:?}", expected);
@@ -657,7 +658,7 @@ fn missing_key() {
 #[test]
 fn missing_index() {
     env_logger::init().unwrap_or(());
-    let pact = json!(r#"
+    let pact : serde_json::Value = serde_json::from_str(r#"
       {
         "match": false,
         "comment": "Missing favorite colour",
@@ -684,7 +685,7 @@ fn missing_index() {
           }
         }
       }
-    "#);
+    "#).unwrap();
 
     let expected = Request::from_json(&pact.get("expected").unwrap(), &PactSpecification::V1);
     println!("{:?}", expected);
@@ -701,7 +702,7 @@ fn missing_index() {
 #[test]
 fn matches() {
     env_logger::init().unwrap_or(());
-    let pact = json!(r#"
+    let pact : serde_json::Value = serde_json::from_str(r#"
       {
         "match": true,
         "comment": "Requests match",
@@ -732,7 +733,7 @@ fn matches() {
           }
         }
       }
-    "#);
+    "#).unwrap();
 
     let expected = Request::from_json(&pact.get("expected").unwrap(), &PactSpecification::V1);
     println!("{:?}", expected);
@@ -749,7 +750,7 @@ fn matches() {
 #[test]
 fn different_value_found_at_key() {
     env_logger::init().unwrap_or(());
-    let pact = json!(r#"
+    let pact : serde_json::Value = serde_json::from_str(r#"
       {
         "match": false,
         "comment": "Incorrect value at alligator name",
@@ -776,7 +777,7 @@ fn different_value_found_at_key() {
           }
         }
       }
-    "#);
+    "#).unwrap();
 
     let expected = Request::from_json(&pact.get("expected").unwrap(), &PactSpecification::V1);
     println!("{:?}", expected);
@@ -793,7 +794,7 @@ fn different_value_found_at_key() {
 #[test]
 fn different_value_found_at_index() {
     env_logger::init().unwrap_or(());
-    let pact = json!(r#"
+    let pact : serde_json::Value = serde_json::from_str(r#"
       {
         "match": false,
         "comment": "Incorrect favourite colour",
@@ -820,7 +821,7 @@ fn different_value_found_at_index() {
           }
         }
       }
-    "#);
+    "#).unwrap();
 
     let expected = Request::from_json(&pact.get("expected").unwrap(), &PactSpecification::V1);
     println!("{:?}", expected);
@@ -837,7 +838,7 @@ fn different_value_found_at_index() {
 #[test]
 fn array_in_different_order() {
     env_logger::init().unwrap_or(());
-    let pact = json!(r#"
+    let pact : serde_json::Value = serde_json::from_str(r#"
       {
         "match": false,
         "comment": "Favourite colours in wrong order",
@@ -864,7 +865,7 @@ fn array_in_different_order() {
           }
         }
       }
-    "#);
+    "#).unwrap();
 
     let expected = Request::from_json(&pact.get("expected").unwrap(), &PactSpecification::V1);
     println!("{:?}", expected);

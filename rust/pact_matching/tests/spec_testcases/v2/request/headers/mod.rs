@@ -6,11 +6,12 @@ use env_logger;
 use pact_matching::match_request;
 #[allow(unused_imports)]
 use expectest::prelude::*;
+use serde_json;
 
 #[test]
 fn empty_headers() {
     env_logger::init().unwrap_or(());
-    let pact = json!(r#"
+    let pact : serde_json::Value = serde_json::from_str(r#"
       {
         "match": true,
         "comment": "Empty headers match",
@@ -28,7 +29,7 @@ fn empty_headers() {
           "headers": {}
         }
       }
-    "#);
+    "#).unwrap();
 
     let expected = Request::from_json(&pact.get("expected").unwrap(), &PactSpecification::V2);
     println!("{:?}", expected);
@@ -45,7 +46,7 @@ fn empty_headers() {
 #[test]
 fn header_name_is_different_case() {
     env_logger::init().unwrap_or(());
-    let pact = json!(r#"
+    let pact : serde_json::Value = serde_json::from_str(r#"
       {
         "match": true,
         "comment": "Header name is case insensitive",
@@ -66,7 +67,7 @@ fn header_name_is_different_case() {
           }
         }
       }
-    "#);
+    "#).unwrap();
 
     let expected = Request::from_json(&pact.get("expected").unwrap(), &PactSpecification::V2);
     println!("{:?}", expected);
@@ -83,7 +84,7 @@ fn header_name_is_different_case() {
 #[test]
 fn header_value_is_different_case() {
     env_logger::init().unwrap_or(());
-    let pact = json!(r#"
+    let pact : serde_json::Value = serde_json::from_str(r#"
       {
         "match": false,
         "comment": "Headers values are case sensitive",
@@ -104,7 +105,7 @@ fn header_value_is_different_case() {
           }
         }
       }
-    "#);
+    "#).unwrap();
 
     let expected = Request::from_json(&pact.get("expected").unwrap(), &PactSpecification::V2);
     println!("{:?}", expected);
@@ -121,7 +122,7 @@ fn header_value_is_different_case() {
 #[test]
 fn matches_with_regex() {
     env_logger::init().unwrap_or(());
-    let pact = json!(r#"
+    let pact : serde_json::Value = serde_json::from_str(r#"
       {
         "match": true,
         "comment": "Headers match with regexp",
@@ -145,7 +146,7 @@ fn matches_with_regex() {
           }
         }
       }
-    "#);
+    "#).unwrap();
 
     let expected = Request::from_json(&pact.get("expected").unwrap(), &PactSpecification::V2);
     println!("{:?}", expected);
@@ -162,7 +163,7 @@ fn matches_with_regex() {
 #[test]
 fn matches() {
     env_logger::init().unwrap_or(());
-    let pact = json!(r#"
+    let pact : serde_json::Value = serde_json::from_str(r#"
       {
         "match": true,
         "comment": "Headers match",
@@ -185,7 +186,7 @@ fn matches() {
           }
         }
       }
-    "#);
+    "#).unwrap();
 
     let expected = Request::from_json(&pact.get("expected").unwrap(), &PactSpecification::V2);
     println!("{:?}", expected);
@@ -202,7 +203,7 @@ fn matches() {
 #[test]
 fn order_of_comma_separated_header_values_different() {
     env_logger::init().unwrap_or(());
-    let pact = json!(r#"
+    let pact : serde_json::Value = serde_json::from_str(r#"
       {
         "match": false,
         "comment": "Comma separated headers out of order, order can matter http://tools.ietf.org/html/rfc2616",
@@ -223,7 +224,7 @@ fn order_of_comma_separated_header_values_different() {
           }
         }
       }
-    "#);
+    "#).unwrap();
 
     let expected = Request::from_json(&pact.get("expected").unwrap(), &PactSpecification::V2);
     println!("{:?}", expected);
@@ -240,7 +241,7 @@ fn order_of_comma_separated_header_values_different() {
 #[test]
 fn unexpected_header_found() {
     env_logger::init().unwrap_or(());
-    let pact = json!(r#"
+    let pact : serde_json::Value = serde_json::from_str(r#"
       {
         "match": true,
         "comment": "Extra headers allowed",
@@ -259,7 +260,7 @@ fn unexpected_header_found() {
           }
         }
       }
-    "#);
+    "#).unwrap();
 
     let expected = Request::from_json(&pact.get("expected").unwrap(), &PactSpecification::V2);
     println!("{:?}", expected);
@@ -276,7 +277,7 @@ fn unexpected_header_found() {
 #[test]
 fn whitespace_after_comma_different() {
     env_logger::init().unwrap_or(());
-    let pact = json!(r#"
+    let pact : serde_json::Value = serde_json::from_str(r#"
       {
         "match": true,
         "comment": "Whitespace between comma separated headers does not matter",
@@ -297,7 +298,7 @@ fn whitespace_after_comma_different() {
           }
         }
       }
-    "#);
+    "#).unwrap();
 
     let expected = Request::from_json(&pact.get("expected").unwrap(), &PactSpecification::V2);
     println!("{:?}", expected);

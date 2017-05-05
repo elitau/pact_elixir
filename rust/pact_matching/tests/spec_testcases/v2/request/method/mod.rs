@@ -6,11 +6,12 @@ use env_logger;
 use pact_matching::match_request;
 #[allow(unused_imports)]
 use expectest::prelude::*;
+use serde_json;
 
 #[test]
 fn different_method() {
     env_logger::init().unwrap_or(());
-    let pact = json!(r#"
+    let pact : serde_json::Value = serde_json::from_str(r#"
       {
         "match": false,
         "comment": "Methods is incorrect",
@@ -28,7 +29,7 @@ fn different_method() {
       
         }
       }
-    "#);
+    "#).unwrap();
 
     let expected = Request::from_json(&pact.get("expected").unwrap(), &PactSpecification::V2);
     println!("{:?}", expected);
@@ -45,7 +46,7 @@ fn different_method() {
 #[test]
 fn matches() {
     env_logger::init().unwrap_or(());
-    let pact = json!(r#"
+    let pact : serde_json::Value = serde_json::from_str(r#"
       {
         "match": true,
         "comment": "Methods match",
@@ -63,7 +64,7 @@ fn matches() {
       
         }
       }
-    "#);
+    "#).unwrap();
 
     let expected = Request::from_json(&pact.get("expected").unwrap(), &PactSpecification::V2);
     println!("{:?}", expected);
@@ -80,7 +81,7 @@ fn matches() {
 #[test]
 fn method_is_different_case() {
     env_logger::init().unwrap_or(());
-    let pact = json!(r#"
+    let pact : serde_json::Value = serde_json::from_str(r#"
       {
         "match": true,
         "comment": "Methods case does not matter",
@@ -98,7 +99,7 @@ fn method_is_different_case() {
       
         }
       }
-    "#);
+    "#).unwrap();
 
     let expected = Request::from_json(&pact.get("expected").unwrap(), &PactSpecification::V2);
     println!("{:?}", expected);

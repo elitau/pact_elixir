@@ -6,11 +6,12 @@ use env_logger;
 use pact_matching::match_response;
 #[allow(unused_imports)]
 use expectest::prelude::*;
+use serde_json;
 
 #[test]
 fn matches() {
     env_logger::init().unwrap_or(());
-    let pact = json!(r#"
+    let pact : serde_json::Value = serde_json::from_str(r#"
       {
           "match": true,
           "comment": "Status matches",
@@ -21,7 +22,7 @@ fn matches() {
               "status": 202
           }
       }
-    "#);
+    "#).unwrap();
 
     let expected = Response::from_json(&pact.get("expected").unwrap(), &PactSpecification::V1_1);
     println!("{:?}", expected);
@@ -39,7 +40,7 @@ fn matches() {
 #[test]
 fn different_status() {
     env_logger::init().unwrap_or(());
-    let pact = json!(r#"
+    let pact : serde_json::Value = serde_json::from_str(r#"
       {
           "match": false,
           "comment": "Status is incorrect",
@@ -50,7 +51,7 @@ fn different_status() {
               "status": 400
           }
       }
-    "#);
+    "#).unwrap();
 
     let expected = Response::from_json(&pact.get("expected").unwrap(), &PactSpecification::V1_1);
     println!("{:?}", expected);
