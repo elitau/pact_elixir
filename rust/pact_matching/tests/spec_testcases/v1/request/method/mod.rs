@@ -9,12 +9,12 @@ use expectest::prelude::*;
 use serde_json;
 
 #[test]
-fn method_is_different_case() {
+fn different_method() {
     env_logger::init().unwrap_or(());
     let pact : serde_json::Value = serde_json::from_str(r#"
       {
-        "match": true,
-        "comment": "Methods case does not matter",
+        "match": false,
+        "comment": "Methods is incorrect",
         "expected" : {
           "method": "POST",
           "path": "/",
@@ -22,7 +22,7 @@ fn method_is_different_case() {
           "headers": {}
         },
         "actual": {
-          "method": "post",
+          "method": "GET",
           "path": "/",
           "query": "",
           "headers": {}
@@ -79,12 +79,12 @@ fn matches() {
 }
 
 #[test]
-fn different_method() {
+fn method_is_different_case() {
     env_logger::init().unwrap_or(());
     let pact : serde_json::Value = serde_json::from_str(r#"
       {
-        "match": false,
-        "comment": "Methods is incorrect",
+        "match": true,
+        "comment": "Methods case does not matter",
         "expected" : {
           "method": "POST",
           "path": "/",
@@ -92,7 +92,7 @@ fn different_method() {
           "headers": {}
         },
         "actual": {
-          "method": "GET",
+          "method": "post",
           "path": "/",
           "query": "",
           "headers": {}

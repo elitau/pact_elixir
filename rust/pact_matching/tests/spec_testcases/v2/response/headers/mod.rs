@@ -4,9 +4,9 @@ use pact_matching::models::*;
 use env_logger;
 #[allow(unused_imports)]
 use pact_matching::match_response;
-use serde_json;
 #[allow(unused_imports)]
 use expectest::prelude::*;
+use serde_json;
 
 #[test]
 fn empty_headers() {

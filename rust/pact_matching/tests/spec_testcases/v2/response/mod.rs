@@ -6,6 +6,7 @@ use env_logger;
 use pact_matching::match_response;
 #[allow(unused_imports)]
 use expectest::prelude::*;
+use serde_json;
 mod body;
 mod headers;
 mod status;

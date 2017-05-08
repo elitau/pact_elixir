@@ -56,14 +56,14 @@ fn forward_slash_found_when_empty_path_expected() {
           "path": "",
           "query": "",
           "headers": {}
-
+      
         },
         "actual": {
           "method": "POST",
           "path": "/",
           "query": "",
           "headers": {}
-
+      
         }
       }
     "#).unwrap();
@@ -92,14 +92,14 @@ fn incorrect_path() {
           "path": "/path/to/something",
           "query": "",
           "headers": {}
-
+      
         },
         "actual": {
           "method": "POST",
           "path": "/path/to/something/else",
           "query": "",
           "headers": {}
-
+      
         }
       }
     "#).unwrap();
@@ -128,14 +128,14 @@ fn matches() {
           "path": "/path/to/something",
           "query": "",
           "headers": {}
-
+      
         },
         "actual": {
           "method": "POST",
           "path": "/path/to/something",
           "query": "",
           "headers": {}
-
+      
         }
       }
     "#).unwrap();
@@ -164,14 +164,14 @@ fn missing_trailing_slash_in_path() {
           "path": "/path/to/something/",
           "query": "",
           "headers": {}
-
+      
         },
         "actual": {
           "method": "POST",
           "path": "/path/to/something",
           "query": "",
           "headers": {}
-
+      
         }
       }
     "#).unwrap();
@@ -200,14 +200,14 @@ fn unexpected_trailing_slash_in_path() {
           "path": "/path/to/something",
           "query": "",
           "headers": {}
-
+      
         },
         "actual": {
           "method": "POST",
           "path": "/path/to/something/",
           "query": "",
           "headers": {}
-
+      
         }
       }
     "#).unwrap();
