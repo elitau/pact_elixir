@@ -7,7 +7,7 @@ fn matches_token(path_fragment: &String, path_token: &PathToken) -> u32 {
     match *path_token {
         PathToken::Root if path_fragment == "$" => 2,
         PathToken::Field(ref name) if *path_fragment == name.clone() => 2,
-        PathToken::Index(ref index) => match path_fragment.parse() {
+        PathToken::Index(ref index) => match path_fragment.parse::<usize>() {
             Ok(ref i) if index == i => 2,
             _ => 0
         },

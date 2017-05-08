@@ -2,8 +2,10 @@
 
 use std::collections::HashMap;
 use std::collections::BTreeMap;
-use rustc_serialize::json::Json;
-use rustc_serialize::hex::FromHex;
+use serde_json;
+use serde_json::Value;
+use serde_json::Value::{Object, Number};
+use hex::FromHex;
 use super::strip_whitespace;
 use regex::Regex;
 use semver::Version;
@@ -13,6 +15,7 @@ use std::io::prelude::*;
 use std::fs;
 use std::fs::File;
 use std::path::Path;
+use std::iter::Map;
 use std::cmp::Ordering;
 use std::hash::{Hash, Hasher};
 use hyper::client::Client;
@@ -65,10 +68,10 @@ pub struct Consumer {
 
 impl Consumer {
     /// Builds a `Consumer` from the `Json` struct.
-    pub fn from_json(pact_json: &Json) -> Consumer {
-        let val = match pact_json.find("name") {
+    pub fn from_json(pact_json: &Value) -> Consumer {
+        let val = match pact_json.get("name") {
             Some(v) => match v.clone() {
-                Json::String(s) => s,
+                Value::String(s) => s,
                 _ => v.to_string()
             },
             None => "consumer".to_string()
@@ -77,8 +80,8 @@ impl Consumer {
     }
 
     /// Converts this `Consumer` to a `Json` struct.
-    pub fn to_json(&self) -> Json {
-        Json::Object(btreemap!{ s!("name") => Json::String(self.name.clone()) })
+    pub fn to_json(&self) -> Value {
+        json!({ s!("name") : json!(self.name.clone()) })
     }
 }
 
@@ -91,10 +94,10 @@ pub struct Provider {
 
 impl Provider {
     /// Builds a `Provider` from a `Json` struct.
-    pub fn from_json(pact_json: &Json) -> Provider {
-        let val = match pact_json.find("name") {
+    pub fn from_json(pact_json: &Value) -> Provider {
+        let val = match pact_json.get("name") {
             Some(v) => match v.clone() {
-                Json::String(s) => s,
+                Value::String(s) => s,
                 _ => v.to_string()
             },
             None => "provider".to_string()
@@ -103,14 +106,14 @@ impl Provider {
     }
 
     /// Converts this `Provider` to a `Json` struct.
-    pub fn to_json(&self) -> Json {
-        Json::Object(btreemap!{ s!("name") => Json::String(self.name.clone()) })
+    pub fn to_json(&self) -> Value {
+        json!({ s!("name") : json!(self.name.clone()) })
     }
 }
 
 /// Enum that defines the four main states that a body of a request and response can be in a pact
 /// file.
-#[derive(RustcDecodable, RustcEncodable, Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, Hash)]
 pub enum OptionalBody {
     /// A body is missing if it is not present in the pact file
     Missing,
@@ -218,9 +221,9 @@ pub trait HttpPart {
     /// Returns the general content type (ignoring subtypes)
     fn content_type_enum(&self) -> DetectedContentType {
         let content_type = self.content_type();
-        if JSON_CONTENT_TYPE.is_match(&content_type) {
+        if JSON_CONTENT_TYPE.is_match(&content_type[..]) {
             DetectedContentType::Json
-        } else if XML_CONTENT_TYPE.is_match(&content_type) {
+        } else if XML_CONTENT_TYPE.is_match(&content_type[..]) {
             DetectedContentType::Xml
         } else {
             DetectedContentType::Text
@@ -288,12 +291,12 @@ impl Hash for Request {
     }
 }
 
-fn headers_from_json(request: &Json) -> Option<HashMap<String, String>> {
-    match request.find("headers") {
+fn headers_from_json(request: &Value) -> Option<HashMap<String, String>> {
+    match request.get("headers") {
         Some(v) => match *v {
-            Json::Object(ref m) => Some(m.iter().map(|(key, val)| {
+            Value::Object(ref m) => Some(m.iter().map(|(key, val)| {
                 match val {
-                    &Json::String(ref s) => (key.clone(), s.clone()),
+                    &Value::String(ref s) => (key.clone(), s.clone()),
                     _ => (key.clone(), val.to_string())
                 }
             }).collect()),
@@ -303,14 +306,14 @@ fn headers_from_json(request: &Json) -> Option<HashMap<String, String>> {
     }
 }
 
-fn headers_to_json(headers: &HashMap<String, String>) -> Json {
-    Json::Object(headers.iter().fold(BTreeMap::new(), |mut map, kv| {
-        map.insert(kv.0.clone(), Json::String(kv.1.clone()));
+fn headers_to_json(headers: &HashMap<String, String>) -> Value {
+    json!(headers.iter().fold(BTreeMap::new(), |mut map, kv| {
+        map.insert(kv.0.clone(), Value::String(kv.1.clone()));
         map
     }))
 }
 
-fn body_from_json(request: &Json, headers: &Option<HashMap<String, String>>) -> OptionalBody {
+fn body_from_json(request: &Value, headers: &Option<HashMap<String, String>>) -> OptionalBody {
     let content_type = match headers {
         &Some(ref h) => match h.iter().find(|kv| kv.0.to_lowercase() == s!("content-type")) {
             Some(kv) => {
@@ -324,14 +327,14 @@ fn body_from_json(request: &Json, headers: &Option<HashMap<String, String>>) -> 
         &None => None
     };
 
-    match request.find("body") {
+    match request.get("body") {
         Some(v) => match *v {
-            Json::String(ref s) => {
+            Value::String(ref s) => {
                 if s.is_empty() {
                     OptionalBody::Empty
                 } else if content_type.unwrap_or(s!("")) == "application/json" {
                     // fuck, that's all I have to say about this
-                    match Json::from_str(&s) {
+                    match serde_json::from_str::<HashMap<String, Value>>(&s) {
                         Ok(_) => OptionalBody::Present(s.clone()),
                         Err(_) => OptionalBody::Present(format!("\"{}\"", s))
                     }
@@ -339,7 +342,7 @@ fn body_from_json(request: &Json, headers: &Option<HashMap<String, String>>) -> 
                     OptionalBody::Present(s.clone())
                 }
             },
-            Json::Null => OptionalBody::Null,
+            Value::Null => OptionalBody::Null,
             _ => OptionalBody::Present(v.to_string())
         },
         None => OptionalBody::Missing
@@ -359,19 +362,19 @@ pub fn build_query_string(query: HashMap<String, Vec<String>>) -> String {
         .join("&")
 }
 
-fn matchers_from_json(json: &Json, deprecated_name: String) -> Option<Matchers> {
-    let matchers_json = match (json.find("matchingRules"), json.find(&deprecated_name)) {
+fn matchers_from_json(json: &Value, deprecated_name: String) -> Option<Matchers> {
+    let matchers_json = match (json.get("matchingRules"), json.get(&deprecated_name)) {
         (Some(v), _) => Some(v),
         (None, Some(v)) => Some(v),
         (None, None) => None
     };
     let matchers = matchers_json.map(|v| {
         match *v {
-            Json::Object(ref m) => m.iter().map(|(k, val)| {
+            Value::Object(ref m) => m.iter().map(|(k, val)| {
                 (k.clone(), match *val {
-                    Json::Object(ref m2) => m2.iter().map(|(k2, v2)| {
+                    Value::Object(ref m2) => m2.iter().map(|(k2, v2)| {
                         (k2.clone(), match v2 {
-                            &Json::String(ref s) => s.clone(),
+                            &Value::String(ref s) => s.clone(),
                             _ => v2.to_string()
                         })
                     }).collect(),
@@ -391,10 +394,10 @@ fn matchers_from_json(json: &Json, deprecated_name: String) -> Option<Matchers> 
     }
 }
 
-fn matchers_to_json(matchers: &Matchers) -> Json {
-    Json::Object(matchers.iter().fold(BTreeMap::new(), |mut map, kv| {
-        map.insert(kv.0.clone(), Json::Object(kv.1.clone().iter().fold(BTreeMap::new(), |mut map, kv| {
-            map.insert(kv.0.clone(), Json::String(kv.1.clone()));
+fn matchers_to_json(matchers: &Matchers) -> Value {
+    json!(matchers.iter().fold(BTreeMap::new(), |mut map, kv| {
+        map.insert(kv.0.clone(), json!(kv.1.clone().iter().fold(BTreeMap::new(), |mut map, kv| {
+            map.insert(kv.0.clone(), Value::String(kv.1.clone()));
             map
         })));
         map
@@ -403,24 +406,24 @@ fn matchers_to_json(matchers: &Matchers) -> Json {
 
 impl Request {
     /// Builds a `Request` from a `Json` struct.
-    pub fn from_json(request_json: &Json, spec_version: &PactSpecification) -> Request {
-        let method_val = match request_json.find("method") {
+    pub fn from_json(request_json: &Value, spec_version: &PactSpecification) -> Request {
+        let method_val = match request_json.get("method") {
             Some(v) => match *v {
-                Json::String(ref s) => s.to_uppercase(),
+                Value::String(ref s) => s.to_uppercase(),
                 _ => v.to_string().to_uppercase()
             },
             None => "GET".to_string()
         };
-        let path_val = match request_json.find("path") {
+        let path_val = match request_json.get("path") {
             Some(v) => match *v {
-                Json::String(ref s) => s.clone(),
+                Value::String(ref s) => s.clone(),
                 _ => v.to_string()
             },
             None => "/".to_string()
         };
-        let query_val = match request_json.find("query") {
+        let query_val = match request_json.get("query") {
             Some(v) => match *v {
-                Json::String(ref s) => parse_query_string(s),
+                Value::String(ref s) => parse_query_string(s),
                 _ => {
                     warn!("Only string versions of request query strings are supported with specification version {}, ignoring.",
                         spec_version.to_string());
@@ -441,39 +444,42 @@ impl Request {
     }
 
     /// Converts this `Request` to a `Json` struct.
-    pub fn to_json(&self) -> Json {
-        let mut json = btreemap!{
-            s!("method") => Json::String(self.method.to_uppercase()),
-            s!("path") => Json::String(self.path.clone())
-        };
-        if self.query.is_some() {
-            json.insert(s!("query"), Json::String(build_query_string(self.query.clone().unwrap())));
-        }
-        if self.headers.is_some() {
-            json.insert(s!("headers"), headers_to_json(&self.headers.clone().unwrap()));
-        }
-        match self.body {
-            OptionalBody::Present(ref body) => {
-                if self.content_type() == "application/json" {
-                    match Json::from_str(body) {
-                        Ok(json_body) => { json.insert(s!("body"), json_body); },
-                        Err(err) => {
-                            warn!("Failed to parse json body: {}", err);
-                            json.insert(s!("body"), Json::String(body.clone()));
+    pub fn to_json(&self) -> Value {
+        let mut json = json!({
+            s!("method") : Value::String(self.method.to_uppercase()),
+            s!("path") : Value::String(self.path.clone())
+        });
+        {
+            let mut map = json.as_object_mut().unwrap();
+            if self.query.is_some() {
+                map.insert(s!("query"), Value::String(build_query_string(self.query.clone().unwrap())));
+            }
+            if self.headers.is_some() {
+                map.insert(s!("headers"), headers_to_json(&self.headers.clone().unwrap()));
+            }
+            match self.body {
+                OptionalBody::Present(ref body) => {
+                    if self.content_type() == "application/json" {
+                        match serde_json::from_str(body) {
+                            Ok(json_body) => { map.insert(s!("body"), json_body); },
+                            Err(err) => {
+                                warn!("Failed to parse json body: {}", err);
+                                map.insert(s!("body"), Value::String(body.clone()));
+                            }
                         }
+                    } else {
+                        map.insert(s!("body"), Value::String(body.clone()));
                     }
-                } else {
-                    json.insert(s!("body"), Json::String(body.clone()));
-                }
-            },
-            OptionalBody::Empty => { json.insert(s!("body"), Json::String(s!(""))); },
-            OptionalBody::Missing => (),
-            OptionalBody::Null => { json.insert(s!("body"), Json::Null); }
+                },
+                OptionalBody::Empty => { map.insert(s!("body"), Value::String(s!(""))); },
+                OptionalBody::Missing => (),
+                OptionalBody::Null => { map.insert(s!("body"), Value::Null); }
+            }
+            if self.matching_rules.is_some() {
+                map.insert(s!("matchingRules"), matchers_to_json(&self.matching_rules.clone().unwrap()));
+            }
         }
-        if self.matching_rules.is_some() {
-            json.insert(s!("matchingRules"), matchers_to_json(&self.matching_rules.clone().unwrap()));
-        }
-        Json::Object(json)
+        json
     }
 
     /// Returns the default request: a GET request to the root.
@@ -529,8 +535,8 @@ pub struct Response {
 impl Response {
 
     /// Build a `Response` from a `Json` struct.
-    pub fn from_json(response: &Json, _: &PactSpecification) -> Response {
-        let status_val = match response.find("status") {
+    pub fn from_json(response: &Value, _: &PactSpecification) -> Response {
+        let status_val = match response.get("status") {
             Some(v) => v.as_u64().unwrap() as u16,
             None => 200
         };
@@ -554,35 +560,38 @@ impl Response {
     }
 
     /// Converts this response to a `Json` struct.
-    pub fn to_json(&self) -> Json {
-        let mut json = btreemap!{
-            s!("status") => Json::U64(self.status as u64)
-        };
-        if self.headers.is_some() {
-            json.insert(s!("headers"), headers_to_json(&self.headers.clone().unwrap()));
-        }
-        match self.body {
-            OptionalBody::Present(ref body) => {
-                if self.content_type() == "application/json" {
-                    match Json::from_str(body) {
-                        Ok(json_body) => { json.insert(s!("body"), json_body); },
-                        Err(err) => {
-                            warn!("Failed to parse json body: {}", err);
-                            json.insert(s!("body"), Json::String(body.clone()));
+    pub fn to_json(&self) -> Value {
+        let mut json = json!({
+            s!("status") : json!(self.status)
+        });
+        {
+            let mut map = json.as_object_mut().unwrap();
+            if self.headers.is_some() {
+                map.insert(s!("headers"), headers_to_json(&self.headers.clone().unwrap()));
+            }
+            match self.body {
+                OptionalBody::Present(ref body) => {
+                    if self.content_type() == "application/json" {
+                        match serde_json::from_str(body) {
+                            Ok(json_body) => { map.insert(s!("body"), json_body); },
+                            Err(err) => {
+                                warn!("Failed to parse json body: {}", err);
+                                map.insert(s!("body"), Value::String(body.clone()));
+                            }
                         }
+                    } else {
+                        map.insert(s!("body"), Value::String(body.clone()));
                     }
-                } else {
-                    json.insert(s!("body"), Json::String(body.clone()));
-                }
-            },
-            OptionalBody::Empty => { json.insert(s!("body"), Json::String(s!(""))); },
-            OptionalBody::Missing => (),
-            OptionalBody::Null => { json.insert(s!("body"), Json::Null); }
+                },
+                OptionalBody::Empty => { map.insert(s!("body"), Value::String(s!(""))); },
+                OptionalBody::Missing => (),
+                OptionalBody::Null => { map.insert(s!("body"), Value::Null); }
+            }
+            if self.matching_rules.is_some() {
+                map.insert(s!("matchingRules"), matchers_to_json(&self.matching_rules.clone().unwrap()));
+            }
         }
-        if self.matching_rules.is_some() {
-            json.insert(s!("matchingRules"), matchers_to_json(&self.matching_rules.clone().unwrap()));
-        }
-        Json::Object(json)
+        json
     }
 
     /// Return a description of all the differences from the other response
@@ -665,31 +674,31 @@ pub struct Interaction {
 
 impl Interaction {
     /// Constructs an `Interaction` from the `Json` struct.
-    pub fn from_json(index: usize, pact_json: &Json, spec_version: &PactSpecification) -> Interaction {
-        let description = match pact_json.find("description") {
+    pub fn from_json(index: usize, pact_json: &Value, spec_version: &PactSpecification) -> Interaction {
+        let description = match pact_json.get("description") {
             Some(v) => match *v {
-                Json::String(ref s) => s.clone(),
+                Value::String(ref s) => s.clone(),
                 _ => v.to_string()
             },
             None => format!("Interaction {}", index)
         };
-        let provider_state = match pact_json.find("providerState").or(pact_json.find("provider_state")) {
+        let provider_state = match pact_json.get("providerState").or(pact_json.get("provider_state")) {
             Some(v) => match *v {
-                Json::String(ref s) => if s.is_empty() {
+                Value::String(ref s) => if s.is_empty() {
                     None
                 } else {
                     Some(s.clone())
                 },
-                Json::Null => None,
+                Value::Null => None,
                 _ => Some(v.to_string())
             },
             None => None
         };
-        let request = match pact_json.find("request") {
+        let request = match pact_json.get("request") {
             Some(v) => Request::from_json(v, spec_version),
             None => Request::default_request()
         };
-        let response = match pact_json.find("response") {
+        let response = match pact_json.get("response") {
             Some(v) => Response::from_json(v, spec_version),
             None => Response::default_response()
         };
@@ -702,16 +711,17 @@ impl Interaction {
     }
 
     /// Converts this interaction to a `Json` struct.
-    pub fn to_json(&self) -> Json {
-        let mut map = btreemap!{
-            s!("description") => Json::String(self.description.clone()),
-            s!("request") => self.request.to_json(),
-            s!("response") => self.response.to_json()
-        };
+    pub fn to_json(&self) -> Value {
+        let mut value = json!({
+            s!("description") : Value::String(self.description.clone()),
+            s!("request") : self.request.to_json(),
+            s!("response") : self.response.to_json()
+        });
         if self.provider_state.is_some() {
-            map.insert(s!("providerState"), Json::String(self.provider_state.clone().unwrap()));
+            let mut map = value.as_object_mut().unwrap();
+            map.insert(s!("providerState"), json!(self.provider_state.clone().unwrap()));
         }
-        Json::Object(map)
+        value
     }
 
     /// Returns list of conflicts if this interaction conflicts with the other interaction.
@@ -758,14 +768,14 @@ pub struct Pact {
     pub specification_version: PactSpecification
 }
 
-fn parse_meta_data(pact_json: &Json) -> BTreeMap<String, BTreeMap<String, String>> {
-    match pact_json.find("metadata") {
+fn parse_meta_data(pact_json: &Value) -> BTreeMap<String, BTreeMap<String, String>> {
+    match pact_json.get("metadata") {
         Some(v) => match *v {
-            Json::Object(ref obj) => obj.iter().map(|(k, v)| {
+            Value::Object(ref obj) => obj.iter().map(|(k, v)| {
                 let val = match *v {
-                    Json::Object(ref obj) => obj.iter().map(|(k, v)| {
+                    Value::Object(ref obj) => obj.iter().map(|(k, v)| {
                         match *v {
-                            Json::String(ref s) => (k.clone(), s.clone()),
+                            Value::String(ref s) => (k.clone(), s.clone()),
                             _ => (k.clone(), v.to_string())
                         }
                     }).collect(),
@@ -779,10 +789,10 @@ fn parse_meta_data(pact_json: &Json) -> BTreeMap<String, BTreeMap<String, String
     }
 }
 
-fn parse_interactions(pact_json: &Json, spec_version: PactSpecification) -> Vec<Interaction> {
-    match pact_json.find("interactions") {
+fn parse_interactions(pact_json: &Value, spec_version: PactSpecification) -> Vec<Interaction> {
+    match pact_json.get("interactions") {
         Some(v) => match *v {
-            Json::Array(ref array) => array.iter().enumerate().map(|(index, ijson)| {
+            Value::Array(ref array) => array.iter().enumerate().map(|(index, ijson)| {
                 Interaction::from_json(index, ijson, &spec_version)
             }).collect(),
             _ => vec![]
@@ -792,7 +802,9 @@ fn parse_interactions(pact_json: &Json, spec_version: PactSpecification) -> Vec<
 }
 
 fn determin_spec_version(file: &String, metadata: &BTreeMap<String, BTreeMap<String, String>>) -> PactSpecification {
-    match metadata.get("pact-specification") {
+    let specification = if metadata.get("pact-specification").is_none()
+        { metadata.get("pactSpecification") } else { metadata.get("pact-specification") };
+    match specification {
         Some(spec) => {
             match spec.get("version") {
                 Some(ver) => match Version::parse(ver) {
@@ -832,15 +844,15 @@ fn determin_spec_version(file: &String, metadata: &BTreeMap<String, BTreeMap<Str
 impl Pact {
 
     /// Creates a `Pact` from a `Json` struct.
-    pub fn from_json(file: &String, pact_json: &Json) -> Pact {
+    pub fn from_json(file: &String, pact_json: &Value) -> Pact {
         let metadata = parse_meta_data(pact_json);
         let spec_version = determin_spec_version(file, &metadata);
 
-        let consumer = match pact_json.find("consumer") {
+        let consumer = match pact_json.get("consumer") {
             Some(v) => Consumer::from_json(v),
             None => Consumer { name: s!("consumer") }
         };
-        let provider = match pact_json.find("provider") {
+        let provider = match pact_json.get("provider") {
             Some(v) => Provider::from_json(v),
             None => Provider { name: s!("provider") }
         };
@@ -854,25 +866,27 @@ impl Pact {
     }
 
     /// Converts this pact to a `Json` struct.
-    pub fn to_json(&self) -> Json {
-        let map = btreemap!{
-            s!("consumer") => self.consumer.to_json(),
-            s!("provider") => self.provider.to_json(),
-            s!("interactions") => Json::Array(self.interactions.iter().map(|i| i.to_json()).collect()),
-            s!("metadata") => Json::Object(self.metadata_to_json())
-        };
-        Json::Object(map)
+    pub fn to_json(&self) -> Value {
+        json!({
+            s!("consumer"): self.consumer.to_json(),
+            s!("provider"): self.provider.to_json(),
+            s!("interactions"): Value::Array(self.interactions.iter().map(|i| i.to_json()).collect()),
+            s!("metadata"): json!(self.metadata_to_json())
+        })
     }
 
     /// Creates a BTreeMap of the metadata of this pact.
-    pub fn metadata_to_json(&self) -> BTreeMap<String, Json> {
-        let mut md_map: BTreeMap<String, Json> = self.metadata.iter()
+    pub fn metadata_to_json(&self) -> BTreeMap<String, Value> {
+        let mut md_map: BTreeMap<String, Value> = self.metadata.iter()
             .map(|(k, v)| {
-                (k.clone(), Json::Object(v.iter().map(|(k, v)| (k.clone(), Json::String(v.clone()))).collect()))
+                (k.clone(), json!(v.iter()
+                .map(|(k, v)| (k.clone(), v.clone()))
+                .collect::<BTreeMap<String, String>>()))
             })
             .collect();
-        md_map.insert(s!("pact-specification"), Json::Object(btreemap!{ s!("version") => Json::String(PactSpecification::V2.version_str()) }));
-        md_map.insert(s!("pact-rust"), Json::Object(btreemap!{ s!("version") => Json::String(s!(VERSION.unwrap_or("unknown"))) }));
+        md_map.insert(s!("pact-specification"), json!({"version" : PactSpecification::V2.version_str()}));
+
+        md_map.insert(s!("pact-rust"), json!({"version" : s!(VERSION.unwrap_or("unknown"))}));
         md_map
     }
 
@@ -931,7 +945,7 @@ impl Pact {
     /// Reads the pact file and parses the resulting JSON into a `Pact` struct
     pub fn read_pact(file: &Path) -> io::Result<Pact> {
         let mut f = try!(File::open(file));
-        let pact_json = Json::from_reader(&mut f);
+        let pact_json = serde_json::from_reader(&mut f);
         match pact_json {
             Ok(ref json) => Ok(Pact::from_json(&format!("{:?}", file), json)),
             Err(err) => Err(Error::new(ErrorKind::Other, format!("Failed to parse Pact JSON - {}", err)))
@@ -943,7 +957,7 @@ impl Pact {
         let client = Client::new();
         match client.get(url).send() {
             Ok(mut res) => if res.status.is_success() {
-                    let pact_json = Json::from_reader(&mut res);
+                    let pact_json = serde_json::de::from_reader(&mut res);
                     match pact_json {
                         Ok(ref json) => Ok(Pact::from_json(url, json)),
                         Err(err) => Err(format!("Failed to parse Pact JSON - {}", err))
@@ -965,14 +979,14 @@ impl Pact {
             match existing_pact.merge(self) {
                 Ok(ref merged_pact) => {
                     let mut file = try!(File::create(path));
-                    try!(file.write_all(format!("{}", merged_pact.to_json().pretty()).as_bytes()));
+                    try!(file.write_all(format!("{}", serde_json::to_string_pretty(&merged_pact.to_json()).unwrap()).as_bytes()));
                     Ok(())
                 },
                 Err(ref message) => Err(Error::new(ErrorKind::Other, message.clone()))
             }
         } else {
             let mut file = try!{ File::create(path) };
-            try!{ file.write_all(format!("{}", self.to_json().pretty()).as_bytes()) };
+            try!{ file.write_all(format!("{}", serde_json::to_string_pretty(&self.to_json()).unwrap()).as_bytes()) };
             Ok(())
         }
     }
@@ -1007,7 +1021,8 @@ fn decode_query(query: &str) -> String {
                     let mut s = String::new();
                     s.push(v1);
                     s.push(v2);
-                    match s.as_str().from_hex() {
+                    let decoded: Result<Vec<u8>, _> = FromHex::from_hex(s.into_bytes());
+                    match decoded {
                         Ok(n) => result.push(n[0] as char),
                         Err(_) => {
                             result.push('%');
