@@ -5,9 +5,8 @@ use env_logger;
 #[allow(unused_imports)]
 use pact_matching::match_request;
 #[allow(unused_imports)]
-use rustc_serialize::json::Json;
-#[allow(unused_imports)]
 use expectest::prelude::*;
+use serde_json;
 mod body;
 mod headers;
 mod method;

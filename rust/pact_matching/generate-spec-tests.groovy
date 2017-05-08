@@ -20,16 +20,14 @@ specs.eachFileRecurse(FileType.DIRECTORIES) { dir ->
       pw.println('#[allow(unused_imports)]')
       pw.println('use pact_matching::match_request;')
       pw.println('#[allow(unused_imports)]')
-      pw.println('use rustc_serialize::json::Json;')
-      pw.println('#[allow(unused_imports)]')
       pw.println('use expectest::prelude::*;')
+      pw.println('use serde_json;')
     } else if (requestResponsePath == 'response') {
       pw.println('#[allow(unused_imports)]')
       pw.println('use pact_matching::match_response;')
       pw.println('#[allow(unused_imports)]')
-      pw.println('use rustc_serialize::json::Json;')
-      pw.println('#[allow(unused_imports)]')
       pw.println('use expectest::prelude::*;')
+      pw.println('use serde_json;')
     }
 
     dir.eachDir {
@@ -42,7 +40,7 @@ specs.eachFileRecurse(FileType.DIRECTORIES) { dir ->
         |#[test]
         |fn ${it.name.replaceAll(' ', '_').replaceAll('-', '_').replaceAll('\\.json', '')}() {
         |    env_logger::init().unwrap_or(());
-        |    let pact = Json::from_str(r#"
+        |    let pact : serde_json::Value = serde_json::from_str(r#"
       """
       it.text.eachLine { line ->
         testBody += '|      ' + line + '\n'
@@ -50,12 +48,12 @@ specs.eachFileRecurse(FileType.DIRECTORIES) { dir ->
       testBody += '|    "#).unwrap();' + '\n'
       if (requestResponsePath == 'request') {
         testBody += """
-        |    let expected = Request::from_json(&pact.find("expected").unwrap(), &PactSpecification::$specVersion);
+        |    let expected = Request::from_json(&pact.get("expected").unwrap(), &PactSpecification::$specVersion);
         |    println!("{:?}", expected);
-        |    let actual = Request::from_json(&pact.find("actual").unwrap(), &PactSpecification::$specVersion);
+        |    let actual = Request::from_json(&pact.get("actual").unwrap(), &PactSpecification::$specVersion);
         |    println!("{:?}", actual);
-        |    let pact_match = pact.find("match").unwrap();
-        |    if pact_match.as_boolean().unwrap() {
+        |    let pact_match = pact.get("match").unwrap();
+        |    if pact_match.as_bool().unwrap() {
         |       expect!(match_request(expected, actual)).to(be_empty());
         |    } else {
         |       expect!(match_request(expected, actual)).to_not(be_empty());
@@ -63,13 +61,13 @@ specs.eachFileRecurse(FileType.DIRECTORIES) { dir ->
         """
       } else if (requestResponsePath == 'response') {
         testBody += """
-        |    let expected = Response::from_json(&pact.find("expected").unwrap(), &PactSpecification::$specVersion);
+        |    let expected = Response::from_json(&pact.get("expected").unwrap(), &PactSpecification::$specVersion);
         |    println!("{:?}", expected);
-        |    let actual = Response::from_json(&pact.find("actual").unwrap(), &PactSpecification::$specVersion);
+        |    let actual = Response::from_json(&pact.get("actual").unwrap(), &PactSpecification::$specVersion);
         |    println!("{:?}", actual);
-        |    let pact_match = pact.find("match").unwrap();
+        |    let pact_match = pact.get("match").unwrap();
         |    let result = match_response(expected, actual);
-        |    if pact_match.as_boolean().unwrap() {
+        |    if pact_match.as_bool().unwrap() {
         |       expect!(result).to(be_empty());
         |    } else {
         |       expect!(result).to_not(be_empty());
