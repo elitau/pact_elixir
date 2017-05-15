@@ -1,7 +1,7 @@
 use pact_matching::models::{Pact, OptionalBody};
 #[macro_use] use serde_json;
 use itertools::Itertools;
-use std::collections::{BTreeMap, HashMap};
+use std::collections::HashMap;
 use hyper::client::*;
 use std::error::Error;
 use super::provider_client::join_paths;
