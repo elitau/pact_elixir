@@ -2,7 +2,7 @@
 #[macro_use(expect)] extern crate expectest;
 #[macro_use] extern crate p_macro;
 extern crate env_logger;
-#[macro_use] extern crate serde_json;
+extern crate serde_json;
 
 mod spec_testcases;
 

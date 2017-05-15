@@ -2,7 +2,7 @@ use clap::ArgMatches;
 use hyper::Client;
 use hyper::Url;
 use std::io::prelude::*;
-use rustc_serialize::json::Json;
+use serde_json;
 
 pub fn list_mock_servers(host: &str, port: u16, matches: &ArgMatches) -> Result<(), i32> {
     let client = Client::new();
@@ -14,13 +14,13 @@ pub fn list_mock_servers(host: &str, port: u16, matches: &ArgMatches) -> Result<
             let mut body = String::new();
             result.read_to_string(&mut body).unwrap();
             if result.status.is_success() {
-                let json_result = Json::from_str(body.as_str());
+                let json_result: Result<serde_json::Value, _> = serde_json::from_str(body.as_str());
                 match json_result {
                     Ok(json) => {
-                        let mock_servers_json = json.find("mockServers").unwrap();
+                        let mock_servers_json = json.get("mockServers").unwrap();
                         let mock_servers = mock_servers_json.as_array().unwrap();
                         let provider_len = mock_servers.iter().fold(0, |acc, ref ms| {
-                            let provider = ms.find("provider").unwrap().as_string().unwrap();
+                            let provider = ms.get("provider").unwrap().to_string();
                             if provider.len() > acc {
                                 provider.len()
                             } else {
@@ -31,10 +31,10 @@ pub fn list_mock_servers(host: &str, port: u16, matches: &ArgMatches) -> Result<
                         println!("{0:32}  {1:5}  {2:3$}  {4}", "Mock Server Id", "Port",
                             "Provider", provider_len, "Status");
                         for ms in mock_servers {
-                            let id = ms.find("id").unwrap().as_string().unwrap();
-                            let port = ms.find("port").unwrap();
-                            let provider = ms.find("provider").unwrap().as_string().unwrap();
-                            let status = ms.find("status").unwrap().as_string().unwrap();
+                            let id = ms.get("id").unwrap().to_string();
+                            let port = ms.get("port").unwrap();
+                            let provider = ms.get("provider").unwrap().to_string();
+                            let status = ms.get("status").unwrap().to_string();
                             println!("{0}  {1}  {2:3$}  {4}", id, port, provider, provider_len, status);
                         };
                         Ok(())

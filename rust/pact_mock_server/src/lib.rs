@@ -53,7 +53,7 @@
 #[macro_use] extern crate lazy_static;
 extern crate libc;
 #[macro_use] extern crate pact_matching;
-extern crate rustc_serialize;
+#[macro_use] extern crate serde_json;
 extern crate env_logger;
 #[macro_use] extern crate hyper;
 extern crate uuid;
@@ -67,7 +67,7 @@ use std::panic::catch_unwind;
 use pact_matching::models::{Pact, Interaction, Request, OptionalBody};
 use pact_matching::models::parse_query_string;
 use pact_matching::Mismatch;
-use rustc_serialize::json::{self, Json, ToJson};
+
 use std::collections::{BTreeMap, HashMap};
 use std::thread;
 use std::sync::Mutex;
@@ -114,33 +114,33 @@ impl MatchResult {
         }
     }
 
-    /// Converts this match result to a `Json` struct
-    pub fn to_json(&self) -> Json {
+    /// Converts this match result to a `Value` struct
+    pub fn to_json(&self) -> serde_json::Value {
         match self {
-            &MatchResult::RequestMatch(_) => Json::Object(btreemap!{ s!("type") => s!("request-match").to_json() }),
+            &MatchResult::RequestMatch(_) => json!({ s!("type") : s!("request-match")}),
             &MatchResult::RequestMismatch(ref interaction, ref mismatches) => mismatches_to_json(&interaction.request, mismatches),
-            &MatchResult::RequestNotFound(ref req) => Json::Object(btreemap!{
-                s!("type") => s!("request-not-found").to_json(),
-                s!("method") => req.method.to_json(),
-                s!("path") => req.path.to_json(),
-                s!("request") => req.to_json()
+            &MatchResult::RequestNotFound(ref req) => json!({
+                s!("type") : json!("request-not-found"),
+                s!("method") : json!(req.method),
+                s!("path") : json!(req.path),
+                s!("request") : json!(req)
             }),
-            &MatchResult::MissingRequest(ref interaction) => Json::Object(btreemap!{
-                s!("type") => s!("missing-request").to_json(),
-                s!("method") => interaction.request.method.to_json(),
-                s!("path") => interaction.request.path.to_json(),
-                s!("request") => interaction.request.to_json()
+            &MatchResult::MissingRequest(ref interaction) => json!({
+                s!("type") : json!("missing-request"),
+                s!("method") : json!(interaction.request.method),
+                s!("path") : json!(interaction.request.path),
+                s!("request") : json!(interaction.request)
             })
         }
     }
 }
 
-fn mismatches_to_json(request: &Request, mismatches: &Vec<Mismatch>) -> Json {
-    Json::Object(btreemap!{
-        s!("type") => s!("request-mismatch").to_json(),
-        s!("method") => request.method.to_json(),
-        s!("path") => request.path.to_json(),
-        s!("mismatches") => Json::Array(mismatches.iter().map(|m| m.to_json()).collect())
+fn mismatches_to_json(request: &Request, mismatches: &Vec<Mismatch>) -> serde_json::Value {
+    json!({
+        s!("type") : json!("request-mismatch"),
+        s!("method") : json!(request.method),
+        s!("path") : json!(request.path),
+        s!("mismatches") : mismatches.iter().map(|m| m.to_json()).collect::<serde_json::Value>()
     })
 }
 
@@ -178,13 +178,13 @@ impl MockServer {
         self.server = p as u64;
     }
 
-    /// Converts this mock server to a `Json` struct
-    pub fn to_json(&self) -> Json {
-        Json::Object(btreemap!{
-            s!("id") => Json::String(self.id.clone()),
-            s!("port") => Json::U64(self.port as u64),
-            s!("provider") => Json::String(self.pact.provider.name.clone()),
-            s!("status") => Json::String(if self.mismatches().is_empty() {
+    /// Converts this mock server to a `Value` struct
+    pub fn to_json(&self) -> serde_json::Value {
+        json!({
+            s!("id") : json!(self.id.clone()),
+            s!("port") : json!(self.port as u64),
+            s!("provider") : json!(self.pact.provider.name.clone()),
+            s!("status") : json!(if self.mismatches().is_empty() {
                     s!("ok")
                 } else {
                     s!("error")
@@ -342,9 +342,8 @@ fn hyper_request_to_pact_request(req: &mut hyper::server::Request) -> Request {
 }
 
 fn error_body(req: &Request, error: &String) -> String {
-    let body = hashmap!{ "error" => format!("{} : {:?}", error, req) };
-    let json = json::encode(&body).unwrap();
-    json.clone()
+    let body = json!({ "error" : format!("{} : {:?}", error, req) });
+    body.to_string()
 }
 
 fn insert_new_mock_server(id: &String, pact: &Pact) {
@@ -575,7 +574,7 @@ pub extern fn create_mock_server(pact_str: *const c_char, port: int32_t) -> int3
         };
 
         let pact_json = str::from_utf8(c_str.to_bytes()).unwrap();
-        let result = Json::from_str(pact_json);
+        let result = serde_json::from_str(pact_json);
         match result {
             Ok(pact_json) => {
                 let pact = Pact::from_json(&s!("<create_mock_server>"), &pact_json);
@@ -643,8 +642,8 @@ pub extern fn mock_server_mismatches(mock_server_port: int32_t) -> *mut c_char {
         let result = update_mock_server_by_port(mock_server_port, &|ref mut mock_server| {
             let mismatches = mock_server.mismatches().iter()
                 .map(|mismatch| mismatch.to_json() )
-                .collect::<Vec<Json>>();
-            let json = Json::Array(mismatches);
+                .collect::<Vec<serde_json::Value>>();
+            let json = json!(mismatches);
             let s = CString::new(json.to_string()).unwrap();
             let p = s.as_ptr();
             mock_server.resources.push(s);

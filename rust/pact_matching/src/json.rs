@@ -2,7 +2,6 @@
 
 use serde_json;
 use serde_json::value::Value;
-use std::collections::btree_map::*;
 use super::Mismatch;
 use super::DiffConfig;
 use difference::*;

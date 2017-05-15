@@ -12,7 +12,7 @@ extern crate pact_mock_server;
 #[macro_use] extern crate maplit;
 extern crate simplelog;
 extern crate uuid;
-extern crate rustc_serialize;
+#[macro_use] extern crate serde_json;
 extern crate hyper;
 extern crate rand;
 extern crate webmachine_rust;
