@@ -448,7 +448,7 @@ pub enum Mismatch {
 }
 
 impl Mismatch {
-    /// Converts the mismatch to a `Json` struct.
+    /// Converts the mismatch to a `Value` struct.
     pub fn to_json(&self) -> serde_json::Value {
         match self {
             &Mismatch::MethodMismatch { expected: ref e, actual: ref a } => {

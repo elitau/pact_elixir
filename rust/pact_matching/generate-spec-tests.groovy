@@ -21,12 +21,14 @@ specs.eachFileRecurse(FileType.DIRECTORIES) { dir ->
       pw.println('use pact_matching::match_request;')
       pw.println('#[allow(unused_imports)]')
       pw.println('use expectest::prelude::*;')
+      pw.println('#[allow(unused_imports)]')
       pw.println('use serde_json;')
     } else if (requestResponsePath == 'response') {
       pw.println('#[allow(unused_imports)]')
       pw.println('use pact_matching::match_response;')
       pw.println('#[allow(unused_imports)]')
       pw.println('use expectest::prelude::*;')
+      pw.println('#[allow(unused_imports)]')
       pw.println('use serde_json;')
     }
 

@@ -4,7 +4,6 @@ use std::collections::HashMap;
 use std::collections::BTreeMap;
 use serde_json;
 use serde_json::Value;
-use serde_json::Value::{Object, Number};
 use hex::FromHex;
 use super::strip_whitespace;
 use regex::Regex;
@@ -15,7 +14,6 @@ use std::io::prelude::*;
 use std::fs;
 use std::fs::File;
 use std::path::Path;
-use std::iter::Map;
 use std::cmp::Ordering;
 use std::hash::{Hash, Hasher};
 use hyper::client::Client;
@@ -79,7 +77,7 @@ impl Consumer {
         Consumer { name: val.clone() }
     }
 
-    /// Converts this `Consumer` to a `Json` struct.
+    /// Converts this `Consumer` to a `Value` struct.
     pub fn to_json(&self) -> Value {
         json!({ s!("name") : json!(self.name.clone()) })
     }
@@ -93,7 +91,7 @@ pub struct Provider {
 }
 
 impl Provider {
-    /// Builds a `Provider` from a `Json` struct.
+    /// Builds a `Provider` from a `Value` struct.
     pub fn from_json(pact_json: &Value) -> Provider {
         let val = match pact_json.get("name") {
             Some(v) => match v.clone() {
@@ -105,7 +103,7 @@ impl Provider {
         Provider { name: val.clone() }
     }
 
-    /// Converts this `Provider` to a `Json` struct.
+    /// Converts this `Provider` to a `Value` struct.
     pub fn to_json(&self) -> Value {
         json!({ s!("name") : json!(self.name.clone()) })
     }
@@ -232,7 +230,7 @@ pub trait HttpPart {
 }
 
 /// Struct that defines the request.
-#[derive(PartialEq, Debug, Clone, Eq)]
+#[derive(Serialize, Deserialize, PartialEq, Debug, Clone, Eq)]
 pub struct Request {
     /// Request method
     pub method: String,
@@ -405,7 +403,7 @@ fn matchers_to_json(matchers: &Matchers) -> Value {
 }
 
 impl Request {
-    /// Builds a `Request` from a `Json` struct.
+    /// Builds a `Request` from a `Value` struct.
     pub fn from_json(request_json: &Value, spec_version: &PactSpecification) -> Request {
         let method_val = match request_json.get("method") {
             Some(v) => match *v {
@@ -443,7 +441,7 @@ impl Request {
         }
     }
 
-    /// Converts this `Request` to a `Json` struct.
+    /// Converts this `Request` to a `Value` struct.
     pub fn to_json(&self) -> Value {
         let mut json = json!({
             s!("method") : Value::String(self.method.to_uppercase()),
@@ -534,7 +532,7 @@ pub struct Response {
 
 impl Response {
 
-    /// Build a `Response` from a `Json` struct.
+    /// Build a `Response` from a `Value` struct.
     pub fn from_json(response: &Value, _: &PactSpecification) -> Response {
         let status_val = match response.get("status") {
             Some(v) => v.as_u64().unwrap() as u16,
@@ -559,7 +557,7 @@ impl Response {
         }
     }
 
-    /// Converts this response to a `Json` struct.
+    /// Converts this response to a `Value` struct.
     pub fn to_json(&self) -> Value {
         let mut json = json!({
             s!("status") : json!(self.status)
@@ -710,7 +708,7 @@ impl Interaction {
          }
     }
 
-    /// Converts this interaction to a `Json` struct.
+    /// Converts this interaction to a `Value` struct.
     pub fn to_json(&self) -> Value {
         let mut value = json!({
             s!("description") : Value::String(self.description.clone()),
@@ -843,7 +841,7 @@ fn determin_spec_version(file: &String, metadata: &BTreeMap<String, BTreeMap<Str
 
 impl Pact {
 
-    /// Creates a `Pact` from a `Json` struct.
+    /// Creates a `Pact` from a `Value` struct.
     pub fn from_json(file: &String, pact_json: &Value) -> Pact {
         let metadata = parse_meta_data(pact_json);
         let spec_version = determin_spec_version(file, &metadata);
@@ -865,7 +863,7 @@ impl Pact {
         }
     }
 
-    /// Converts this pact to a `Json` struct.
+    /// Converts this pact to a `Value` struct.
     pub fn to_json(&self) -> Value {
         json!({
             s!("consumer"): self.consumer.to_json(),

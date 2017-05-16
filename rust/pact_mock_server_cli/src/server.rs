@@ -8,7 +8,7 @@ use pact_mock_server::{
     MockServer
 };
 use uuid::Uuid;
-use rustc_serialize::json::Json;
+use serde_json;
 use std::sync::Arc;
 use std::iter::FromIterator;
 use std::ops::Deref;
@@ -18,24 +18,24 @@ use webmachine_rust::context::*;
 use webmachine_rust::headers::*;
 
 fn json_error(error: String) -> String {
-    let json_response = Json::Object(btreemap!{ s!("error") => Json::String(error) });
+    let json_response = json!({ s!("error") : json!(error) });
     json_response.to_string()
 }
 
 fn start_provider(context: &mut WebmachineContext) -> Result<bool, u16> {
     match context.request.body {
         Some(ref body) if !body.is_empty() => {
-            match Json::from_str(body) {
+            match serde_json::from_str(body) {
                 Ok(ref json) => {
                     let pact = Pact::from_json(&context.request.request_path, json);
                     let mock_server_id = Uuid::new_v4().simple().to_string();
                     match start_mock_server(mock_server_id.clone(), pact, 0) {
                         Ok(mock_server) => {
-                            let mock_server_json = Json::Object(btreemap!{
-                                s!("id") => Json::String(mock_server_id.clone()),
-                                s!("port") => Json::I64(mock_server as i64),
+                            let mock_server_json = json!({
+                                s!("id") : json!(mock_server_id.clone()),
+                                s!("port") : json!(mock_server as i64),
                             });
-                            let json_response = Json::Object(btreemap!{ s!("mockServer") => mock_server_json });
+                            let json_response = json!({ s!("mockServer") : mock_server_json });
                             context.response.body = Some(json_response.to_string());
                             context.response.add_header(s!("Location"),
                                 vec![HeaderValue::basic(&format!("/mockserver/{}", mock_server_id))]);
@@ -69,17 +69,17 @@ pub fn verify_mock_server_request(context: &mut WebmachineContext, output_path: 
             let mut map = btreemap!{ s!("mockServer") => ms.to_json() };
             let mismatches = ms.mismatches();
             if !mismatches.is_empty() {
-                map.insert(s!("mismatches"), Json::Array(
+                map.insert(s!("mismatches"), json!(
                     Vec::from_iter(mismatches.iter()
                         .map(|m| m.to_json()))));
-                context.response.body = Some(Json::Object(map).to_string());
+                context.response.body = Some(json!(map).to_string());
                 Err(422)
             } else {
                 match ms.write_pact(&output_path) {
                     Ok(_) => Ok(true),
                     Err(err) => {
-                        map.insert(s!("error"), Json::String(format!("Failed to write pact to file - {}", err)));
-                        context.response.body = Some(Json::Object(map).to_string());
+                        map.insert(s!("error"), json!(format!("Failed to write pact to file - {}", err)));
+                        context.response.body = Some(json!(map).to_string());
                         Err(422)
                     }
                 }
@@ -99,7 +99,7 @@ fn main_resource() -> WebmachineResource {
                 let mock_server_json = ms.to_json();
                 mock_servers.push(mock_server_json);
             });
-            let json_response = Json::Object(btreemap!{ s!("mockServers") => Json::Array(mock_servers) });
+            let json_response = json!({ s!("mockServers") : json!(mock_servers) });
             Some(json_response.to_string())
         }),
         process_post: Box::new(|context| start_provider(context)),

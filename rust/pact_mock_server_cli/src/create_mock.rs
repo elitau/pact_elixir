@@ -5,7 +5,7 @@ use hyper::header::ContentType;
 use hyper::mime::{Mime, TopLevel, SubLevel, Attr, Value};
 use std::io::prelude::*;
 use std::path::Path;
-use rustc_serialize::json::Json;
+use serde_json;
 use pact_matching::models::Pact;
 
 pub fn create_mock_server(host: &str, port: u16, matches: &ArgMatches) -> Result<(), i32> {
@@ -27,12 +27,12 @@ pub fn create_mock_server(host: &str, port: u16, matches: &ArgMatches) -> Result
                     let mut body = String::new();
                     result.read_to_string(&mut body).unwrap();
                     if result.status.is_success() {
-                        let json_result = Json::from_str(body.as_str());
+                        let json_result: Result<serde_json::Value, _> = serde_json::from_str(body.as_str());
                         match json_result {
                             Ok(json) => {
-                                let mock_server = json.find("mockServer").unwrap();
-                                let id = mock_server.find("id").unwrap();
-                                let port = mock_server.find("port").unwrap();
+                                let mock_server = json.get("mockServer").unwrap();
+                                let id = mock_server.get("id").unwrap();
+                                let port = mock_server.get("port").unwrap();
                                 println!("Mock server {} started on port {}", id, port);
                                 Ok(())
                             },

@@ -1,7 +1,7 @@
 use pact_matching::models::{Pact, OptionalBody};
-use rustc_serialize::json::Json;
+use serde_json;
 use itertools::Itertools;
-use std::collections::{BTreeMap, HashMap};
+use std::collections::HashMap;
 use hyper::client::*;
 use std::error::Error;
 use super::provider_client::join_paths;
@@ -12,19 +12,19 @@ use regex::{Regex, Captures};
 use hyper::Url;
 use hyper::status::StatusCode;
 
-fn is_true(object: &BTreeMap<String, Json>, field: &String) -> bool {
+fn is_true(object: &serde_json::Map<String, serde_json::Value>, field: &String) -> bool {
     match object.get(field) {
         Some(json) => match json {
-            &Json::Boolean(b) => b,
+            &serde_json::Value::Bool(b) => b,
             _ => false
         },
         None => false
     }
 }
 
-fn as_string(json: &Json) -> String {
+fn as_string(json: &serde_json::Value) -> String {
     match json {
-        &Json::String(ref s) => s.clone(),
+        &serde_json::Value::String(ref s) => s.clone(),
         _ => format!("{}", json)
     }
 }
@@ -50,7 +50,7 @@ fn json_content_type(response: &Response) -> bool {
     }
 }
 
-fn find_entry<T>(map: &BTreeMap<String, T>, key: &String) -> Option<(String, T)> where T: Clone {
+fn find_entry(map: &serde_json::Map<String, serde_json::Value>, key: &String) -> Option<(String, serde_json::Value)> {
     match map.keys().find(|k| k.to_lowercase() == key.to_lowercase() ) {
         Some(k) => map.get(k).map(|v| (key.clone(), v.clone()) ),
         None => None
@@ -101,7 +101,7 @@ pub struct Link {
 
 impl Link {
 
-    pub fn from_json(link: &String, link_data: &BTreeMap<String, Json>) -> Link {
+    pub fn from_json(link: &String, link_data: &serde_json::Map<String, serde_json::Value>) -> Link {
         Link {
             name: link.clone(),
             href: find_entry(link_data, &s!("href")).map(|(_, href)| as_string(&href)),
@@ -113,7 +113,7 @@ impl Link {
 
 pub struct HALClient {
     url: String,
-    path_info: Option<Json>
+    path_info: Option<serde_json::Value>
 }
 
 impl HALClient {
@@ -122,7 +122,7 @@ impl HALClient {
         HALClient{ url: s!(""), path_info: None }
     }
 
-    fn navigate(&mut self, link: &str, template_values: &HashMap<String, String>) -> Result<Json, PactBrokerError> {
+    fn navigate(&mut self, link: &str, template_values: &HashMap<String, String>) -> Result<serde_json::Value, PactBrokerError> {
         if self.path_info.is_none() {
             self.path_info = Some(try!(self.fetch("/")));
         }
@@ -134,14 +134,14 @@ impl HALClient {
         match self.path_info {
             None => Err(PactBrokerError::LinkError(format!("No previous resource has been fetched from the pact broker. URL: '{}', LINK: '{}'",
                 self.url, link))),
-            Some(ref json) => match json.find("_links") {
-                Some(json) => match json.find(link) {
+            Some(ref json) => match json.get("_links") {
+                Some(json) => match json.get(link) {
                     Some(link_data) => link_data.as_object()
-                        .map(|link_data| Link::from_json(&s!(link), link_data))
+                        .map(|link_data| Link::from_json(&s!(link), &link_data))
                         .ok_or(PactBrokerError::LinkError(format!("Link is malformed, expcted an object but got {}. URL: '{}', LINK: '{}'",
                             link_data, self.url, link))),
                     None => Err(PactBrokerError::LinkError(format!("Link '{}' was not found in the response, only the following links where found: {:?}. URL: '{}', LINK: '{}'",
-                        link, json.as_object().unwrap_or(&btreemap!{}).keys().join(", "), self.url, link)))
+                        link, json.as_object().unwrap_or(&json!({}).as_object().unwrap()).keys().join(", "), self.url, link)))
                 },
                 None => Err(PactBrokerError::LinkError(format!("Expected a HAL+JSON response from the pact broker, but got a response with no '_links'. URL: '{}', LINK: '{}'",
                     self.url, link)))
@@ -149,12 +149,12 @@ impl HALClient {
         }
     }
 
-    fn fetch_link(&self, link: &str, template_values: &HashMap<String, String>) -> Result<Json, PactBrokerError> {
+    fn fetch_link(&self, link: &str, template_values: &HashMap<String, String>) -> Result<serde_json::Value, PactBrokerError> {
         let link_data = try!(self.find_link(link));
         self.fetch_url(&link_data, template_values)
     }
 
-    fn fetch_url(&self, link: &Link, template_values: &HashMap<String, String>) -> Result<Json, PactBrokerError> {
+    fn fetch_url(&self, link: &Link, template_values: &HashMap<String, String>) -> Result<serde_json::Value, PactBrokerError> {
         let link_url = try!(if link.templated {
             debug!("Link URL is templated");
             self.parse_link_url(&link, template_values)
@@ -168,7 +168,7 @@ impl HALClient {
         self.fetch(&url.path())
     }
 
-    fn fetch(&self, path: &str) -> Result<Json, PactBrokerError> {
+    fn fetch(&self, path: &str) -> Result<serde_json::Value, PactBrokerError> {
         debug!("Fetching path '{}' from pact broker", path);
         let client = Client::new();
         let res = client.get(&join_paths(&self.url.clone(), s!(path)))
@@ -182,11 +182,12 @@ impl HALClient {
                 if response.status.is_success() {
                     if json_content_type(&response) {
                         match extract_body(&mut response) {
-                            OptionalBody::Present(body) => Json::from_str(&body)
-                                .map_err(|err| PactBrokerError::ContentError(format!("Did not get a valid HAL response body from pact broker path '{}' - {}: {}. URL: '{}'",
-                                    path, err.description(), err, self.url))),
+                            OptionalBody::Present(body) => serde_json::from_str(&body)
+                                    .map_err(|err| PactBrokerError::ContentError(format!("Did not get a valid HAL response body from pact broker path '{}' - {}: {}. URL: '{}'",
+                                                                                         path, err.description(), err, self.url))),
                             _ => Err(PactBrokerError::ContentError(format!("Did not get a valid HAL response body from pact broker path '{}'. URL: '{}'",
-                                path, self.url)))
+                                                                          path, self.url)))
+
                         }
                     } else {
                         Err(PactBrokerError::ContentError(format!("Did not get a HAL response from pact broker path '{}', content type is '{}'. URL: '{}'",
@@ -236,18 +237,18 @@ impl HALClient {
         match self.path_info {
             None => Err(PactBrokerError::LinkError(format!("No previous resource has been fetched from the pact broker. URL: '{}', LINK: '{}'",
                 self.url, link))),
-            Some(ref json) => match json.find("_links") {
-                Some(json) => match json.find(&link) {
+            Some(ref json) => match json.get("_links") {
+                Some(json) => match json.get(&link) {
                     Some(link_data) => link_data.as_array()
                         .map(|link_data| link_data.iter().map(|link_json| match link_json {
-                            &Json::Object(ref data) => Link::from_json(&link, data),
-                            &Json::String(ref s) => Link { name: link.clone(), href: Some(s.clone()), templated: false },
+                            &serde_json::Value::Object(ref data) => Link::from_json(&link, data),
+                            &serde_json::Value::String(ref s) => Link { name: link.clone(), href: Some(s.clone()), templated: false },
                             _ => Link { name: link.clone(), href: Some(link_json.to_string()), templated: false }
                         }).collect())
                         .ok_or(PactBrokerError::LinkError(format!("Link is malformed, expcted an object but got {}. URL: '{}', LINK: '{}'",
                             link_data, self.url, link))),
                     None => Err(PactBrokerError::LinkError(format!("Link '{}' was not found in the response, only the following links where found: {:?}. URL: '{}', LINK: '{}'",
-                        link, json.as_object().unwrap_or(&btreemap!{}).keys().join(", "), self.url, link)))
+                        link, json.as_object().unwrap_or(&json!({}).as_object().unwrap()).keys().join(", "), self.url, link)))
                 },
                 None => Err(PactBrokerError::LinkError(format!("Expected a HAL+JSON response from the pact broker, but got a response with no '_links'. URL: '{}', LINK: '{}'",
                     self.url, link)))
@@ -304,7 +305,6 @@ mod tests {
     use hyper::header::{Headers, ContentType};
     use std::borrow::Cow;
     use hyper::mime::{Mime, TopLevel, SubLevel, Attr, Value};
-    use rustc_serialize::json::Json;
 
     #[test]
     fn fetch_returns_an_error_if_there_is_no_pact_broker() {
@@ -479,7 +479,7 @@ mod tests {
             expect!(result).to(be_err().value(format!("Did not get a valid HAL response body from pact broker path \'/nonhal\'. URL: '{}'",
                 broker_url)));
             let result = client.fetch(&s!("/nonhal2"));
-            expect!(result).to(be_err().value(format!("Did not get a valid HAL response body from pact broker path \'/nonhal2\' - failed to parse json: SyntaxError(\"invalid syntax\", 1, 1). URL: '{}'",
+            expect!(result).to(be_err().value(format!("Did not get a valid HAL response body from pact broker path \'/nonhal2\' - JSON error: expected value at line 1 column 1. URL: '{}'",
                 broker_url)));
             Ok(())
         });
@@ -617,7 +617,7 @@ mod tests {
             expect!(result.clone()).to(be_ok());
             client.path_info = result.ok();
             let result = client.fetch_link(&s!("next"), &hashmap!{});
-            expect!(result).to(be_ok().value(Json::String(s!("Yay! You found your way here"))));
+            expect!(result).to(be_ok().value(serde_json::Value::String(s!("Yay! You found your way here"))));
             Ok(())
         });
         expect!(result).to(be_equal_to(VerificationResult::PactVerified));
@@ -648,7 +648,7 @@ mod tests {
             expect!(result.clone()).to(be_ok());
             client.path_info = result.ok();
             let result = client.fetch_link(&s!("next"), &hashmap!{});
-            expect!(result).to(be_ok().value(Json::String(s!("Yay! You found your way here"))));
+            expect!(result).to(be_ok().value(serde_json::Value::String(s!("Yay! You found your way here"))));
             Ok(())
         });
         expect!(result).to(be_equal_to(VerificationResult::PactVerified));
@@ -679,7 +679,7 @@ mod tests {
             expect!(result.clone()).to(be_ok());
             client.path_info = result.ok();
             let result = client.fetch_link(&s!("document"), &hashmap!{ s!("id") => s!("abc") });
-            expect!(result).to(be_ok().value(Json::String(s!("Yay! You found your way here"))));
+            expect!(result).to(be_ok().value(serde_json::Value::String(s!("Yay! You found your way here"))));
             Ok(())
         });
         expect!(result).to(be_equal_to(VerificationResult::PactVerified));

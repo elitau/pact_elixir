@@ -2,7 +2,6 @@
 
 use serde_json;
 use serde_json::value::Value;
-use std::collections::btree_map::*;
 use super::Mismatch;
 use super::DiffConfig;
 use difference::*;
@@ -58,7 +57,6 @@ impl Matches<Value> for Value {
                    } else {
                        Ok(())
                    },
-                   (&Value::Array(_), &Value::Array(_)) => Ok(()),
                    (&Value::Bool(_), &Value::Bool(_)) => Ok(()),
                    (&Value::Number(_), &Value::Number(_)) => Ok(()),
                    (&Value::Null, &Value::Null) => Ok(()),
@@ -74,7 +72,6 @@ impl Matches<Value> for Value {
                    } else {
                        Ok(())
                    },
-                   (&Value::Array(_), &Value::Array(_)) => Ok(()),
                    (&Value::Bool(_), &Value::Bool(_)) => Ok(()),
                    (&Value::Number(_), &Value::Number(_)) => Ok(()),
                    (&Value::Null, &Value::Null) => Ok(()),

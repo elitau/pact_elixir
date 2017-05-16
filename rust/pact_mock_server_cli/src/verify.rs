@@ -3,7 +3,7 @@ use hyper::Client;
 use hyper::Url;
 use hyper::status::*;
 use std::io::prelude::*;
-use rustc_serialize::json::Json;
+use serde_json;
 use pact_mock_server::{
     lookup_mock_server,
     lookup_mock_server_by_port,
@@ -36,12 +36,12 @@ pub fn verify_mock_server(host: &str, port: u16, matches: &ArgMatches) -> Result
                     StatusCode::UnprocessableEntity => {
                         let mut body = String::new();
                         result.read_to_string(&mut body).unwrap();
-                        let json_result = Json::from_str(body.as_str());
+                        let json_result: Result<serde_json::Value, _> = serde_json::from_str(body.as_str());
                         match json_result {
                             Ok(json) => {
-                                let mock_server = json.find("mockServer").unwrap();
-                                let id = mock_server.find("id").unwrap().as_string().unwrap();
-                                let port = mock_server.find("port").unwrap().as_u64().unwrap();
+                                let mock_server = json.get("mockServer").unwrap();
+                                let id = mock_server.get("id").unwrap().as_str().unwrap();
+                                let port = mock_server.get("port").unwrap().as_u64().unwrap();
                                 display_verification_errors(id, port, &json);
                                 Err(2)
                             },
@@ -98,27 +98,28 @@ pub fn validate_id(id: &str) -> Result<MockServer, String> {
     }
 }
 
-fn display_verification_errors(id: &str, port: u64, json: &Json) {
-    let mismatches = json.find("mismatches").unwrap().as_array().unwrap();
+fn display_verification_errors(id: &str, port: u64, json: &serde_json::Value) {
+    let mismatches = json.get("mismatches").unwrap().as_array().unwrap();
     println!("Mock server {}/{} failed verification with {} errors\n", id, port, mismatches.len());
 
     for (i, mismatch) in mismatches.iter().enumerate() {
-        match mismatch.find("type").unwrap().as_string().unwrap() {
+//        mismatch.get("type").unwrap().to_string().fpp();
+        match mismatch.get("type").unwrap().to_string().as_ref() {
             "missing-request" => {
-                let request = mismatch.find("request").unwrap();
+                let request = mismatch.get("request").unwrap();
                 println!("{} - Expected request was not received - {}", i, request)
             },
             "request-not-found" => {
-                let request = mismatch.find("request").unwrap();
+                let request = mismatch.get("request").unwrap();
                 println!("{} - Received a request that was not expected - {}", i, request)
             },
             "request-mismatch" => {
-                let path = mismatch.find("path").unwrap().as_string().unwrap();
-                let method = mismatch.find("method").unwrap().as_string().unwrap();
+                let path = mismatch.get("path").unwrap().to_string();
+                let method = mismatch.get("method").unwrap().to_string();
                 println!("{} - Received a request that did not match with expected - {} {}", i, method, path);
-                let request_mismatches = mismatch.find("mismatches").unwrap().as_array().unwrap();
+                let request_mismatches = mismatch.get("mismatches").unwrap().as_array().unwrap();
                 for request_mismatch in request_mismatches {
-                    println!("        {}", request_mismatch.find("mismatch").unwrap().as_string().unwrap())
+                    println!("        {}", request_mismatch.get("mismatch").unwrap().to_string())
                 }
             },
             _ => println!("{} - Known failure - {}", i, mismatch),
