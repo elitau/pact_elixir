@@ -1,5 +1,5 @@
 use pact_matching::models::{Pact, OptionalBody};
-#[macro_use] use serde_json;
+use serde_json;
 use itertools::Itertools;
 use std::collections::HashMap;
 use hyper::client::*;

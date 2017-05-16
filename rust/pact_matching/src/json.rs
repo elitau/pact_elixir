@@ -57,7 +57,6 @@ impl Matches<Value> for Value {
                    } else {
                        Ok(())
                    },
-                   (&Value::Array(_), &Value::Array(_)) => Ok(()),
                    (&Value::Bool(_), &Value::Bool(_)) => Ok(()),
                    (&Value::Number(_), &Value::Number(_)) => Ok(()),
                    (&Value::Null, &Value::Null) => Ok(()),
@@ -73,7 +72,6 @@ impl Matches<Value> for Value {
                    } else {
                        Ok(())
                    },
-                   (&Value::Array(_), &Value::Array(_)) => Ok(()),
                    (&Value::Bool(_), &Value::Bool(_)) => Ok(()),
                    (&Value::Number(_), &Value::Number(_)) => Ok(()),
                    (&Value::Null, &Value::Null) => Ok(()),
