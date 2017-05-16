@@ -1,5 +1,31 @@
 To generate the log, run `git log --pretty='* %h - %s (%an, %ad)' TAGNAME..HEAD .` replacing TAGNAME and HEAD as appropriate.
 
+# 0.2.2 - Bugfix Release
+
+* 3399f7c - Merge pull request #13 from adamtsis/remove-deprecated-json-lib (Ronald Holshausen, Tue May 16 15:56:22 2017 +1000)
+* efe4ca7 - Cleanup unused imports and unreachable pattern warning messages (Anthony Damtsis, Tue May 16 10:31:29 2017 +1000)
+* a59fb98 - Migrate remaining pact modules over to serde (Anthony Damtsis, Mon May 15 16:59:04 2017 +1000)
+* 142d550 - Merge pull request #12 from adamtsis/remove-deprecated-json-lib (Ronald Holshausen, Mon May 8 16:13:30 2017 +1000)
+* ff1b676 - Change spec test generator template to use serde library (Anthony Damtsis, Mon May 8 12:23:28 2017 +1000)
+* cdecc71 - Simplify json handling logic when running comparisons (Anthony Damtsis, Fri May 5 15:48:17 2017 +1000)
+* f725ddc - Remove commented crate (Anthony Damtsis, Fri May 5 15:39:27 2017 +1000)
+* bd6fa9b - Fixed remaining serialisation bugs with writing pact files (Anthony Damtsis, Fri May 5 15:27:59 2017 +1000)
+* d1bd5ef - Changed type parameter to be a Hashmap when deserialising payload body (Anthony Damtsis, Fri May 5 14:09:54 2017 +1000)
+* 83a8b7e - Fix incorrectly deserialised json objects in tests (Anthony Damtsis, Fri May 5 13:23:03 2017 +1000)
+* 21cb633 - Compiles now - lots of test failures to work through (Anthony Damtsis, Fri May 5 13:27:36 2017 +1000)
+* 1e8531b - Begun work to replace rustc_serialize - work in progress (Anthony Damtsis, Mon May 1 14:52:08 2017 +1000)
+* 7982137 - Merge pull request #11 from adamtsis/camel-case-specification (Ronald Holshausen, Mon May 1 13:49:09 2017 +1000)
+* 9a29085 - Supports camel case format pact specifications (Anthony Damtsis, Thu Apr 27 15:03:15 2017 +1000)
+* 4dabb31 - Simplify call to HeaderMismatch destructure (Anthony Damtsis, Wed Apr 26 20:48:32 2017 +1000)
+* 381a85e - Explicitly clone the borrowed header reference (Anthony Damtsis, Wed Apr 26 18:25:04 2017 +1000)
+* 755ada8 - Fixed compiler warning messages (Anthony Damtsis, Wed Apr 26 18:12:55 2017 +1000)
+* a2847c6 - Replace .to_string() refs with s!() macro (Anthony Damtsis, Wed Apr 26 17:28:19 2017 +1000)
+* c9eff21 - Support optional header parameters for 'accept' and 'content-type' (Anthony Damtsis, Wed Apr 26 15:36:08 2017 +1000)
+* 26f91a5 - Ensure mismatch for HeaderMismatch is consistent for EqualityMatcher (Anthony Damtsis, Wed Apr 26 15:32:30 2017 +1000)
+* a501309 - bump version to 0.2.2 (Ronald Holshausen, Sun Oct 9 16:14:45 2016 +1100)
+* 227b61b - correct the doc URL in the cargo manifest (Ronald Holshausen, Sun Oct 9 16:13:27 2016 +1100)
+* 5233cfa - correct updating the documentation URL in the release script (Ronald Holshausen, Sun Oct 9 16:08:33 2016 +1100)
+
 # 0.2.1 - Changes required for verifying V2 pacts
 
 * 574e072 - upadte versions for V2 branch and fix an issue with loading JSON bodies encoded as a string (Ronald Holshausen, Sun Oct 9 15:31:57 2016 +1100)
