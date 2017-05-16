@@ -98,7 +98,6 @@ ask('Publish library to crates.io?: [Y]') {
   executeOnShell 'cargo publish'
 }
 
-executeOnShell "tar cvfz libpact_mock_server-docs-${releaseVer}.tgz *", new File("./target/doc")
 executeOnShell "cargo build --release"
 executeOnShell "gzip -c target/release/libpact_mock_server.so > target/release/libpact_mock_server-linux-x86_64-${releaseVer}.so.gz"
 executeOnShell "gzip -c target/release/libpact_mock_server.a > target/release/libpact_mock_server-linux-x86_64-${releaseVer}.a.gz"
