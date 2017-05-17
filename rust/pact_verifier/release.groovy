@@ -98,10 +98,6 @@ ask('Publish library to crates.io?: [Y]') {
   executeOnShell 'cargo publish'
 }
 
-executeOnShell "tar cvfz pact_verifier-docs-${releaseVer}.tgz *", new File("./target/doc")
-executeOnShell "cargo build --release"
-executeOnShell "gzip -c target/release/libpact_verifier.so > target/release/libpact_verifier-linux-x86_64-${releaseVer}.so.gz"
-
 def nextVer = Version.valueOf(releaseVer).incrementPatchVersion()
 ask("Bump version to $nextVer?: [Y]") {
   executeOnShell "sed -i -e 's/version = \"${releaseVer}\"/version = \"${nextVer}\"/' Cargo.toml"
