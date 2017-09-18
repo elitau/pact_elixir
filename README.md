@@ -1,6 +1,7 @@
 # pact-reference [![Build Status](https://travis-ci.org/pact-foundation/pact-reference.svg?branch=master)](https://travis-ci.org/pact-foundation/pact-reference) [![Windows Build status](https://ci.appveyor.com/api/projects/status/bqlb7ny924lsu6yi?svg=true)](https://ci.appveyor.com/project/MichelBoudreau/pact-reference)
 
 [![Join the chat at https://gitter.im/pact-foundation/pact-reference](https://badges.gitter.im/pact-foundation/pact-reference.svg)](https://gitter.im/pact-foundation/pact-reference?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+
 Reference implementations for Pact Specification
 
 This project contains a reference implementations of the [Pact specifications](https://github.com/pact-foundation/pact-specification)
