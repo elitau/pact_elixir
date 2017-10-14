@@ -15,30 +15,12 @@ defmodule PactElixir.PactMockServerTest do
             "providerState": "test state",
             "description": "test interaction",
             "request": {
-              "method": "POST",
-              "path": "/",
-              "body": {
-                "complete": {
-                  "certificateUri": "http://...",
-                  "issues": {
-                    "idNotFound": {}
-                  },
-                  "nevdis": {
-                    "body": null,
-                    "colour": null,
-                    "engine": null
-                  },
-                  "body": 123456
-                },
-                "body": [
-                  1,
-                  2,
-                  3
-                ]
-              }
+              "method": "GET",
+              "path": "/call_me"
             },
             "response": {
-              "status": 200
+              "status": 200,
+              "body": "Stop calling me"
             }
           }
         ],
@@ -52,8 +34,14 @@ defmodule PactElixir.PactMockServerTest do
         }
       }
   """
+  @port 50823
 
   test "creates a mock server and returns its port" do
-    assert PactMockServer.create_mock_server(@pact, 50823) == {:ok, 50823}
+    assert PactMockServer.create_mock_server(@pact, @port) == {:ok, @port}
+    assert get_request("/call_me").body == "Stop calling me"
+  end
+
+  defp get_request(path) do
+    %HTTPoison.Response{} = HTTPoison.get! "http://localhost:#{@port}#{path}"
   end
 end
