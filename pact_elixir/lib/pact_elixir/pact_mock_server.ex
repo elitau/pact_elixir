@@ -13,4 +13,7 @@ defmodule PactElixir.PactMockServer do
 
     """
     def add(_a, _b), do: throw :nif_not_loaded
+
+    # Create a mock server
+    def create_mock_server(_pact_json, _port), do: throw :nif_not_loaded
 end
