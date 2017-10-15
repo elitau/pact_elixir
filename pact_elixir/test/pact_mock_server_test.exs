@@ -42,6 +42,6 @@ defmodule PactElixir.PactMockServerTest do
   end
 
   defp get_request(path) do
-    %HTTPoison.Response{} = HTTPoison.get! "http://localhost:#{@port}#{path}"
+    %HTTPoison.Response{} = HTTPoison.get!("http://localhost:#{@port}#{path}")
   end
 end

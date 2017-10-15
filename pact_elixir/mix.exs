@@ -6,7 +6,7 @@ defmodule PactElixir.MixProject do
       app: :pact_elixir,
       version: "0.1.0",
       elixir: "~> 1.6-dev",
-      start_permanent: Mix.env == :prod,
+      start_permanent: Mix.env() == :prod,
       deps: deps(),
       compilers: [:rustler] ++ Mix.compilers(),
       rustler_crates: rustler_crates()
@@ -25,7 +25,7 @@ defmodule PactElixir.MixProject do
   defp deps do
     [
       {:rustler, "~> 0.10"},
-      {:httpoison, "~> 0.13", only: :test},
+      {:httpoison, "~> 0.13", only: :test}
     ]
   end
 
@@ -33,7 +33,7 @@ defmodule PactElixir.MixProject do
     [
       pactmockserver: [
         path: "native/pactmockserver",
-        mode: (if Mix.env == :prod, do: :release, else: :debug),
+        mode: if(Mix.env() == :prod, do: :release, else: :debug)
       ]
     ]
   end
