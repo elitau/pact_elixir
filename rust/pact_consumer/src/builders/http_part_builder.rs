@@ -56,7 +56,7 @@ pub trait HttpPartBuilder {
         {
             let (headers, rules) = self.headers_and_matching_rules_mut();
             headers.insert(name.clone(), value.to_example());
-            value.extract_matching_rules(&obj_key_for_path(&name), rules.add_category(&"header".to_string()))
+            value.extract_matching_rules(&obj_key_for_path(&name), rules.add_category("header"))
         }
         self
     }
@@ -129,7 +129,7 @@ pub trait HttpPartBuilder {
         {
             let (body_ref, rules) = self.body_and_matching_rules_mut();
             *body_ref = OptionalBody::Present(body.to_example().to_string());
-            body.extract_matching_rules("", rules.add_category(&"body".to_string()));
+            body.extract_matching_rules("", rules.add_category("body"));
         }
         self
     }

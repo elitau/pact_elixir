@@ -8,7 +8,7 @@ mod spec_testcases;
 
 use pact_matching::models::*;
 use std::env;
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 use expectest::prelude::*;
 use std::fs::File;
 

@@ -54,7 +54,7 @@ impl RequestBuilder {
         self.request.path = path.to_example();
         path.extract_matching_rules(
             "",
-            self.request.matching_rules.add_category(&"path".to_string()),
+            self.request.matching_rules.add_category("path"),
         );
         self
     }
@@ -100,7 +100,7 @@ impl RequestBuilder {
         // Extract our matching rules.
         value.extract_matching_rules(
             &format!("$.query{}", obj_key_for_path(&key)),
-            self.request.matching_rules.add_category(&"query".to_string()),
+            self.request.matching_rules.add_category("query"),
         );
 
         self

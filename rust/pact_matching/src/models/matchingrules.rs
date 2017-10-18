@@ -364,11 +364,14 @@ impl MatchingRules {
     }
 
     /// Adds the category to the map of rules
-    pub fn add_category(&mut self, category: &String) -> &mut Category {
-        if !self.rules.contains_key(category) {
-            self.rules.insert(category.clone(), Category::default(category.clone()));
-        }
-        self.rules.get_mut(category).unwrap()
+    pub fn add_category<S>(&mut self, category: S) -> &mut Category
+      where S: Into<String>
+    {
+      let category = category.into();
+      if !self.rules.contains_key(&category) {
+          self.rules.insert(category.clone(), Category::default(category.clone()));
+      }
+      self.rules.get_mut(&category).unwrap()
     }
 
     /// Returns all the category names in this rule set
@@ -452,7 +455,7 @@ impl MatchingRules {
     }
 
     fn add_rules(&mut self, category_name: &String, rules: &Value) {
-      let mut category = self.add_category(category_name);
+      let mut category = self.add_category(category_name.clone());
       if category_name == "path" {
         match rules.get("matchers") {
           Some(matchers) => match matchers {
@@ -484,7 +487,7 @@ impl MatchingRules {
     }
 
   fn add_v2_rule(&mut self, category_name: String, sub_category: String, rule: &Value) {
-    let mut category = self.add_category(&category_name);
+    let mut category = self.add_category(category_name);
     category.rule_from_json(&sub_category, rule);
   }
 
@@ -543,7 +546,7 @@ macro_rules! matchingrules {
     }), * ) => {{
         let mut _rules = $crate::models::matchingrules::MatchingRules::default();
         $({
-            let mut _category = _rules.add_category(&$name.to_string());
+            let mut _category = _rules.add_category($name);
             $({
               $({
                 _category.add_rule(&$subname.to_string(), $matcher);
@@ -901,13 +904,5 @@ mod tests {
     expect!(MatchingRule::MinType(1).to_json().to_string()).to(be_equal_to("{\"match\":\"type\",\"min\":1}"));
     expect!(MatchingRule::MaxType(1).to_json().to_string()).to(be_equal_to("{\"match\":\"type\",\"max\":1}"));
     expect!(MatchingRule::MinMaxType(1, 10).to_json().to_string()).to(be_equal_to("{\"match\":\"type\",\"max\":10,\"min\":1}"));
-  }
-
-  #[test]
-  fn category_from_path() {
-    expect!(Category::from_path("")).to(be_none());
-    expect!(Category::from_path("$")).to(be_none());
-    expect!(Category::from_path("$.body")).to(be_some().value("body"));
-    expect!(Category::from_path("$.body.a.b.c")).to(be_some().value("body"));
   }
 }

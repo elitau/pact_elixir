@@ -408,7 +408,6 @@ mod tests {
     use expectest::prelude::*;
     use Mismatch;
     use DiffConfig;
-    use env_logger;
 
     #[test]
     fn match_json_handles_invalid_expected_json() {
