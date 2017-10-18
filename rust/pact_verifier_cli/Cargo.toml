@@ -1,6 +1,6 @@
 [package]
 name = "pact_verifier_cli"
-version = "0.2.1"
+version = "0.3.0"
 authors = ["Ronald Holshausen <uglyog@gmail.com>"]
 description = "Standalone pact verifier for provider pact verification"
 homepage = "http://www.pact.io"
@@ -15,8 +15,8 @@ exclude = [
 [dependencies]
 libc = "0.2.9"
 clap = "2.13.0"
-pact_matching = { version = "0.2.2", path = "../pact_matching" }
-pact_verifier = { version = "0.2.1", path = "../pact_verifier" }
+pact_matching = { version = "0.3.0", path = "../pact_matching" }
+pact_verifier = { version = "0.3.0", path = "../pact_verifier" }
 p-macro = "0.2.0"
 simplelog = "0.1.0"
 log = "0.3.5"

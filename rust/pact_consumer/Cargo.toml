@@ -1,6 +1,6 @@
 [package]
 name = "pact_consumer"
-version = "0.2.1"
+version = "0.3.0"
 authors = ["Ronald Holshausen <uglyog@gmail.com>", "Eric Kidd <git@randomhacks.net>"]
 description = "Pact-Rust module that provides support for writing consumer pact tests"
 documentation = "https://docs.rs/pact_consumer/0.2.1/pact_consumer/"
@@ -15,8 +15,8 @@ exclude = [
 
 [dependencies]
 libc = "0.2.9"
-pact_matching = { version = "0.2.2", path = "../pact_matching" }
-pact_mock_server = { version = "0.2.2", path = "../pact_mock_server" }
+pact_matching = { version = "0.3.0", path = "../pact_matching" }
+pact_mock_server = { version = "0.3.0", path = "../pact_mock_server" }
 log = "0.3.5"
 maplit = "0.1.3"
 lazy_static = "0.1.15"
