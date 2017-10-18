@@ -1,4 +1,5 @@
 use pact_matching::models::*;
+use pact_matching::models::matchingrules::{MatchingRules, Category};
 use std::collections::HashMap;
 
 use prelude::*;
@@ -60,10 +61,6 @@ impl ResponseBuilder {
     /// Build the specified `Response` object.
     pub fn build(&self) -> Response {
         let mut result = self.response.clone();
-        if result.matching_rules.as_ref().map_or(false, |r| r.is_empty()) {
-            // Empty matching rules break pact merging, so clean them up.
-            result.matching_rules = None;
-        }
         result
     }
 }
@@ -75,17 +72,17 @@ impl Default for ResponseBuilder {
 }
 
 impl HttpPartBuilder for ResponseBuilder {
-    fn headers_and_matching_rules_mut(&mut self) -> (&mut HashMap<String, String>, &mut Matchers) {
+    fn headers_and_matching_rules_mut(&mut self) -> (&mut HashMap<String, String>, &mut MatchingRules) {
         (
             self.response.headers.get_defaulting(),
-            self.response.matching_rules.get_defaulting(),
+            &mut self.response.matching_rules,
         )
     }
 
-    fn body_and_matching_rules_mut(&mut self) -> (&mut OptionalBody, &mut Matchers) {
+    fn body_and_matching_rules_mut(&mut self) -> (&mut OptionalBody, &mut MatchingRules) {
         (
             &mut self.response.body,
-            self.response.matching_rules.get_defaulting(),
+            &mut self.response.matching_rules,
         )
 
     }

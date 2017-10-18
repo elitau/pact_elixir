@@ -1,6 +1,6 @@
 //! Support for patterns which match only strings, not JSON.
 
-use pact_matching::models::Matchers;
+use pact_matching::models::matchingrules::Category;
 use std::borrow::Cow;
 
 use super::Pattern;
@@ -34,7 +34,7 @@ impl Pattern for StringPattern {
         }
     }
 
-    fn extract_matching_rules(&self, path: &str, rules_out: &mut Matchers) {
+    fn extract_matching_rules(&self, path: &str, rules_out: &mut Category) {
         match *self {
             StringPattern::String(_) => {},
             StringPattern::Pattern(ref p) => {
@@ -61,12 +61,12 @@ fn string_pattern_is_pattern() {
     assert_eq!(pattern.to_example(), "10");
 
     // Here are our matching rules, for passing to the low-level match engine.
-    let expected_rules = json!({
-        "$": { "match": "regex", "regex": "^[0-9]+$" },
-    });
-    let mut rules = HashMap::new();
+    let expected_rules = hashmap!(
+        s!("$") => json!({ "match": "regex", "regex": "^[0-9]+$" })
+    );
+    let mut rules = Category::default("");
     pattern.extract_matching_rules("$", &mut rules);
-    assert_eq!(json!(rules), expected_rules);
+    assert_eq!(rules.to_v2_json(), expected_rules);
 }
 
 impl<'a> From<String> for StringPattern {

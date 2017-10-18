@@ -1,4 +1,5 @@
 use pact_matching::models::*;
+use pact_matching::models::matchingrules::{MatchingRules, Category};
 #[cfg(test)]
 use regex::Regex;
 use std::collections::HashMap;
@@ -52,8 +53,8 @@ impl RequestBuilder {
         let path = path.into();
         self.request.path = path.to_example();
         path.extract_matching_rules(
-            "$.path",
-            &mut self.request.matching_rules.get_defaulting(),
+            "",
+            self.request.matching_rules.add_category(&"path".to_string()),
         );
         self
     }
@@ -99,7 +100,7 @@ impl RequestBuilder {
         // Extract our matching rules.
         value.extract_matching_rules(
             &format!("$.query{}", obj_key_for_path(&key)),
-            &mut self.request.matching_rules.get_defaulting(),
+            self.request.matching_rules.add_category(&"query".to_string()),
         );
 
         self
@@ -108,10 +109,6 @@ impl RequestBuilder {
     /// Build the specified `Request` object.
     pub fn build(&self) -> Request {
         let mut result = self.request.clone();
-        if result.matching_rules.as_ref().map_or(false, |r| r.is_empty()) {
-            // Empty matching rules break pact merging, so clean them up.
-            result.matching_rules = None;
-        }
         result
     }
 }
@@ -123,17 +120,17 @@ impl Default for RequestBuilder {
 }
 
 impl HttpPartBuilder for RequestBuilder {
-    fn headers_and_matching_rules_mut(&mut self) -> (&mut HashMap<String, String>, &mut Matchers) {
+    fn headers_and_matching_rules_mut(&mut self) -> (&mut HashMap<String, String>, &mut MatchingRules) {
         (
             self.request.headers.get_defaulting(),
-            self.request.matching_rules.get_defaulting(),
+            &mut self.request.matching_rules,
         )
     }
 
-    fn body_and_matching_rules_mut(&mut self) -> (&mut OptionalBody, &mut Matchers) {
+    fn body_and_matching_rules_mut(&mut self) -> (&mut OptionalBody, &mut MatchingRules) {
         (
             &mut self.request.body,
-            self.request.matching_rules.get_defaulting(),
+            &mut self.request.matching_rules,
         )
     }
 }

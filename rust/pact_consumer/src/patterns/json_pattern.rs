@@ -1,6 +1,6 @@
 //! Our `JsonPattern` type and supporting code.
 
-use pact_matching::models::Matchers;
+use pact_matching::models::matchingrules::Category;
 use serde_json;
 use std::borrow::Cow;
 use std::collections::HashMap as Map;
@@ -73,7 +73,7 @@ impl Pattern for JsonPattern {
         }
     }
 
-    fn extract_matching_rules(&self, path: &str, rules_out: &mut Matchers) {
+    fn extract_matching_rules(&self, path: &str, rules_out: &mut Category) {
         match *self {
             JsonPattern::Json(_) => {}
             JsonPattern::Array(ref arr) => {
@@ -120,13 +120,13 @@ fn json_pattern_is_pattern() {
     assert_eq!(pattern.to_example(), expected_json);
 
     // Here are our matching rules, for passing to the low-level match engine.
-    let expected_rules = json!({
-        "$.simple": { "match": "type" },
-        "$.array[0]": { "match": "type" },
-    });
-    let mut rules = HashMap::new();
+    let expected_rules = hashmap!(
+        s!("$.simple") => json!({ "match": "type" }),
+        s!("$.array[0]") => json!({ "match": "type" })
+    );
+    let mut rules = Category::default("");
     pattern.extract_matching_rules("$", &mut rules);
-    assert_eq!(json!(rules), expected_rules);
+    assert_eq!(rules.to_v2_json(), expected_rules);
 }
 
 /// This macro will define a `From` implementation for a list of types by first

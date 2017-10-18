@@ -47,8 +47,8 @@ impl ValidatingMockServer {
         let url_str = lookup_mock_server_by_port(port, &|ms| ms.url())
             .expect("could not find mock server");
         ValidatingMockServer {
-            description: description,
-            port: port,
+            description,
+            port,
             url: url_str.parse().expect("invalid mock server URL"),
         }
     }

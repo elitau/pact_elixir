@@ -1,7 +1,7 @@
 //! JSON "patterns", which can be used to either generate JSON documents or
 //! match them.
 
-use pact_matching::models::Matchers;
+use pact_matching::models::matchingrules::Category;
 use std::fmt::Debug;
 
 #[macro_use]
@@ -50,5 +50,5 @@ pub trait Pattern: Debug {
     ///
     /// [ruby]:
     /// https://github.com/pact-foundation/pact-support/blob/master/lib/pact/matching_rules/extract.rb
-    fn extract_matching_rules(&self, path: &str, rules_out: &mut Matchers);
+    fn extract_matching_rules(&self, path: &str, rules_out: &mut Category);
 }

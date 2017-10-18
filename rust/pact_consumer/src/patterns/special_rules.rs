@@ -1,6 +1,6 @@
 //! Special matching rules, including `Like`, `Term`, etc.
 
-use pact_matching::models::Matchers;
+use pact_matching::models::matchingrules::{MatchingRule, Category};
 use regex::Regex;
 use serde_json;
 #[cfg(test)]
@@ -42,8 +42,8 @@ impl<Nested: Pattern> Pattern for Like<Nested> {
         self.example.to_example()
     }
 
-    fn extract_matching_rules(&self, path: &str, rules_out: &mut Matchers) {
-        rules_out.insert(path.to_owned(), hashmap!(s!("match") => s!("type")));
+    fn extract_matching_rules(&self, path: &str, rules_out: &mut Category) {
+        rules_out.add_rule(&path.to_string(), MatchingRule::Type);
         self.example.extract_matching_rules(path, rules_out);
     }
 }
@@ -55,7 +55,7 @@ impl_from_for_pattern!(Like<StringPattern>, StringPattern);
 fn like_is_pattern() {
     let matchable = Like::<JsonPattern>::new(json_pattern!("hello"));
     assert_eq!(matchable.to_example(), json!("hello"));
-    let mut rules = HashMap::new();
+    let mut rules = Category::default("");
     matchable.extract_matching_rules("$", &mut rules);
     assert_eq!(json!(rules), json!({"$": {"match": "type"}}));
 }
@@ -103,7 +103,7 @@ impl EachLike {
     /// Match arrays containing elements like `example_element`.
     pub fn new(example_element: JsonPattern) -> EachLike {
         EachLike {
-            example_element: example_element,
+            example_element,
             min_len: 1,
         }
     }
@@ -125,19 +125,14 @@ impl Pattern for EachLike {
         serde_json::Value::Array(repeat(element).take(self.min_len).collect())
     }
 
-    fn extract_matching_rules(&self, path: &str, rules_out: &mut Matchers) {
-        rules_out.insert(
-            path.to_owned(),
-            hashmap!(
-                s!("match") => s!("type"),
-                s!("min") => format!("{}", self.min_len),
-            ),
+    fn extract_matching_rules(&self, path: &str, rules_out: &mut Category) {
+        rules_out.add_rule(
+            &path.to_string(),
+            MatchingRule::MinType(self.min_len)
         );
-        rules_out.insert(
-            format!("{}[*].*", path),
-            hashmap!(
-                s!("match") => s!("type"),
-            ),
+        rules_out.add_rule(
+            &format!("{}[*].*", path),
+            MatchingRule::Type
         );
         let new_path = format!("{}[*]", path);
         self.example_element.extract_matching_rules(
@@ -153,20 +148,20 @@ fn each_like_is_pattern() {
     let matchable = EachLike::new(json_pattern!(elem)).with_min_len(2);
     assert_eq!(matchable.to_example(), json!(["hello", "hello"]));
 
-    let mut rules = HashMap::new();
+    let mut rules = Category::default("");
     matchable.extract_matching_rules("$", &mut rules);
-    let expected_rules = json!({
+    let expected_rules = hashmap!(
         // Ruby omits the `type` here, but the Rust `pact_matching` library
         // claims to want `"type"` when `"min"` is used.
-        "$": {"match": "type", "min": "2"},
+        s!("$") => json!({"match": "type", "min": "2"}),
         // TODO: Ruby always generates this; I'm not sure what it's intended to
         // do. It looks like it makes child objects in the array match their
         // fields by type automatically?
-        "$[*].*": {"match": "type"},
+        s!("$[*].*") => json!({"match": "type"}),
         // This is inserted by our nested `Like` rule.
-        "$[*]": {"match": "type"},
-    });
-    assert_eq!(json!(rules), expected_rules);
+        s!("$[*]") => json!({"match": "type"}),
+    );
+    assert_eq!(rules.to_v2_json(), expected_rules);
 }
 
 // A hidden macro which does the hard work of expanding `each_like!`. We don't
@@ -275,7 +270,7 @@ impl<Nested: Pattern> Term<Nested> {
     pub fn new<S: Into<String>>(regex: Regex, example: S) -> Self {
         Term {
             example: example.into(),
-            regex: regex,
+            regex,
             phantom: PhantomData,
         }
     }
@@ -292,13 +287,10 @@ where
         From::from(self.example.clone())
     }
 
-    fn extract_matching_rules(&self, path: &str, rules_out: &mut Matchers) {
-        rules_out.insert(
-            path.to_owned(),
-            hashmap!(
-                s!("match") => s!("regex"),
-                s!("regex") => s!(self.regex.as_str()),
-            ),
+    fn extract_matching_rules(&self, path: &str, rules_out: &mut Category) {
+        rules_out.add_rule(
+            &path.to_string(),
+            MatchingRule::Regex(self.regex.to_string())
         );
     }
 }
@@ -311,12 +303,12 @@ fn term_is_pattern() {
     let matchable = Term::<JsonPattern>::new(Regex::new("[Hh]ello").unwrap(), "hello");
     assert_eq!(matchable.to_example(), json!("hello"));
 
-    let mut rules = HashMap::new();
+    let mut rules = Category::default("");
     matchable.extract_matching_rules("$", &mut rules);
-    let expected_rules = json!({
-        "$": { "match": "regex", "regex": "[Hh]ello" },
-    });
-    assert_eq!(json!(rules), expected_rules);
+    let expected_rules = hashmap!(
+        s!("$") => json!({ "match": "regex", "regex": "[Hh]ello" })
+    );
+    assert_eq!(rules.to_v2_json(), expected_rules);
 }
 
 #[test]

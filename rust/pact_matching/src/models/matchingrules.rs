@@ -251,9 +251,11 @@ pub struct Category {
 impl Category {
 
   /// Creates a default empty category
-  pub fn default(name: String) -> Category {
+  pub fn default<S>(name: S) -> Category
+    where S: Into<String>
+  {
       Category {
-          name: name.clone(),
+          name: name.into(),
           rules: hashmap!{}
       }
   }
@@ -302,7 +304,8 @@ impl Category {
       .map(|(_, v, _)| v.clone())
   }
 
-  fn to_v2_json(&self) -> HashMap<String, Value> {
+  /// Convert the rule category to JSON
+  pub fn to_v2_json(&self) -> HashMap<String, Value> {
     let mut map = hashmap!{};
 
     if self.name == "body" {
@@ -485,7 +488,8 @@ impl MatchingRules {
     category.rule_from_json(&sub_category, rule);
   }
 
-  fn to_v2_json(&self) -> Value {
+  /// Convert these rules to JSON
+  pub fn to_v2_json(&self) -> Value {
     Value::Object(self.rules.iter().fold(serde_json::Map::new(), |mut map, (_, category)| {
       for (key, value) in category.to_v2_json() {
         map.insert(key.clone(), value);
@@ -897,5 +901,13 @@ mod tests {
     expect!(MatchingRule::MinType(1).to_json().to_string()).to(be_equal_to("{\"match\":\"type\",\"min\":1}"));
     expect!(MatchingRule::MaxType(1).to_json().to_string()).to(be_equal_to("{\"match\":\"type\",\"max\":1}"));
     expect!(MatchingRule::MinMaxType(1, 10).to_json().to_string()).to(be_equal_to("{\"match\":\"type\",\"max\":10,\"min\":1}"));
+  }
+
+  #[test]
+  fn category_from_path() {
+    expect!(Category::from_path("")).to(be_none());
+    expect!(Category::from_path("$")).to(be_none());
+    expect!(Category::from_path("$.body")).to(be_some().value("body"));
+    expect!(Category::from_path("$.body.a.b.c")).to(be_some().value("body"));
   }
 }

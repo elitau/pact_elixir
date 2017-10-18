@@ -1,4 +1,5 @@
 use pact_matching::models::*;
+use pact_matching::models::matchingrules::{MatchingRules, Category};
 #[cfg(test)]
 use regex::Regex;
 use std::collections::HashMap;
@@ -16,7 +17,7 @@ pub trait HttpPartBuilder {
     /// `&mut` into two `&mut` pointing to sub-objects, which has to be done
     /// carefully in Rust.
     #[doc(hidden)]
-    fn headers_and_matching_rules_mut(&mut self) -> (&mut HashMap<String, String>, &mut Matchers);
+    fn headers_and_matching_rules_mut(&mut self) -> (&mut HashMap<String, String>, &mut MatchingRules);
 
     /// (Implementation detail.) This function fetches the mutable state that's
     /// needed to update this builder's `body`. You should not need to use this
@@ -26,7 +27,7 @@ pub trait HttpPartBuilder {
     /// `&mut` into two `&mut` pointing to sub-objects, which has to be done
     /// carefully in Rust.
     #[doc(hidden)]
-    fn body_and_matching_rules_mut(&mut self) -> (&mut OptionalBody, &mut Matchers);
+    fn body_and_matching_rules_mut(&mut self) -> (&mut OptionalBody, &mut MatchingRules);
 
     /// Specify a header pattern.
     ///
@@ -55,7 +56,7 @@ pub trait HttpPartBuilder {
         {
             let (headers, rules) = self.headers_and_matching_rules_mut();
             headers.insert(name.clone(), value.to_example());
-            value.extract_matching_rules(&format!("$.headers{}", obj_key_for_path(&name)), rules)
+            value.extract_matching_rules(&obj_key_for_path(&name), rules.add_category(&"header".to_string()))
         }
         self
     }
@@ -128,7 +129,7 @@ pub trait HttpPartBuilder {
         {
             let (body_ref, rules) = self.body_and_matching_rules_mut();
             *body_ref = OptionalBody::Present(body.to_example().to_string());
-            body.extract_matching_rules("$.body", rules);
+            body.extract_matching_rules("", rules.add_category(&"body".to_string()));
         }
         self
     }
