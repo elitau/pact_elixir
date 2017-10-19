@@ -98,14 +98,15 @@ ask('Publish library to crates.io?: [Y]') {
   executeOnShell 'cargo publish'
 }
 
-executeOnShell "tar cvfz libpact_mock_server-docs-${releaseVer}.tgz *", new File("./target/doc")
 executeOnShell "cargo build --release"
-executeOnShell "gzip -c target/release/pact_mock_server_cli > target/release/pact_mock_server_cli-linux-x86_64-${releaseVer}.gz"
+executeOnShell "gzip -c ../target/release/pact_mock_server_cli > ../target/release/pact_mock_server_cli-linux-x86_64-${releaseVer}.gz"
 
 def nextVer = Version.valueOf(releaseVer).incrementPatchVersion()
 ask("Bump version to $nextVer?: [Y]") {
   executeOnShell "sed -i -e 's/version = \"${releaseVer}\"/version = \"${nextVer}\"/' Cargo.toml"
+  executeOnShell("cargo update")
   executeOnShell("git add Cargo.toml")
+  executeOnShell("git add ../Cargo.lock")
   executeOnShell("git diff --cached")
   ask("Commit and push this change?: [Y]") {
     executeOnShell("git commit -m 'bump version to $nextVer'")
