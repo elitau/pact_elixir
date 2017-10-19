@@ -32,4 +32,11 @@ defmodule PactElixir.PactMockServer do
   end
 
   def mock_server_mismatches(_port), do: throw(:nif_not_loaded)
+
+  def matched?(%ServiceProvider{} = provider) do
+    {:ok, matched} = mock_server_matched(provider.port)
+    matched
+  end
+
+  def mock_server_matched(_port), do: throw(:nif_not_loaded)
 end

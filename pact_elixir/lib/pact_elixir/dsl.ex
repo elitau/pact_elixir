@@ -20,6 +20,10 @@ defmodule PactElixir.Dsl do
     PactMockServer.mismatches(provider)
   end
 
+  def mock_server_matched?(provider) do
+    PactMockServer.matched?(provider)
+  end
+
   # defp verify_interactions(provider) do
     # get matches and mismatches
     # convert to exunit failures

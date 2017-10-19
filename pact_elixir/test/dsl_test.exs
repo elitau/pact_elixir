@@ -12,17 +12,12 @@ defmodule PactElixir.DslTest do
         with_request(method: :get, path: "/foo"),
         will_respond_with(status: 200, body: "bar")
       )
-      |> add_interaction(
-        "give me foo",
-        given("foo exists"),
-        with_request(method: :get, path: "/foo"),
-        will_respond_with(status: 200, body: "bar")
-      )
       |> build
 
     assert get_request(provider, "/foo").body == "bar"
 
     assert "[]" = mock_server_mismatches(provider)
+    assert mock_server_matched?(provider) == true
 
     {:ok}
   end
