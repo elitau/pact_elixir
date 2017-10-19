@@ -10,7 +10,7 @@ dependencies = [
  "log 0.3.8 (registry+https://github.com/rust-lang/crates.io-index)",
  "maplit 0.1.5 (registry+https://github.com/rust-lang/crates.io-index)",
  "p-macro 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "pact_matching 0.3.0",
+ "pact_matching 0.3.1",
  "pact_verifier 0.3.0",
  "quickcheck 0.2.27 (registry+https://github.com/rust-lang/crates.io-index)",
  "rand 0.3.17 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -650,7 +650,7 @@ dependencies = [
  "log 0.3.8 (registry+https://github.com/rust-lang/crates.io-index)",
  "maplit 0.1.5 (registry+https://github.com/rust-lang/crates.io-index)",
  "p-macro 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "pact_matching 0.3.0",
+ "pact_matching 0.3.1",
  "pact_mock_server 0.3.0",
  "quickcheck 0.2.27 (registry+https://github.com/rust-lang/crates.io-index)",
  "regex 0.1.80 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -664,7 +664,7 @@ dependencies = [
 
 [[package]]
 name = "pact_matching"
-version = "0.3.0"
+version = "0.3.1"
 dependencies = [
  "ansi_term 0.9.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "difference 1.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -700,7 +700,7 @@ dependencies = [
  "log 0.3.8 (registry+https://github.com/rust-lang/crates.io-index)",
  "maplit 0.1.5 (registry+https://github.com/rust-lang/crates.io-index)",
  "p-macro 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "pact_matching 0.3.0",
+ "pact_matching 0.3.1",
  "quickcheck 0.2.27 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde_json 1.0.4 (registry+https://github.com/rust-lang/crates.io-index)",
  "uuid 0.2.3 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -718,13 +718,13 @@ dependencies = [
  "log 0.3.8 (registry+https://github.com/rust-lang/crates.io-index)",
  "maplit 0.1.5 (registry+https://github.com/rust-lang/crates.io-index)",
  "p-macro 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "pact_matching 0.3.0",
+ "pact_matching 0.3.1",
  "pact_mock_server 0.3.0",
  "quickcheck 0.2.27 (registry+https://github.com/rust-lang/crates.io-index)",
  "rand 0.3.17 (registry+https://github.com/rust-lang/crates.io-index)",
  "regex 0.1.80 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde_json 1.0.4 (registry+https://github.com/rust-lang/crates.io-index)",
- "simplelog 0.4.2 (registry+https://github.com/rust-lang/crates.io-index)",
+ "simplelog 0.4.3 (registry+https://github.com/rust-lang/crates.io-index)",
  "uuid 0.2.3 (registry+https://github.com/rust-lang/crates.io-index)",
  "webmachine-rust 0.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
@@ -745,7 +745,7 @@ dependencies = [
  "maplit 0.1.5 (registry+https://github.com/rust-lang/crates.io-index)",
  "p-macro 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "pact_consumer 0.3.0",
- "pact_matching 0.3.0",
+ "pact_matching 0.3.1",
  "quickcheck 0.2.27 (registry+https://github.com/rust-lang/crates.io-index)",
  "regex 0.1.80 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde_json 1.0.4 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -1026,7 +1026,7 @@ dependencies = [
 
 [[package]]
 name = "simplelog"
-version = "0.4.2"
+version = "0.4.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 dependencies = [
  "log 0.3.8 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -1503,7 +1503,7 @@ dependencies = [
 "checksum serde_json 1.0.4 (registry+https://github.com/rust-lang/crates.io-index)" = "ee28c1d94a7745259b767ca9e5b95d55bafbd3205ca3acb978cad84a6ed6bc62"
 "checksum serde_urlencoded 0.5.1 (registry+https://github.com/rust-lang/crates.io-index)" = "ce0fd303af908732989354c6f02e05e2e6d597152870f2c6990efb0577137480"
 "checksum simplelog 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)" = "e95111656853a116a6b58ee9fbb6e5ba631e6564c60621071a842fc6c8be256f"
-"checksum simplelog 0.4.2 (registry+https://github.com/rust-lang/crates.io-index)" = "2c3a63f2b74bc3359ed6050da62e32cc0e10a162c4f62a0c1d80cd89d432234b"
+"checksum simplelog 0.4.3 (registry+https://github.com/rust-lang/crates.io-index)" = "58f3b14218f187ff2e4d710ff8d50200c4e567d454e2e97a7a2d329d362103e9"
 "checksum skeptic 0.4.0 (registry+https://github.com/rust-lang/crates.io-index)" = "24ebf8a06f5f8bae61ae5bbc7af7aac4ef6907ae975130faba1199e5fe82256a"
 "checksum slab 0.3.0 (registry+https://github.com/rust-lang/crates.io-index)" = "17b4fcaed89ab08ef143da37bc52adbcc04d4a69014f4c1208d6b51f0c47bc23"
 "checksum slab 0.4.0 (registry+https://github.com/rust-lang/crates.io-index)" = "fdeff4cd9ecff59ec7e3744cbca73dfe5ac35c2aedb2cfba8a1c715a18912e9d"
