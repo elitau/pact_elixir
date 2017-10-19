@@ -11,7 +11,7 @@ To use it, add it to your dependencies in your cargo manifest and add an extern 
 
 ```toml
 [dependencies]
-pact_matching = "0.2.0"
+pact_matching = "0.3.0"
 ```
 
 ```rust
