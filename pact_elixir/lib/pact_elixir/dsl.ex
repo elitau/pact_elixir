@@ -1,5 +1,5 @@
 defmodule PactElixir.Dsl do
-  alias PactElixir.{ServiceProvider, Interaction, Request, Response, MockServer}
+  alias PactElixir.{ServiceProvider, Interaction, Request, Response, PactMockServer}
 
   def service_provider(options) do
     %ServiceProvider{
@@ -13,7 +13,11 @@ defmodule PactElixir.Dsl do
   def build(provider) do
     provider
     |> ServiceProvider.to_pact_json
-    |> MockServer.start_mock_server(provider)
+    |> PactMockServer.start(provider)
+  end
+
+  def mock_server_mismatches(provider) do
+    PactMockServer.mismatches(provider)
   end
 
   # defp verify_interactions(provider) do

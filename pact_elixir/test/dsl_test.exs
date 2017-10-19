@@ -21,6 +21,9 @@ defmodule PactElixir.DslTest do
       |> build
 
     assert get_request(provider, "/foo").body == "bar"
+
+    assert "[]" = mock_server_mismatches(provider)
+
     {:ok}
   end
 
