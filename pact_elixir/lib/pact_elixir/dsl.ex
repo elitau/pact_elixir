@@ -1,37 +1,5 @@
-defmodule PactElixir.ServiceProvider do
-  defstruct [:consumer, :provider, :port, :interactions]
-end
-
-defmodule PactElixir.Interaction do
-  defstruct [:description, :given, :request, :response]
-end
-
-defimpl Poison.Encoder, for: PactElixir.Interaction do
-  def encode(%{description: description, given: given, request: request, response: response}, options) do
-    Poison.Encoder.Map.encode(
-      %{
-        description: description,
-        providerState: given,
-        request: request,
-        response: response
-      },
-      options
-    )
-  end
-end
-
-defmodule PactElixir.Request do
-  @derive [Poison.Encoder]
-  defstruct [:method, :path]
-end
-
-defmodule PactElixir.Response do
-  @derive [Poison.Encoder]
-  defstruct [:status, :body]
-end
-
 defmodule PactElixir.Dsl do
-  alias PactElixir.{ServiceProvider, Interaction, Request, Response}
+  alias PactElixir.{ServiceProvider, Interaction, Request, Response, MockServer}
 
   def service_provider(options) do
     %ServiceProvider{
@@ -42,18 +10,10 @@ defmodule PactElixir.Dsl do
     }
   end
 
-  # returns Provider with actual port
-  def start_mock_server(pact_json, %ServiceProvider{} = provider) do
-    {:ok, mock_server_port} =
-      PactElixir.PactMockServer.create_mock_server(pact_json, provider.port)
-
-    put_in(provider.port, mock_server_port)
-  end
-
   def build(provider) do
     provider
-    |> to_pact_json
-    |> start_mock_server(provider)
+    |> ServiceProvider.to_pact_json
+    |> MockServer.start_mock_server(provider)
   end
 
   # defp verify_interactions(provider) do
@@ -63,29 +23,6 @@ defmodule PactElixir.Dsl do
     # write pact file
     # shutdown mock server
   # end
-
-  def to_pact_json(provider) do
-    """
-      {
-        "provider": {
-          "name": "#{provider.provider}"
-        },
-        "consumer": {
-          "name": "#{provider.consumer}"
-        },
-        "interactions": #{interactions_to_json(provider.interactions)},
-        "metadata": {
-          "pact-specification": {
-            "version": "2.0.0"
-          }
-        }
-      }
-    """
-  end
-
-  def interactions_to_json(interactions) do
-    Poison.encode!(interactions)
-  end
 
   def add_interaction(provider, description, given, %Request{} = request, %Response{} = response) do
     interaction = %Interaction{
