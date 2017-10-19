@@ -55,9 +55,9 @@ impl_from_for_pattern!(Like<StringPattern>, StringPattern);
 fn like_is_pattern() {
     let matchable = Like::<JsonPattern>::new(json_pattern!("hello"));
     assert_eq!(matchable.to_example(), json!("hello"));
-    let mut rules = Category::default("");
+    let mut rules = Category::default("body");
     matchable.extract_matching_rules("$", &mut rules);
-    assert_eq!(json!(rules), json!({"$": {"match": "type"}}));
+    assert_eq!(rules.to_v2_json(), hashmap!(s!("$.body") => json!({"match": "type"})));
 }
 
 #[test]
@@ -148,18 +148,18 @@ fn each_like_is_pattern() {
     let matchable = EachLike::new(json_pattern!(elem)).with_min_len(2);
     assert_eq!(matchable.to_example(), json!(["hello", "hello"]));
 
-    let mut rules = Category::default("");
+    let mut rules = Category::default("body");
     matchable.extract_matching_rules("$", &mut rules);
     let expected_rules = hashmap!(
         // Ruby omits the `type` here, but the Rust `pact_matching` library
         // claims to want `"type"` when `"min"` is used.
-        s!("$") => json!({"match": "type", "min": "2"}),
+        s!("$.body") => json!({"match": "type", "min": 2}),
         // TODO: Ruby always generates this; I'm not sure what it's intended to
         // do. It looks like it makes child objects in the array match their
         // fields by type automatically?
-        s!("$[*].*") => json!({"match": "type"}),
+        s!("$.body[*].*") => json!({"match": "type"}),
         // This is inserted by our nested `Like` rule.
-        s!("$[*]") => json!({"match": "type"}),
+        s!("$.body[*]") => json!({"match": "type"}),
     );
     assert_eq!(rules.to_v2_json(), expected_rules);
 }
@@ -303,10 +303,10 @@ fn term_is_pattern() {
     let matchable = Term::<JsonPattern>::new(Regex::new("[Hh]ello").unwrap(), "hello");
     assert_eq!(matchable.to_example(), json!("hello"));
 
-    let mut rules = Category::default("");
+    let mut rules = Category::default("body");
     matchable.extract_matching_rules("$", &mut rules);
     let expected_rules = hashmap!(
-        s!("$") => json!({ "match": "regex", "regex": "[Hh]ello" })
+        s!("$.body") => json!({ "match": "regex", "regex": "[Hh]ello" })
     );
     assert_eq!(rules.to_v2_json(), expected_rules);
 }

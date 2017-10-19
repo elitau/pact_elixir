@@ -4,6 +4,9 @@ use pact_matching::models::matchingrules::{MatchingRules, Category};
 use regex::Regex;
 use std::collections::HashMap;
 
+#[cfg(test)]
+use env_logger;
+
 use prelude::*;
 use util::{GetDefaulting, obj_key_for_path};
 
@@ -99,7 +102,7 @@ impl RequestBuilder {
 
         // Extract our matching rules.
         value.extract_matching_rules(
-            &format!("$.query{}", obj_key_for_path(&key)),
+            &key,
             self.request.matching_rules.add_category("query"),
         );
 

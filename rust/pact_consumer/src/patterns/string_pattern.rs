@@ -54,7 +54,7 @@ fn string_pattern_is_pattern() {
 
     let _ = env_logger::init();
 
-    // This is our pattern, combinging both example data and matching rules.
+    // This is our pattern, combining both example data and matching rules.
     let pattern: StringPattern = Term::new(Regex::new("^[0-9]+$").unwrap(), "10").into();
 
     // Make sure we generate the right output.
@@ -62,10 +62,10 @@ fn string_pattern_is_pattern() {
 
     // Here are our matching rules, for passing to the low-level match engine.
     let expected_rules = hashmap!(
-        s!("$") => json!({ "match": "regex", "regex": "^[0-9]+$" })
+        s!("$.query.val") => json!({ "match": "regex", "regex": "^[0-9]+$" })
     );
-    let mut rules = Category::default("");
-    pattern.extract_matching_rules("$", &mut rules);
+    let mut rules = Category::default("query");
+    pattern.extract_matching_rules("val", &mut rules);
     assert_eq!(rules.to_v2_json(), expected_rules);
 }
 

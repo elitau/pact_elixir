@@ -195,9 +195,7 @@
 #![warn(missing_docs)]
 
 #[macro_use] extern crate clap;
-#[macro_use] extern crate p_macro;
 #[macro_use] extern crate log;
-#[macro_use] extern crate maplit;
 #[macro_use] extern crate pact_matching;
 extern crate pact_verifier;
 extern crate simplelog;

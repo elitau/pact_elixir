@@ -41,7 +41,7 @@ impl PactBuilder {
         let mut pact = Pact::default();
         pact.consumer = Consumer { name: consumer.into() };
         pact.provider = Provider { name: provider.into() };
-        PactBuilder { pact: pact }
+        PactBuilder { pact }
     }
 
     /// Add a new `Interaction` to the `Pact`.

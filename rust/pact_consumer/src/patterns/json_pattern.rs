@@ -121,10 +121,10 @@ fn json_pattern_is_pattern() {
 
     // Here are our matching rules, for passing to the low-level match engine.
     let expected_rules = hashmap!(
-        s!("$.simple") => json!({ "match": "type" }),
-        s!("$.array[0]") => json!({ "match": "type" })
+        s!("$.body.simple") => json!({ "match": "type" }),
+        s!("$.body.array[0]") => json!({ "match": "type" })
     );
-    let mut rules = Category::default("");
+    let mut rules = Category::default("body");
     pattern.extract_matching_rules("$", &mut rules);
     assert_eq!(rules.to_v2_json(), expected_rules);
 }

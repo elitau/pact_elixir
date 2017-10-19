@@ -179,6 +179,25 @@ pub enum DetectedContentType {
     Text
 }
 
+/// Enumeration of the types of differences between requests and responses
+#[derive(PartialEq, Debug, Clone, Eq)]
+pub enum DifferenceType {
+  /// Methods differ
+  Method,
+  /// Paths differ
+  Path,
+  /// Headers differ
+  Headers,
+  /// Query parameters differ
+  QueryParameters,
+  /// Bodies differ
+  Body,
+  /// Matching Rules differ
+  MatchingRules,
+  /// Response status differ
+  Status
+}
+
 #[macro_use] pub mod matchingrules;
 
 /// Trait to specify an HTTP part of a message. It encapsulates the shared parts of a request and
@@ -457,25 +476,25 @@ impl Request {
     }
 
     /// Return a description of all the differences from the other request
-    pub fn differences_from(&self, other: &Request) -> Vec<String> {
+    pub fn differences_from(&self, other: &Request) -> Vec<(DifferenceType, String)> {
         let mut differences = vec![];
         if self.method != other.method {
-            differences.push(format!("Request method {} != {}", self.method, other.method));
+            differences.push((DifferenceType::Method, format!("Request method {} != {}", self.method, other.method)));
         }
         if self.path != other.path {
-            differences.push(format!("Request path {} != {}", self.path, other.path));
+            differences.push((DifferenceType::Path, format!("Request path {} != {}", self.path, other.path)));
         }
         if self.query != other.query {
-            differences.push(format!("Request query {:?} != {:?}", self.query, other.query));
+            differences.push((DifferenceType::QueryParameters, format!("Request query {:?} != {:?}", self.query, other.query)));
         }
         if self.headers != other.headers {
-            differences.push(format!("Request headers {:?} != {:?}", self.headers, other.headers));
+            differences.push((DifferenceType::Headers, format!("Request headers {:?} != {:?}", self.headers, other.headers)));
         }
         if self.body != other.body {
-            differences.push(format!("Request body '{:?}' != '{:?}'", self.body, other.body));
+            differences.push((DifferenceType::Body, format!("Request body '{:?}' != '{:?}'", self.body, other.body)));
         }
         if self.matching_rules != other.matching_rules {
-            differences.push(format!("Request matching rules {:?} != {:?}", self.matching_rules, other.matching_rules));
+            differences.push((DifferenceType::MatchingRules, format!("Request matching rules {:?} != {:?}", self.matching_rules, other.matching_rules)));
         }
         differences
     }
@@ -558,19 +577,19 @@ impl Response {
     }
 
     /// Return a description of all the differences from the other response
-    pub fn differences_from(&self, other: &Response) -> Vec<String> {
+    pub fn differences_from(&self, other: &Response) -> Vec<(DifferenceType, String)> {
         let mut differences = vec![];
         if self.status != other.status {
-            differences.push(format!("Response status {} != {}", self.status, other.status));
+            differences.push((DifferenceType::Status, format!("Response status {} != {}", self.status, other.status)));
         }
         if self.headers != other.headers {
-            differences.push(format!("Response headers {:?} != {:?}", self.headers, other.headers));
+            differences.push((DifferenceType::Headers, format!("Response headers {:?} != {:?}", self.headers, other.headers)));
         }
         if self.body != other.body {
-            differences.push(format!("Response body '{:?}' != '{:?}'", self.body, other.body));
+            differences.push((DifferenceType::Body, format!("Response body '{:?}' != '{:?}'", self.body, other.body)));
         }
         if self.matching_rules != other.matching_rules {
-            differences.push(format!("Response matching rules {:?} != {:?}", self.matching_rules, other.matching_rules));
+            differences.push((DifferenceType::MatchingRules, format!("Response matching rules {:?} != {:?}", self.matching_rules, other.matching_rules)));
         }
         differences
     }
@@ -686,10 +705,17 @@ impl Interaction {
     pub fn conflicts_with(&self, other: &Interaction) -> Vec<PactConflict> {
         if self.description == other.description && self.provider_state == other.provider_state {
             let mut conflicts = self.request.differences_from(&other.request).iter()
-                .map(|difference| PactConflict { interaction: self.description.clone(), description: difference.clone() } )
+                .filter(|difference| match difference.0 {
+                  DifferenceType::MatchingRules | DifferenceType::Body => false,
+                  _ => true
+                })
+                .map(|difference| PactConflict { interaction: self.description.clone(), description: difference.1.clone() } )
                 .collect::<Vec<PactConflict>>();
             for difference in self.response.differences_from(&other.response) {
-                conflicts.push(PactConflict { interaction: self.description.clone(), description: difference.clone() });
+              match difference.0 {
+                DifferenceType::MatchingRules | DifferenceType::Body => (),
+                _ => conflicts.push(PactConflict { interaction: self.description.clone(), description: difference.1.clone() })
+              };
             }
             conflicts
         } else {
@@ -930,7 +956,7 @@ impl Pact {
     /// automatically created. If an existing pact is found at the path, this pact will be
     /// merged into the pact file.
     pub fn write_pact(&self, path: &Path) -> io::Result<()> {
-        try!(fs::create_dir_all(path.parent().unwrap()));
+        fs::create_dir_all(path.parent().unwrap())?;
         if path.exists() {
             let existing_pact = Pact::read_pact(path)?;
             match existing_pact.merge(self) {
