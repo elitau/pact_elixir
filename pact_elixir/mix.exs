@@ -25,6 +25,7 @@ defmodule PactElixir.MixProject do
   defp deps do
     [
       {:rustler, "~> 0.10"},
+      {:poison, "~> 3.1"},
       {:httpoison, "~> 0.13", only: :test}
     ]
   end
