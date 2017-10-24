@@ -29,7 +29,7 @@ defmodule PactElixir.Errors do
   end
 
   def format_difference_error(%PactElixir.RequestError{} = exception) do
-    "RequestError: method: #{exception.method}, path: #{exception.path}"
+    "RequestError: method: #{exception.method}, path: #{exception.path}, request: #{inspect(exception.request)}"
   end
 
   defp mismatch_to_error(mismatch) do
