@@ -3,19 +3,21 @@ defmodule PactElixir.DslTest do
 
   import PactElixir.Dsl
 
-  test "Provider responds to /foo with 'bar'" do
-    provider = provider_with_interaction()
+  # "setup" is called before each test
+  setup do
+    {:ok, provider: provider_with_interaction()}
+  end
 
+  test "Provider responds to /foo with 'bar'", %{provider: provider} do
     assert get_request(provider, "/foo").body == "bar"
 
     assert mock_server_mismatches(provider) == []
     assert mock_server_matched?(provider) == true
   end
 
-  test "Mock server includes mismatch without mocked request being made" do
-    provider = provider_with_interaction()
-
+  test "Mock server includes mismatch without mocked request being made", %{provider: provider} do
     assert mock_server_matched?(provider) == false
+
     [failure | _tail] = mock_server_mismatches(provider)
     assert %{
               "method" => "GET",
@@ -24,9 +26,7 @@ defmodule PactElixir.DslTest do
             } = failure
   end
 
-  test "fails with ex unit assertion error" do
-    provider = provider_with_interaction()
-
+  test "fails with ex unit assertion error", %{provider: provider} do
     assert_raise PactElixir.RequestError, fn ->
       provider
       |> verify_interactions
