@@ -22,7 +22,7 @@ defmodule PactElixir.DslTest do
     {:ok}
   end
 
-  test "Mock server includes mismatch without request" do
+  test "Mock server includes mismatch without mocked request being made" do
     provider =
       service_provider(consumer: "PactTester", provider: "PactProvider")
       |> add_interaction(
@@ -35,7 +35,11 @@ defmodule PactElixir.DslTest do
 
     assert mock_server_matched?(provider) == false
     [failure | _tail] = mock_server_mismatches(provider) |> Poison.decode!
-    assert %{"type" => "missing-request"} = failure
+    assert %{
+              "method" => "GET",
+              "path" => "/foo",
+              "type" => "missing-request"
+            } = failure
 
     {:ok}
   end
