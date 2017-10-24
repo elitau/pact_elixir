@@ -37,7 +37,7 @@ defmodule PactElixir.Dsl do
   end
 
   def throw_errors(errors) do
-    Enum.map(errors, fn error -> raise(error) end)
+    Enum.map(errors, &(raise(&1)))
   end
 
   # hook after test suite
