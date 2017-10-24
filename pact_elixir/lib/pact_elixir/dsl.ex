@@ -6,7 +6,8 @@ defmodule PactElixir.Dsl do
       provider: options[:provider],
       consumer: options[:consumer],
       interactions: [],
-      port: options[:port] || 0
+      port: options[:port] || 0,
+      pact_output_dir_path: options[:pact_output_dir_path]
     }
   end
 
@@ -41,10 +42,11 @@ defmodule PactElixir.Dsl do
   end
 
   # hook after test suite
-  # def after_test_suite(provider) do
-  #   # write pact file
-  #   # shutdown mock server
-  # end
+  def after_test_suite(provider) do
+    provider
+    |> PactMockServer.write_pact_file
+    # shutdown mock server
+  end
 
   def add_interaction(provider, description, given, %Request{} = request, %Response{} = response) do
     interaction = %Interaction{

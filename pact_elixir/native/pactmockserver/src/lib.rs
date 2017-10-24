@@ -9,6 +9,7 @@ use rustler::types::binary::NifBinary;
 use pact_mock_server::create_mock_server;
 use pact_mock_server::mock_server_mismatches;
 use pact_mock_server::mock_server_matched;
+use pact_mock_server::write_pact_file;
 use libc::c_char;
 use std::io;
 use std::ffi::CString;
@@ -27,7 +28,8 @@ rustler_export_nifs! {
     [
         ("create_mock_server", 2, create_mock_server_call),
         ("mock_server_mismatches", 1, mock_server_mismatches_call),
-        ("mock_server_matched", 1, mock_server_matched_call)
+        ("mock_server_matched", 1, mock_server_matched_call),
+        ("write_pact_file", 2, write_pact_file_call)
     ],
     None
 }
@@ -68,3 +70,15 @@ fn mock_server_matched_call<'a>(env: NifEnv<'a>, args: &[NifTerm<'a>]) -> NifRes
 
     Ok((atoms::ok(), matched).encode(env))
 }
+
+fn write_pact_file_call<'a>(env: NifEnv<'a>, args: &[NifTerm<'a>]) -> NifResult<NifTerm<'a>> {
+    let port: i32 = try!(args[0].decode());
+    let dir_path: String = try!(args[1].decode());
+
+    let s = CString::new(dir_path).unwrap();
+
+    let result = write_pact_file(port, s.as_ptr());
+
+    Ok((atoms::ok(), result).encode(env))
+}
+

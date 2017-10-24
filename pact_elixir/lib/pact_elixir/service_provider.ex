@@ -1,5 +1,5 @@
 defmodule PactElixir.ServiceProvider do
-  defstruct [:consumer, :provider, :port, :interactions]
+  defstruct [:consumer, :provider, :port, :interactions, :pact_output_dir_path]
 
   def to_pact_json(provider) do
     """

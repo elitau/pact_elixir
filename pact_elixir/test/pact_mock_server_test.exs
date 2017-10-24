@@ -41,6 +41,16 @@ defmodule PactElixir.PactMockServerTest do
     assert get_request("/call_me").body == "Stop calling me"
   end
 
+  # test "do not write pact file when mismatches happend" do
+  #   dir_path = Path.join(File.cwd!, "test")
+  #   exported_pact_file_path = Path.join(dir_path, "PactTester-PactProvider.json")
+  #   PactMockServer.create_mock_server(@pact, @port) == {:ok, @port}
+
+  #   assert {:ok, result} = PactMockServer.write_pact_file(@port, dir_path)
+
+  #   refute File.exists?(exported_pact_file_path)
+  # end
+
   defp get_request(path) do
     %HTTPoison.Response{} = HTTPoison.get!("http://localhost:#{@port}#{path}")
   end

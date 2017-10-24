@@ -39,4 +39,29 @@ defmodule PactElixir.PactMockServer do
   end
 
   def mock_server_matched(_port), do: throw(:nif_not_loaded)
+
+  def write_pact_file(%ServiceProvider{} = provider) do
+    result = if matched?(provider) do
+      write_pact_file(provider.port, provider.pact_output_dir_path)
+      |> process_write_pact_file_error
+    else
+      # Do not write file when mismatches happend
+      {:mismatches_happend, false}
+    end
+
+    result
+  end
+
+  # Successfully written
+  defp process_write_pact_file_error({:ok, 0}), do: true
+  # TODO: raise error unless result == 0
+  # Errors are returned as positive values.
+  #
+  # | Error | Description |
+  # |-------|-------------|
+  # | 1 | A general panic was caught |
+  # | 2 | The pact file was not able to be written |
+  # | 3 | A mock server with the provided port was not found |
+
+  def write_pact_file(_port, _dir_path), do: throw(:nif_not_loaded)
 end

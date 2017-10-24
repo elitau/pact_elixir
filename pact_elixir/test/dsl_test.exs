@@ -33,6 +33,21 @@ defmodule PactElixir.DslTest do
     end
   end
 
+  test "write pact file after test suite", %{provider: provider} do
+    exported_pact_file_path = Path.join(provider.pact_output_dir_path, "PactTester-PactProvider.json")
+    on_exit fn ->
+      if File.exists?(exported_pact_file_path) do
+        File.rm(exported_pact_file_path)
+      end
+    end
+
+    get_request(provider, "/foo")
+
+    after_test_suite(provider)
+
+    assert File.exists?(exported_pact_file_path)
+  end
+
   # test "throws InvalidInteractionError when description is missing"
   # test "throws InvalidInteractionError when request is missing"
   # test "throws InvalidInteractionError when response is missing"
@@ -42,7 +57,8 @@ defmodule PactElixir.DslTest do
   end
 
   defp provider_with_interaction do
-    service_provider(consumer: "PactTester", provider: "PactProvider")
+    pact_output_dir_path = Path.join(File.cwd!, "test")
+    service_provider(consumer: "PactTester", provider: "PactProvider", pact_output_dir_path: pact_output_dir_path)
     |> add_interaction(
       "give me foo",
       given("foo exists"),
