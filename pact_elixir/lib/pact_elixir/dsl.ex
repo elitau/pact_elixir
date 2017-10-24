@@ -1,5 +1,5 @@
 defmodule PactElixir.Dsl do
-  alias PactElixir.{ServiceProvider, Interaction, Request, Response, PactMockServer}
+  alias PactElixir.{ServiceProvider, Interaction, Request, Response, PactMockServer, Errors}
 
   def service_provider(options) do
     %ServiceProvider{
@@ -17,19 +17,33 @@ defmodule PactElixir.Dsl do
   end
 
   def mock_server_mismatches(provider) do
-    PactMockServer.mismatches(provider)
+    PactMockServer.mismatches(provider) |> Poison.decode!
   end
 
   def mock_server_matched?(provider) do
     PactMockServer.matched?(provider)
   end
 
-  # defp verify_interactions(provider) do
-    # get matches and mismatches
-    # convert to exunit failures
-    # output failures
-    # write pact file
-    # shutdown mock server
+  # hook to run after each test
+  def verify_interactions(provider) do
+    provider
+    |> mock_server_mismatches
+    |> Errors.convert_to_errors
+    |> throw_errors
+  end
+
+  def throw_errors([]) do
+    # Logger.no_mismatches
+  end
+
+  def throw_errors(errors) do
+    Enum.map(errors, fn error -> raise(error) end)
+  end
+
+  # hook after test suite
+  # def after_test_suite(provider) do
+  #   # write pact file
+  #   # shutdown mock server
   # end
 
   def add_interaction(provider, description, given, %Request{} = request, %Response{} = response) do
@@ -39,7 +53,7 @@ defmodule PactElixir.Dsl do
       request: request,
       response: response
     }
-
+    # raise Pact::InvalidInteractionError.new(self) unless description && request && response
     put_in(provider.interactions, provider.interactions ++ [interaction])
   end
 
