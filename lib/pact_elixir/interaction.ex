@@ -7,7 +7,10 @@ defmodule PactElixir.Interaction do
 end
 
 defimpl Poison.Encoder, for: PactElixir.Interaction do
-  def encode(%{description: description, given: given, request: request, response: response}, options) do
+  def encode(
+        %{description: description, given: given, request: request, response: response},
+        options
+      ) do
     Poison.Encoder.Map.encode(
       %{
         description: description,

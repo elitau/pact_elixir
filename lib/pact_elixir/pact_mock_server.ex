@@ -17,8 +17,7 @@ defmodule PactElixir.PactMockServer do
 
   # returns ServiceProvider with actual port
   def start(pact_json, %ServiceProvider{} = provider) do
-    {:ok, mock_server_port} =
-      create_mock_server(pact_json, provider.port)
+    {:ok, mock_server_port} = create_mock_server(pact_json, provider.port)
 
     put_in(provider.port, mock_server_port)
   end
@@ -59,8 +58,12 @@ defmodule PactElixir.PactMockServer do
   # Successfully written
   defp process_write_pact_file_error({:ok, 0}), do: {:success, true}
   defp process_write_pact_file_error({:ok, 1}), do: {:error, :general_panic_caught}
-  defp process_write_pact_file_error({:ok, 2}), do: {:error, :pact_file_was_not_able_to_be_written}
-  defp process_write_pact_file_error({:ok, 3}), do: {:error, :mock_server_with_the_provided_port_was_not_found}
+
+  defp process_write_pact_file_error({:ok, 2}),
+    do: {:error, :pact_file_was_not_able_to_be_written}
+
+  defp process_write_pact_file_error({:ok, 3}),
+    do: {:error, :mock_server_with_the_provided_port_was_not_found}
 
   def write_pact_file(_port, _dir_path), do: throw(:nif_not_loaded)
 end

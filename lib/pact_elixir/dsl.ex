@@ -13,12 +13,12 @@ defmodule PactElixir.Dsl do
 
   def build(provider) do
     provider
-    |> ServiceProvider.to_pact_json
+    |> ServiceProvider.to_pact_json()
     |> PactMockServer.start(provider)
   end
 
   def mock_server_mismatches(provider) do
-    PactMockServer.mismatches(provider) |> Poison.decode!
+    PactMockServer.mismatches(provider) |> Poison.decode!()
   end
 
   def mock_server_matched?(provider) do
@@ -29,7 +29,7 @@ defmodule PactElixir.Dsl do
   def verify_interactions(provider) do
     provider
     |> mock_server_mismatches
-    |> Errors.convert_to_errors
+    |> Errors.convert_to_errors()
     |> throw_errors
   end
 
@@ -38,13 +38,14 @@ defmodule PactElixir.Dsl do
   end
 
   def throw_errors(errors) do
-    Enum.map(errors, &(raise(&1)))
+    Enum.map(errors, &raise(&1))
   end
 
   # hook after test suite
   def after_test_suite(provider) do
     provider
-    |> PactMockServer.write_pact_file
+    |> PactMockServer.write_pact_file()
+
     # shutdown mock server
   end
 
@@ -55,13 +56,14 @@ defmodule PactElixir.Dsl do
       request: request,
       response: response
     }
+
     # raise Pact::InvalidInteractionError.new(self) unless description && request && response
     put_in(provider.interactions, provider.interactions ++ [interaction])
   end
 
   def with_request(options) do
     %PactElixir.Request{
-      method: options[:method] |> to_string |> String.upcase,
+      method: options[:method] |> to_string |> String.upcase(),
       path: options[:path]
     }
   end
