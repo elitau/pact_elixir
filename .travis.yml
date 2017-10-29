@@ -5,3 +5,5 @@ otp_release: '20.0'
 before_install:
   - sudo apt-get -qq update
   - sudo apt-get install -y --no-install-recommends rustc cargo
+  - rustc --version
+  - cargo --version
