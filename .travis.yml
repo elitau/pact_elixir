@@ -5,4 +5,11 @@ otp_release: '20.0'
 matrix:
   include:
     - language: rust
-      rust: 1.21
+      rust: 1.21.0
+
+before_install:
+  - erl -version
+  - elixir --version
+  - mix --version
+  - rustc --version
+  - cargo --version
