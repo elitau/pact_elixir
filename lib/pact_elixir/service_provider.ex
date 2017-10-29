@@ -6,7 +6,7 @@ defmodule PactElixir.ServiceProvider do
   @default_port 0
   @default_pact_output_dir_path File.cwd!()
 
-  def new(options) do
+  def new(options \\ %{}) do
     %PactElixir.ServiceProvider{
       provider: options[:provider] || @default_provider_name,
       consumer: options[:consumer] || @default_consumer_name,
@@ -14,6 +14,10 @@ defmodule PactElixir.ServiceProvider do
       port: options[:port] || @default_port,
       pact_output_dir_path: options[:pact_output_dir_path] || @default_pact_output_dir_path
     }
+  end
+
+  def pact_file_path(provider) do
+    Path.join(provider.pact_output_dir_path, "#{provider.consumer}-#{provider.provider}.json")
   end
 
   def to_pact_json(provider) do
