@@ -33,6 +33,7 @@ defmodule PactElixir.PactMockServer do
 
   def mock_server_mismatches(_port), do: throw(:nif_not_loaded)
 
+  # TODO: Dialyzer specs
   def matched?(%ServiceProvider{} = provider) do
     {:ok, matched} = mock_server_matched(provider.port)
     matched
@@ -41,12 +42,12 @@ defmodule PactElixir.PactMockServer do
   def mock_server_matched(_port), do: throw(:nif_not_loaded)
 
   def write_pact_file(%ServiceProvider{} = provider) do
-    provider
-    |> write_pact_file_with_errors
+    write_pact_file_with_error_handling(provider, matched?(provider))
   end
 
-  def write_pact_file_with_errors(%ServiceProvider{} = provider) do
-    if matched?(provider) do
+  defp write_pact_file_with_error_handling(%ServiceProvider{} = provider, all_assertions_matched)
+       when is_boolean(all_assertions_matched) do
+    if all_assertions_matched do
       write_pact_file(provider.port, provider.pact_output_dir_path)
       |> process_write_pact_file_error
     else

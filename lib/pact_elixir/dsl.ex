@@ -2,13 +2,7 @@ defmodule PactElixir.Dsl do
   alias PactElixir.{ServiceProvider, Interaction, Request, Response, PactMockServer, Errors}
 
   def service_provider(options) do
-    %ServiceProvider{
-      provider: options[:provider],
-      consumer: options[:consumer],
-      interactions: [],
-      port: options[:port] || 0,
-      pact_output_dir_path: options[:pact_output_dir_path]
-    }
+    ServiceProvider.new(options)
   end
 
   def build(provider) do
