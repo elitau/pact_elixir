@@ -11,9 +11,9 @@ before_install:
   - sudo dpkg -i erlang-solutions_1.0_all.deb
   - sudo apt-get -qq update
   - sudo apt-get install -y --no-install-recommends erlang elixir tree
-  - mix local.hex --force
   - erl -version
   - elixir --version
+  - mix local.hex --force
   - mix --version
 
 script:
