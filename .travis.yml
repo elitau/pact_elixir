@@ -1,15 +1,24 @@
-language: elixir
-elixir: '1.5.2'
-otp_release: '20.0'
+language: rust
 
-matrix:
-  include:
-    - language: rust
-      rust: 1.21.0
+rust: stable
+
+# matrix:
+#   allow_failures:
+#     - rust: nightly
 
 before_install:
+  - wget http://packages.erlang-solutions.com/erlang-solutions_1.0_all.deb
+  - sudo dpkg -i erlang-solutions_1.0_all.deb
+  - sudo apt-get -qq update
+  - sudo apt-get install -y --no-install-recommends erlang elixir tree
+  - mix local.hex --force
   - erl -version
   - elixir --version
   - mix --version
-  - rustc --version
-  - cargo --version
+
+script:
+  # - cargo build --verbose
+  - cd test && mix test
+
+after_script:
+  - tree
