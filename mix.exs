@@ -8,6 +8,13 @@ defmodule PactElixir.MixProject do
       elixir: "~> 1.5",
       start_permanent: Mix.env() == :prod,
       deps: deps(),
+      test_coverage: [tool: ExCoveralls],
+      preferred_cli_env: [
+        coveralls: :test,
+        "coveralls.detail": :test,
+        "coveralls.post": :test,
+        "coveralls.html": :test
+      ],
       compilers: [:rustler] ++ Mix.compilers(),
       rustler_crates: rustler_crates()
     ]
@@ -26,7 +33,8 @@ defmodule PactElixir.MixProject do
     [
       {:rustler, "~> 0.10"},
       {:poison, "~> 3.1"},
-      {:httpoison, "~> 0.13", only: :test}
+      {:httpoison, "~> 0.13", only: :test},
+      {:excoveralls, "~> 0.7", only: :test}
     ]
   end
 
