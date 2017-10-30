@@ -8,5 +8,6 @@ before_install:
   - rustc --version
   - cargo --version
 
-script:
-  - "MIX_ENV=test mix do deps.get, compile, coveralls.travis"
+env: MIX_ENV=test
+
+script: mix coveralls.travis
