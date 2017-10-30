@@ -3,6 +3,7 @@
 **Elixir bridge for pact-reference implementation in rust**
 
 [![Build Status](https://travis-ci.org/elitau/pact_elixir.svg?branch=master)](https://travis-ci.org/elitau/pact_elixir)
+[![Coverage Status](https://coveralls.io/repos/github/elitau/pact_elixir/badge.svg?branch=master)](https://coveralls.io/github/elitau/pact_elixir?branch=master)
 
 ## Installation
 
