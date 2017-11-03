@@ -6,9 +6,7 @@ defmodule PactElixir.Dsl do
   end
 
   def build(provider) do
-    provider
-    |> ServiceProvider.to_pact_json()
-    |> PactMockServer.start(provider)
+    PactMockServer.start(provider)
   end
 
   def mock_server_mismatches(provider) do
