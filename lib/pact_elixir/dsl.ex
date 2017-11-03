@@ -54,10 +54,7 @@ defmodule PactElixir.Dsl do
   end
 
   def with_request(options) do
-    %PactElixir.Request{
-      method: options[:method] |> to_string |> String.upcase(),
-      path: options[:path]
-    }
+    PactElixir.Request.new(options)
   end
 
   def will_respond_with(options) do
