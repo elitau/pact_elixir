@@ -42,3 +42,4 @@ erl_crash.dump
 
 # Ignore package tarball (built via "mix hex.build").
 pact_elixir-*.tar
+.tool-versions-e
