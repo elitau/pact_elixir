@@ -49,7 +49,7 @@ defmodule PactElixir.Dsl do
       response: response
     }
 
-    # raise Pact::InvalidInteractionError.new(self) unless description && request && response
+    # TODO: raise Pact::InvalidInteractionError.new(self) unless description && request && response
     put_in(provider.interactions, provider.interactions ++ [interaction])
   end
 
