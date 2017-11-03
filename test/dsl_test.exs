@@ -9,10 +9,10 @@ defmodule PactElixir.DslTest do
   end
 
   test "Provider responds to /foo with 'bar'", %{provider: provider} do
-    assert get_request(provider, "/foo").body == "bar"
+    assert "bar" == get_request(provider, "/foo").body
 
-    assert mock_server_mismatches(provider) == []
-    assert mock_server_matched?(provider) == true
+    assert [] == mock_server_mismatches(provider)
+    assert true == mock_server_matched?(provider)
   end
 
   test "Mock server includes mismatch without mocked request being made", %{provider: provider} do

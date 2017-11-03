@@ -8,10 +8,13 @@ defmodule PactElixir.InteractionTest do
         [
           {
             "providerState": "foo is present",
-            "description": "inter-description",
+            "description": "interaction-description",
             "request": {
               "method": "GET",
-              "path": "/foo"
+              "path": "/foo",
+              "query": "",
+              "headers": {},
+              "body": ""
             },
             "response": {
               "status": 200,
@@ -22,7 +25,7 @@ defmodule PactElixir.InteractionTest do
       """)
 
     interaction = %PactElixir.Interaction{
-      description: "inter-description",
+      description: "interaction-description",
       given: given("foo is present"),
       request: with_request(method: :get, path: "/foo"),
       response: will_respond_with(status: 200, body: "bar")
