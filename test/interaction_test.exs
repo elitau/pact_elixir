@@ -18,7 +18,8 @@ defmodule PactElixir.InteractionTest do
             },
             "response": {
               "status": 200,
-              "body": "bar"
+              "body": "bar",
+              "headers": {}
             }
           }
         ]

@@ -58,10 +58,7 @@ defmodule PactElixir.Dsl do
   end
 
   def will_respond_with(options) do
-    %PactElixir.Response{
-      status: options[:status],
-      body: options[:body]
-    }
+    PactElixir.Response.new(options)
   end
 
   def given(precondition) do
