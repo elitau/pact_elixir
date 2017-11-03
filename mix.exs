@@ -7,6 +7,8 @@ defmodule PactElixir.MixProject do
       version: "0.1.0",
       elixir: "~> 1.5",
       start_permanent: Mix.env() == :prod,
+      description: description(),
+      package: package(),
       deps: deps(),
       test_coverage: [tool: ExCoveralls],
       preferred_cli_env: [
@@ -44,6 +46,24 @@ defmodule PactElixir.MixProject do
         path: "native/pactmockserver",
         mode: if(Mix.env() == :prod, do: :release, else: :debug)
       ]
+    ]
+  end
+
+  defp description do
+    """
+    Elixir version of Pact. Enables consumer driven contract testing, providing a mock service and DSL for the consumer project.
+    """
+
+    # TODO Also provides interaction playback and verification for the service provider project.
+  end
+
+  defp package do
+    [
+      maintainers: ["Eduard Litau"],
+      licenses: ["MIT"],
+      files: ["lib", "priv", "native", "mix.exs", "README*", "readme*", "LICENSE*", "license*"],
+      links: %{"GitHub" => "https://github.com/elitau/pact_elixir"},
+      source_url: "https://github.com/elitau/pact_elixir"
     ]
   end
 end
