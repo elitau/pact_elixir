@@ -8,6 +8,10 @@ before_install:
   - rustc --version
   - cargo --version
 
-# TODO: not all files are reported to coveralls eg. PactMockServer is not there. Maybe the elixir version is the reason
-# for this.
-script: "MIX_ENV=test mix do deps.get, test && mix compile && mix coveralls.travis"
+env: MIX_ENV=test
+
+# Compiling PactMockServer outputs a warning {:error, {:upgrade, 'Upgrade not supported by this NIF library.'}} which
+# swallows coverage results for it. Running test twice solves this for now.
+script:
+ - mix test
+ - mix coveralls.travis
