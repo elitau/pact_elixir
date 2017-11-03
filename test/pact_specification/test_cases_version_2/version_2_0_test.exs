@@ -1,3 +1,23 @@
+defmodule PactElixir.PactSpecification.Version20Test do
+  @pact_spec_dir Path.join(__DIR__, "testcases")
+  # @request_test_case_folders Path.wildcard(Path.join(@pact_spec_dir, "request/**"))
+  # @request_test_case_files Path.wildcard(Path.join(@pact_spec_dir, "/request/**/*.json"))
+  use ExUnit.Case
+  alias PactElixir.Request
+
+  test "first" do
+    file_name =
+      "/Users/elitau/Documents/workspace/pact/pact_elixir/test/pact_specification/test_cases_version_2/testcases/request/body/array at top level.json"
+
+    {:ok, file_content} = File.read(file_name)
+    # IO.inspect(file_content)
+    test_case_content = Poison.decode!(file_content)
+    # expected = Request.new(file_content["expected"])
+    # IO.inspect(expected)
+    #               actual = Pact::Consumer::Request::Actual.from_hash(file_content["actual"])
+  end
+end
+
 # PACT_SPEC_DIR = "../pact-specification/testcases"
 # REQUEST_TEST_CASE_FOLDERS = Dir.glob("#{PACT_SPEC_DIR}/request/**")
 # REQUEST_TEST_CASE_FILES = Dir.glob("#{PACT_SPEC_DIR}/request/**/*.json")
