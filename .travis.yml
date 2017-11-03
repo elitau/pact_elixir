@@ -10,4 +10,6 @@ before_install:
 
 env: MIX_ENV=test
 
+# TODO: not all files are reported to coveralls eg. PactMockServer is not there. Maybe the elixir version is the reason
+# for this.
 script: mix coveralls.travis
