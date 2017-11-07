@@ -41,6 +41,7 @@ defmodule PactElixir.Dsl do
     # shutdown mock server
   end
 
+  # todo: capture source location of request/response interaction definition for error output
   def add_interaction(provider, description, given, %Request{} = request, %Response{} = response) do
     interaction = %Interaction{
       description: description,

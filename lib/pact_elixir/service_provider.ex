@@ -4,6 +4,7 @@ defmodule PactElixir.ServiceProvider do
   @default_consumer_name "test_consumer"
   # System selects a random port
   @default_port 0
+  # todo: FIXME: defaults now to root folder of this library. should instead default to root of app using this library
   @default_pact_output_dir_path File.cwd!()
 
   def new(options \\ %{}) do
