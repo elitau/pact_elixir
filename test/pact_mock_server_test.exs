@@ -1,6 +1,6 @@
 defmodule PactElixir.PactMockServerTest do
   use ExUnit.Case
-  alias PactElixir.{PactMockServer, ServiceProvider}
+  alias PactElixir.{PactMockServer, ServiceProvider, RustPactMockServerFacade}
 
   @pact """
   {
@@ -45,9 +45,9 @@ defmodule PactElixir.PactMockServerTest do
   end
 
   test "creates a mock server and returns its port" do
-    assert PactMockServer.create_mock_server(@pact, @port) == {:ok, @port}
+    assert RustPactMockServerFacade.create_mock_server(@pact, @port) == {:ok, @port}
     assert "Stop calling me" == get_request("/call_me").body
-    PactMockServer.cleanup_mock_server(@port)
+    RustPactMockServerFacade.cleanup_mock_server(@port)
   end
 
   # todo
