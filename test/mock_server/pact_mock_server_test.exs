@@ -1,6 +1,7 @@
 defmodule PactElixir.PactMockServerTest do
   use ExUnit.Case
-  alias PactElixir.{PactMockServer, ServiceProvider, RustPactMockServerFacade}
+  alias PactElixir.{PactMockServer, ServiceProvider}
+  import PactElixir.Dsl
 
   @pact """
   {
@@ -34,7 +35,14 @@ defmodule PactElixir.PactMockServerTest do
   @port 50823
 
   setup do
-    provider = ServiceProvider.new()
+    provider =
+      ServiceProvider.new()
+      |> add_interaction(
+           "give me foo",
+           given("foo exists"),
+           with_request(method: :get, path: "/foo"),
+           will_respond_with(status: 200, body: "bar")
+         )
 
     on_exit(fn ->
       delete_generated_pact_file(provider)
@@ -44,12 +52,6 @@ defmodule PactElixir.PactMockServerTest do
     {:ok, provider: provider}
   end
 
-  test "creates a mock server and returns its port" do
-    assert RustPactMockServerFacade.create_mock_server(@pact, @port) == {:ok, @port}
-    assert "Stop calling me" == get_request("/call_me").body
-    RustPactMockServerFacade.cleanup_mock_server(@port)
-  end
-
   # todo
   # test "returns error if mock server port is already in use" do
   #   assert PactMockServer.create_mock_server(@pact, @port) == {:ok, @port}
@@ -57,7 +59,16 @@ defmodule PactElixir.PactMockServerTest do
   #   PactMockServer.shutdown_mock_server(@port)
   # end
 
+  test "spawns as genserver", %{provider: provider} do
+    {:ok, mock_server} = start_supervised(PactMockServer)
+    provider = PactMockServer.boot(mock_server, provider)
+    assert "bar" == get_request("/foo", provider.port).body
+
+    # assert PactMockServer.stop()
+  end
+
   test "writes pact file", %{provider: provider} do
+    # {:ok, mock_server} = start_supervised(PactMockServer)
     provider = PactMockServer.start(@pact, provider)
 
     # make sure all assertions are matched

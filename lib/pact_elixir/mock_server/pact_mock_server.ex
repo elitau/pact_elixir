@@ -1,14 +1,37 @@
 defmodule PactElixir.PactMockServer do
   alias PactElixir.{ServiceProvider, RustPactMockServerFacade}
+  use GenServer
+
+  # GenServer: Client
+  def start_link(opts) do
+    GenServer.start_link(__MODULE__, :ok, opts)
+  end
+
+  def boot(server, provider) do
+    GenServer.call(server, {:boot, provider})
+  end
+
+  # GenServer: Server
+  def init(:ok) do
+    {:ok, %{}}
+  end
+
+  def handle_call({:boot, provider}, _from, names) do
+    {:reply, start(provider), names}
+  end
+
+  # PactMockServer API
 
   # returns ServiceProvider with actual port
+  # @spec start(ServiceProvider) :: ServiceProvider
   def start(%ServiceProvider{} = provider) do
     start(ServiceProvider.to_pact_json(provider), provider)
   end
 
   # returns ServiceProvider with actual port
   def start(pact_json, %ServiceProvider{} = provider) when is_binary(pact_json) do
-    {:ok, mock_server_port} = RustPactMockServerFacade.create_mock_server(pact_json, provider.port)
+    {:ok, mock_server_port} =
+      RustPactMockServerFacade.create_mock_server(pact_json, provider.port)
 
     put_in(provider.port, mock_server_port)
   end
@@ -20,6 +43,7 @@ defmodule PactElixir.PactMockServer do
   end
 
   # TODO: Dialyzer specs
+  @spec matched?(ServiceProvider) :: boolean
   def matched?(%ServiceProvider{} = provider) do
     {:ok, matched} = RustPactMockServerFacade.mock_server_matched(provider.port)
     matched
