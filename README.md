@@ -28,3 +28,4 @@ be found at [https://hexdocs.pm/pact_elixir](https://hexdocs.pm/pact_elixir).
  * TODO: Dialyzer specs
  * TODO: Property testing
  * TODO: Run every mock server as a GenServer
+   * Convert to app that supervises all mock servers

@@ -1,80 +1,39 @@
 defmodule PactElixir.PactMockServer do
-  alias PactElixir.{ServiceProvider, RustPactMockServerFacade}
+  alias PactElixir.ServiceProvider
   use GenServer
 
   # GenServer: Client
-  def start_link(opts) do
-    GenServer.start_link(__MODULE__, :ok, opts)
+  def start_link(%ServiceProvider{} = provider) do
+    GenServer.start_link(PactElixir.MockServerCallbacks, provider)
   end
 
-  def boot(server, provider) do
-    GenServer.call(server, {:boot, provider})
+  def port(mock_server_pid) when is_pid(mock_server_pid) do
+    GenServer.call(mock_server_pid, {:port})
   end
 
-  # GenServer: Server
-  def init(:ok) do
-    {:ok, %{}}
+  def pact_output_dir_path(mock_server_pid) when is_pid(mock_server_pid) do
+    GenServer.call(mock_server_pid, {:pact_output_dir_path})
   end
 
-  def handle_call({:boot, provider}, _from, names) do
-    {:reply, start(provider), names}
+  def pact_file_path(mock_server_pid) when is_pid(mock_server_pid) do
+    GenServer.call(mock_server_pid, {:pact_file_path})
   end
 
-  # PactMockServer API
-
-  # returns ServiceProvider with actual port
-  # @spec start(ServiceProvider) :: ServiceProvider
-  def start(%ServiceProvider{} = provider) do
-    start(ServiceProvider.to_pact_json(provider), provider)
-  end
-
-  # returns ServiceProvider with actual port
-  def start(pact_json, %ServiceProvider{} = provider) when is_binary(pact_json) do
-    {:ok, mock_server_port} =
-      RustPactMockServerFacade.create_mock_server(pact_json, provider.port)
-
-    put_in(provider.port, mock_server_port)
-  end
-
-  def mismatches(%ServiceProvider{} = provider) do
+  def mismatches(mock_server_pid) when is_pid(mock_server_pid) do
     # TODO: fails with seg fault when called with not used port
-    {:ok, mismatches} = RustPactMockServerFacade.mock_server_mismatches(provider.port)
-    mismatches
+    GenServer.call(mock_server_pid, {:mismatches})
   end
 
-  # TODO: Dialyzer specs
-  @spec matched?(ServiceProvider) :: boolean
-  def matched?(%ServiceProvider{} = provider) do
-    {:ok, matched} = RustPactMockServerFacade.mock_server_matched(provider.port)
-    matched
+  @spec matched?(pid) :: list
+  def matched?(mock_server_pid) when is_pid(mock_server_pid) do
+    GenServer.call(mock_server_pid, {:matched})
   end
 
-  def write_pact_file(%ServiceProvider{} = provider) do
-    write_pact_file_with_error_handling(provider, matched?(provider))
+  def write_pact_file(mock_server_pid) when is_pid(mock_server_pid) do
+    GenServer.call(mock_server_pid, {:write_pact_file})
   end
 
-  def shutdown_mock_server(%ServiceProvider{} = provider) do
-    {:ok, success} = RustPactMockServerFacade.cleanup_mock_server(provider.port)
-    {:success, success}
+  def stop(mock_server_pid) when is_pid(mock_server_pid) do
+    :ok = GenServer.stop(mock_server_pid)
   end
-
-  defp write_pact_file_with_error_handling(%ServiceProvider{} = provider, true) do
-    RustPactMockServerFacade.write_pact_file(provider.port, provider.pact_output_dir_path)
-    |> process_write_pact_file_error
-  end
-
-  defp write_pact_file_with_error_handling(%ServiceProvider{} = _provider, false) do
-    # Do not write file when mismatches happend
-    {:error, :mismatches_prohibited_file_output}
-  end
-
-  # Successfully written
-  defp process_write_pact_file_error({:ok, 0}), do: {:success, true}
-  defp process_write_pact_file_error({:ok, 1}), do: {:error, :general_panic_caught}
-
-  defp process_write_pact_file_error({:ok, 2}),
-    do: {:error, :pact_file_was_not_able_to_be_written}
-
-  defp process_write_pact_file_error({:ok, 3}),
-    do: {:error, :mock_server_with_the_provided_port_was_not_found}
 end

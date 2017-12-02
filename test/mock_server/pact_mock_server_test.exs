@@ -3,37 +3,6 @@ defmodule PactElixir.PactMockServerTest do
   alias PactElixir.{PactMockServer, ServiceProvider}
   import PactElixir.Dsl
 
-  @pact """
-  {
-        "provider": {
-          "name": "test_provider"
-        },
-        "consumer": {
-          "name": "test_consumer"
-        },
-        "interactions": [
-          {
-            "providerState": "test state",
-            "description": "test interaction",
-            "request": {
-              "method": "GET",
-              "path": "/call_me"
-            },
-            "response": {
-              "status": 200,
-              "body": "Stop calling me"
-            }
-          }
-        ],
-        "metadata": {
-          "pact-specification": {
-            "version": "2.0.0"
-          }
-        }
-      }
-  """
-  @port 50823
-
   setup do
     provider =
       ServiceProvider.new()
@@ -46,7 +15,6 @@ defmodule PactElixir.PactMockServerTest do
 
     on_exit(fn ->
       delete_generated_pact_file(provider)
-      shutdown_mock_server(provider)
     end)
 
     {:ok, provider: provider}
@@ -59,52 +27,65 @@ defmodule PactElixir.PactMockServerTest do
   #   PactMockServer.shutdown_mock_server(@port)
   # end
 
-  test "spawns as genserver", %{provider: provider} do
-    {:ok, mock_server} = start_supervised(PactMockServer)
-    provider = PactMockServer.boot(mock_server, provider)
-    assert "bar" == get_request("/foo", provider.port).body
+  test "return port of started mock server", %{provider: provider} do
+    {:ok, mock_server_pid} = start_supervised({PactMockServer, provider})
 
-    # assert PactMockServer.stop()
+    assert Enum.member?(50000..65535, PactMockServer.port(mock_server_pid))
+  end
+
+  test "spawn as genserver", %{provider: provider} do
+    {:ok, mock_server_pid} = start_supervised({PactMockServer, provider})
+
+    assert "bar" == get_request("/foo", mock_server_pid).body
+  end
+
+  test "shutdown GenServer", %{provider: provider} do
+    {:ok, mock_server_pid} = start_supervised({PactMockServer, provider})
+
+    assert PactMockServer.stop(mock_server_pid)
   end
 
   test "writes pact file", %{provider: provider} do
-    # {:ok, mock_server} = start_supervised(PactMockServer)
-    provider = PactMockServer.start(@pact, provider)
+    {:ok, mock_server_pid} = start_supervised({PactMockServer, provider})
 
-    # make sure all assertions are matched
-    get_request("/call_me", provider.port)
+    # make sure all assertions are matched which is needed for the file to be written
+    get_request("/foo", mock_server_pid)
 
-    assert {:success, true} == PactMockServer.write_pact_file(provider)
+    assert {:success, true} == PactMockServer.write_pact_file(mock_server_pid)
   end
 
   # matched? returns false if no server could be found for given port, so this test is somewhat misleading
   test "do not write pact file when some assertions did not match", %{provider: provider} do
-    assert {:error, :mismatches_prohibited_file_output} ==
-             PactMockServer.write_pact_file(provider)
+    {:ok, mock_server_pid} = start_supervised({PactMockServer, provider})
 
-    refute File.exists?(ServiceProvider.pact_file_path(provider))
+    assert {:error, :mismatches_prohibited_file_output} ==
+             PactMockServer.write_pact_file(mock_server_pid)
+
+    refute File.exists?(PactMockServer.pact_file_path(mock_server_pid))
   end
 
   # TODO: Simulate other possible errors during pact file write
 
   test "shutdown mock server returns empty body", %{provider: provider} do
-    provider = PactMockServer.start(@pact, provider)
+    {:ok, mock_server_pid} = start_supervised({PactMockServer, provider})
 
-    assert "Stop calling me" == get_request("/call_me", provider.port).body
-    assert {:success, true} == shutdown_mock_server(provider)
-    assert "" == get_request("/call_me", provider.port).body
+    assert "bar" == get_request("/foo", mock_server_pid).body
+    port = PactMockServer.port(mock_server_pid)
+    assert :ok == PactMockServer.stop(mock_server_pid)
+    refute Process.alive?(mock_server_pid)
+    assert "" == get_request("/foo", port).body
   end
 
-  def get_request(path, port \\ @port) do
+  defp get_request(path, mock_server_pid) when is_pid(mock_server_pid) do
+    get_request(path, PactMockServer.port(mock_server_pid))
+  end
+
+  defp get_request(path, port) when is_number(port) do
     %HTTPoison.Response{} = HTTPoison.get!("http://localhost:#{port}#{path}")
   end
 
   defp delete_generated_pact_file(provider) do
     exported_pact_file_path = ServiceProvider.pact_file_path(provider)
     if File.exists?(exported_pact_file_path), do: File.rm(exported_pact_file_path)
-  end
-
-  defp shutdown_mock_server(provider) do
-    PactMockServer.shutdown_mock_server(provider)
   end
 end

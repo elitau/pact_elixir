@@ -6,7 +6,8 @@ defmodule PactElixir.Dsl do
   end
 
   def build(provider) do
-    PactMockServer.start(provider)
+    {:ok, pid} = PactMockServer.start_link(provider)
+    pid
   end
 
   def mock_server_mismatches(provider) do
