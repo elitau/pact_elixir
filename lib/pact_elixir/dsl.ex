@@ -1,7 +1,7 @@
 defmodule PactElixir.Dsl do
   alias PactElixir.{ServiceProvider, Interaction, Request, Response, PactMockServer, Errors}
 
-  def service_provider(options) do
+  def service_provider(options \\ %{}) do
     ServiceProvider.new(options)
   end
 

@@ -5,7 +5,7 @@ defmodule PactElixir.PactMockServerTest do
 
   setup do
     provider =
-      ServiceProvider.new()
+      service_provider()
       |> add_interaction(
            "give me foo",
            given("foo exists"),

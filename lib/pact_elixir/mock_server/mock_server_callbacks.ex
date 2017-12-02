@@ -29,7 +29,7 @@ defmodule PactElixir.MockServerCallbacks do
     {:reply, write_pact_file(provider), provider}
   end
 
-  def terminate(reason, provider) do
+  def terminate(_reason, provider) do
     {:ok, _success} = RustPactMockServerFacade.cleanup_mock_server(provider.port)
   end
 
