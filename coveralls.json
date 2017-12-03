@@ -1,0 +1,5 @@
+{
+  "skip_files": [
+    "lib/pact_elixir/mock_server/rust_pact_mock_server_facade.ex"
+  ]
+}

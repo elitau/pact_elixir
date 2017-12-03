@@ -4,8 +4,9 @@ defmodule PactElixir.MixProject do
   def project do
     [
       app: :pact_elixir,
-      version: "0.1.0",
+      version: "0.1.1",
       elixir: "~> 1.5",
+      name: "PactElixir",
       start_permanent: Mix.env() == :prod,
       description: description(),
       package: package(),
@@ -18,7 +19,11 @@ defmodule PactElixir.MixProject do
         "coveralls.html": :test
       ],
       compilers: [:rustler] ++ Mix.compilers(),
-      rustler_crates: rustler_crates()
+      rustler_crates: rustler_crates(),
+      source_url: "https://github.com/elitau/pact_elixir",
+      homepage_url: "https://github.com/elitau/pact_elixir",
+      # The main page in the docs
+      docs: [main: "readme", extras: ["README.md"]]
     ]
   end
 
@@ -35,6 +40,7 @@ defmodule PactElixir.MixProject do
     [
       {:rustler, "~> 0.10"},
       {:poison, "~> 3.1"},
+      {:ex_doc, "~> 0.18", only: :dev, runtime: false},
       {:httpoison, "~> 0.13", only: :test},
       {:excoveralls, "~> 0.7", only: :test}
     ]
@@ -61,7 +67,7 @@ defmodule PactElixir.MixProject do
     [
       maintainers: ["Eduard Litau"],
       licenses: ["MIT"],
-      files: ["lib", "priv", "native", "mix.exs", "README*", "readme*", "LICENSE*", "license*"],
+      files: ["lib", "native", "mix.exs", "README.md", "LICENSE"],
       links: %{"GitHub" => "https://github.com/elitau/pact_elixir"},
       source_url: "https://github.com/elitau/pact_elixir"
     ]

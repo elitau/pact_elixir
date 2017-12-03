@@ -32,7 +32,7 @@ defmodule PactElixir.ServiceProvider do
         },
         "interactions": #{PactElixir.Interaction.to_json(provider.interactions)},
         "metadata": {
-          "pact-specification": {
+          "pactSpecification": {
             "version": "2.0.0"
           }
         }
