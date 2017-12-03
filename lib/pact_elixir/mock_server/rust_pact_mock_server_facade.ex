@@ -1,3 +1,7 @@
+# Functions in this file are replaced by Rustler with their Rust calling
+# counterpart. See native/pactmockserver/src/lib.rs for the concrete Rust
+# implementation.
+# This file is therefore excluded from the coverage tool.
 defmodule PactElixir.RustPactMockServerFacade do
   use Rustler, otp_app: :pact_elixir, crate: "pactmockserver"
 
