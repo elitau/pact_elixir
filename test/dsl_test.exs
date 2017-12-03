@@ -1,6 +1,6 @@
 defmodule PactElixir.DslTest do
   use ExUnit.Case
-
+  alias PactElixir.PactMockServer
   import PactElixir.Dsl
 
   # "setup" is called before each test
@@ -36,7 +36,7 @@ defmodule PactElixir.DslTest do
 
   test "write pact file after test suite", %{provider: provider} do
     exported_pact_file_path =
-      Path.join(provider.pact_output_dir_path, "PactTester-PactProvider.json")
+      Path.join(PactMockServer.pact_output_dir_path(provider), "PactTester-PactProvider.json")
 
     on_exit(fn ->
       if File.exists?(exported_pact_file_path) do
@@ -56,7 +56,8 @@ defmodule PactElixir.DslTest do
   # test "throws InvalidInteractionError when response is missing"
 
   defp get_request(provider, path) do
-    %HTTPoison.Response{} = HTTPoison.get!("http://localhost:#{provider.port}#{path}")
+    %HTTPoison.Response{} =
+      HTTPoison.get!("http://localhost:#{PactMockServer.port(provider)}#{path}")
   end
 
   defp provider_with_interaction do

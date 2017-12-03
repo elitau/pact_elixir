@@ -25,7 +25,7 @@ mod atoms {
 }
 
 rustler_export_nifs! {
-    "Elixir.PactElixir.PactMockServer",
+    "Elixir.PactElixir.RustPactMockServerFacade",
     [
         ("create_mock_server", 2, create_mock_server_call),
         ("mock_server_mismatches", 1, mock_server_mismatches_call),
