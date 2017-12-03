@@ -5,14 +5,11 @@
 extern crate libc;
 
 use rustler::{NifEnv, NifTerm, NifResult, NifEncoder};
-use rustler::types::binary::NifBinary;
 use pact_mock_server::create_mock_server;
 use pact_mock_server::mock_server_mismatches_ffi;
 use pact_mock_server::mock_server_matched_ffi;
 use pact_mock_server::write_pact_file_ffi;
 use pact_mock_server::cleanup_mock_server_ffi;
-use libc::c_char;
-use std::io;
 use std::ffi::CString;
 use std::ffi::CStr;
 mod atoms {
@@ -37,17 +34,13 @@ rustler_export_nifs! {
 }
 
 fn create_mock_server_call<'a>(env: NifEnv<'a>, args: &[NifTerm<'a>]) -> NifResult<NifTerm<'a>> {
-    let arg1: &str = try!(args[0].decode());
-    let arg2: i32 = try!(args[1].decode());
+    let pact_json: &str = try!(args[0].decode());
+    let port_arg: i32 = try!(args[1].decode());
 
-    // let s = CString::new(arg1).unwrap();
-    match create_mock_server(arg1, arg2) {
+    match create_mock_server(pact_json, port_arg) {
         Ok(port) => Ok((atoms::ok(), port).encode(env)),
         Err(err) => Ok((atoms::error(), 0).encode(env))
     }
-    // let result = create_mock_server(arg1, arg2);
-
-    // Ok((atoms::ok(), result).encode(env))
 }
 
 fn mock_server_mismatches_call<'a>(env: NifEnv<'a>, args: &[NifTerm<'a>]) -> NifResult<NifTerm<'a>> {
