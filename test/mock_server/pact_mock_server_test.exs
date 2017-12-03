@@ -30,7 +30,7 @@ defmodule PactElixir.PactMockServerTest do
   test "return port of started mock server", %{provider: provider} do
     {:ok, mock_server_pid} = start_supervised({PactMockServer, provider})
 
-    assert Enum.member?(50000..65535, PactMockServer.port(mock_server_pid))
+    assert Enum.member?(40000..65535, PactMockServer.port(mock_server_pid))
   end
 
   test "spawn as genserver", %{provider: provider} do
