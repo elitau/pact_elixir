@@ -6,8 +6,8 @@
 [![Build Status](https://travis-ci.org/elitau/pact_elixir.svg?branch=master)](https://travis-ci.org/elitau/pact_elixir)
 [![Coverage Status](https://coveralls.io/repos/github/elitau/pact_elixir/badge.svg?branch=master)](https://coveralls.io/github/elitau/pact_elixir?branch=master)
 
-It is not yet usable as many needed parts like publishing a pact file to a broker or pact verification on the provider side are still missing.
-Also there is no documentation available, yet.
+It is not yet usable as many needed parts like publishing a pact file to a broker or pact
+verification on the provider side are still missing. Also there is no documentation available, yet.
 
 
 ## Installation
