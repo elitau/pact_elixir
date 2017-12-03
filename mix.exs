@@ -67,7 +67,7 @@ defmodule PactElixir.MixProject do
     [
       maintainers: ["Eduard Litau"],
       licenses: ["MIT"],
-      files: ["lib", "priv", "native", "mix.exs", "README.md", "LICENSE"],
+      files: ["lib", "native", "mix.exs", "README.md", "LICENSE"],
       links: %{"GitHub" => "https://github.com/elitau/pact_elixir"},
       source_url: "https://github.com/elitau/pact_elixir"
     ]
