@@ -6,8 +6,8 @@ extern crate libc;
 
 use rustler::{NifEnv, NifTerm, NifResult, NifEncoder};
 use pact_mock_server::create_mock_server;
-use pact_mock_server::mock_server_mismatches_ffi;
 use pact_mock_server::MockServerError;
+use pact_mock_server::mock_server_mismatches;
 use pact_mock_server::mock_server_matched_ffi;
 use pact_mock_server::write_pact_file_ffi;
 use pact_mock_server::cleanup_mock_server_ffi;
@@ -50,13 +50,9 @@ fn create_mock_server_call<'a>(env: NifEnv<'a>, args: &[NifTerm<'a>]) -> NifResu
 
 fn mock_server_mismatches_call<'a>(env: NifEnv<'a>, args: &[NifTerm<'a>]) -> NifResult<NifTerm<'a>> {
     let port: i32 = try!(args[0].decode());
-
-    let c_buf: *mut i8 = mock_server_mismatches_ffi(port);
-    let c_str: &CStr = unsafe { CStr::from_ptr(c_buf) };
-    let str_slice: &str = c_str.to_str().unwrap();
-    let str_buf: String = str_slice.to_owned();  // if necessary
-
-    Ok((atoms::ok(), str_buf).encode(env))
+    // TODO: This works only because mock_server_mismatches returns a string now: 
+    // Calling to_string() on json!(mismatches) in pact-reference/rust/pact_mock_server/src/lib.rs:657
+    Ok((atoms::ok(), mock_server_mismatches(port)).encode(env))
 }
 
 fn mock_server_matched_call<'a>(env: NifEnv<'a>, args: &[NifTerm<'a>]) -> NifResult<NifTerm<'a>> {
