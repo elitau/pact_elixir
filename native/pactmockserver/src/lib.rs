@@ -7,6 +7,7 @@ extern crate libc;
 use rustler::{NifEnv, NifTerm, NifResult, NifEncoder};
 use pact_mock_server::create_mock_server;
 use pact_mock_server::mock_server_mismatches_ffi;
+use pact_mock_server::MockServerError;
 use pact_mock_server::mock_server_matched_ffi;
 use pact_mock_server::write_pact_file_ffi;
 use pact_mock_server::cleanup_mock_server_ffi;
@@ -38,8 +39,12 @@ fn create_mock_server_call<'a>(env: NifEnv<'a>, args: &[NifTerm<'a>]) -> NifResu
     let port_arg: i32 = try!(args[1].decode());
 
     match create_mock_server(pact_json, port_arg) {
-        Ok(port) => Ok((atoms::ok(), port).encode(env)),
-        Err(err) => Ok((atoms::error(), 0).encode(env))
+        Ok(port) => 
+            Ok((atoms::ok(), port).encode(env)),
+        Err(MockServerError::MockServerFailedToStart) => 
+            Ok((atoms::error(), String::from("MockServerFailedToStart").encode(env)).encode(env)),
+        Err(MockServerError::InvalidPactJson) => 
+            Ok((atoms::error(), String::from("InvalidPactJson").encode(env)).encode(env))
     }
 }
 

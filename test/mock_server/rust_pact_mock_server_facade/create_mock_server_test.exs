@@ -39,6 +39,23 @@ defmodule PactElixir.RustPactMockServerFacadeTest do
     RustPactMockServerFacade.cleanup_mock_server(@port)
   end
 
+  test "fails if mock server could not start due to broken json" do
+    broken_json = "broken{}json"
+
+    assert {:error, error_message} =
+             RustPactMockServerFacade.create_mock_server(broken_json, @port)
+
+    assert "InvalidPactJson" == error_message
+    RustPactMockServerFacade.cleanup_mock_server(@port)
+  end
+
+  # test "fails if mock server could not start because of other error" do
+  #   assert {:error, error_message} = RustPactMockServerFacade.create_mock_server(@pact, 22)
+
+  #   assert "MockServerFailedToStart" == error_message
+  #   RustPactMockServerFacade.cleanup_mock_server(@port)
+  # end
+
   def get_request(path) do
     %HTTPoison.Response{} = HTTPoison.get!("http://localhost:#{@port}#{path}")
   end
