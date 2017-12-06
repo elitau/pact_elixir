@@ -33,11 +33,21 @@ defmodule PactElixir.RustPactMockServerFacade.MockServerMismatchesTest do
   """
   @port 50824
 
-  test "returns mismatches json when no requests were made" do
+  setup_all do
     RustPactMockServerFacade.create_mock_server(@pact, @port)
+
+    on_exit(fn ->
+      RustPactMockServerFacade.cleanup_mock_server(@port)
+    end)
+  end
+
+  test "returns mismatches json when no requests were made" do
     assert {:ok, mismatches_json_string} = RustPactMockServerFacade.mock_server_mismatches(@port)
 
     assert String.ends_with?(mismatches_json_string, "}]")
-    RustPactMockServerFacade.cleanup_mock_server(@port)
+  end
+
+  test "returns false if no expected requests were made" do
+    assert {:ok, false} = RustPactMockServerFacade.mock_server_matched(@port)
   end
 end

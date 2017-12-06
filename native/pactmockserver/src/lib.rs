@@ -8,7 +8,7 @@ use rustler::{NifEnv, NifTerm, NifResult, NifEncoder};
 use pact_mock_server::create_mock_server;
 use pact_mock_server::MockServerError;
 use pact_mock_server::mock_server_mismatches;
-use pact_mock_server::mock_server_matched_ffi;
+use pact_mock_server::mock_server_matched;
 use pact_mock_server::write_pact_file_ffi;
 use pact_mock_server::cleanup_mock_server_ffi;
 use std::ffi::CString;
@@ -58,7 +58,7 @@ fn mock_server_mismatches_call<'a>(env: NifEnv<'a>, args: &[NifTerm<'a>]) -> Nif
 fn mock_server_matched_call<'a>(env: NifEnv<'a>, args: &[NifTerm<'a>]) -> NifResult<NifTerm<'a>> {
     let port: i32 = try!(args[0].decode());
 
-    let matched: bool = mock_server_matched_ffi(port);
+    let matched: bool = mock_server_matched(port);
 
     Ok((atoms::ok(), matched).encode(env))
 }
