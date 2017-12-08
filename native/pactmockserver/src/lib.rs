@@ -15,7 +15,7 @@ use pact_mock_server::mock_server_mismatches;
 use pact_mock_server::mock_server_matched;
 use pact_mock_server::write_pact_file;
 use pact_mock_server::WritePactFileErr;
-use pact_mock_server::shutdown_mock_server_by_port;
+use pact_mock_server::cleanup_mock_server_ffi;
 mod atoms {
     rustler_atoms! {
         atom ok;
@@ -87,6 +87,6 @@ fn write_pact_file_call<'a>(env: NifEnv<'a>, args: &[NifTerm<'a>]) -> NifResult<
 fn cleanup_mock_server_call<'a>(env: NifEnv<'a>, args: &[NifTerm<'a>]) -> NifResult<NifTerm<'a>> {
     let port: i32 = try!(args[0].decode());
 
-    Ok((atoms::ok(), shutdown_mock_server_by_port(port)).encode(env))
+    Ok((atoms::ok(), cleanup_mock_server_ffi(port)).encode(env))
 }
 
