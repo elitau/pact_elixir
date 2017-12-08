@@ -1,7 +1,11 @@
 #[macro_use] extern crate rustler;
-#[macro_use] extern crate rustler_codegen;
+
+// Disabled for now, but still
+// wondering why rustler generated this in the first place
+// #[macro_use] extern crate rustler_codegen; 
+
 #[macro_use] extern crate lazy_static;
-#[macro_use] extern crate pact_mock_server;
+extern crate pact_mock_server;
 extern crate libc;
 
 use rustler::{NifEnv, NifTerm, NifResult, NifEncoder};
@@ -73,10 +77,8 @@ fn write_pact_file_call<'a>(env: NifEnv<'a>, args: &[NifTerm<'a>]) -> NifResult<
     match write_pact_file(port, Some(dir_path)) {
         Ok(_result) => 
             Ok((atoms::ok()).encode(env)),
-        /// IO Error occured
         Err(WritePactFileErr::IOError) => 
             Ok((atoms::error(), atoms::io_error()).encode(env)),
-        /// No mock server was running on the port
         Err(WritePactFileErr::NoMockServer) => 
             Ok((atoms::error(), atoms::no_mock_server_running_on_port()).encode(env))
     }
