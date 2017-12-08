@@ -9,7 +9,8 @@ use pact_mock_server::create_mock_server;
 use pact_mock_server::MockServerError;
 use pact_mock_server::mock_server_mismatches;
 use pact_mock_server::mock_server_matched;
-use pact_mock_server::write_pact_file_ffi;
+use pact_mock_server::write_pact_file;
+use pact_mock_server::WritePactFileErr;
 use pact_mock_server::cleanup_mock_server_ffi;
 use std::ffi::CString;
 use std::ffi::CStr;
@@ -17,6 +18,10 @@ mod atoms {
     rustler_atoms! {
         atom ok;
         atom error;
+        atom mock_server_failed_to_start;
+        atom invalid_pact_json;
+        atom io_error;
+        atom no_mock_server_running_on_port;
         //atom __true__ = "true";
         //atom __false__ = "false";
     }
@@ -42,9 +47,9 @@ fn create_mock_server_call<'a>(env: NifEnv<'a>, args: &[NifTerm<'a>]) -> NifResu
         Ok(port) => 
             Ok((atoms::ok(), port).encode(env)),
         Err(MockServerError::MockServerFailedToStart) => 
-            Ok((atoms::error(), String::from("MockServerFailedToStart").encode(env)).encode(env)),
+            Ok((atoms::error(), atoms::mock_server_failed_to_start()).encode(env)),
         Err(MockServerError::InvalidPactJson) => 
-            Ok((atoms::error(), String::from("InvalidPactJson").encode(env)).encode(env))
+            Ok((atoms::error(), atoms::invalid_pact_json()).encode(env))
     }
 }
 
@@ -67,11 +72,16 @@ fn write_pact_file_call<'a>(env: NifEnv<'a>, args: &[NifTerm<'a>]) -> NifResult<
     let port: i32 = try!(args[0].decode());
     let dir_path: String = try!(args[1].decode());
 
-    let s = CString::new(dir_path).unwrap();
-
-    let result = write_pact_file_ffi(port, s.as_ptr());
-
-    Ok((atoms::ok(), result).encode(env))
+    match write_pact_file(port, Some(dir_path)) {
+        Ok(_result) => 
+            Ok((atoms::ok()).encode(env)),
+        /// IO Error occured
+        Err(WritePactFileErr::IOError) => 
+            Ok((atoms::error(), atoms::io_error()).encode(env)),
+        /// No mock server was running on the port
+        Err(WritePactFileErr::NoMockServer) => 
+            Ok((atoms::error(), atoms::no_mock_server_running_on_port()).encode(env))
+    }
 }
 
 fn cleanup_mock_server_call<'a>(env: NifEnv<'a>, args: &[NifTerm<'a>]) -> NifResult<NifTerm<'a>> {

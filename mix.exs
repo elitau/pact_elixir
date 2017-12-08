@@ -42,7 +42,8 @@ defmodule PactElixir.MixProject do
       {:poison, "~> 3.1"},
       {:ex_doc, "~> 0.18", only: :dev, runtime: false},
       {:httpoison, "~> 0.13", only: :test},
-      {:excoveralls, "~> 0.7", only: :test}
+      {:excoveralls, "~> 0.7", only: :test},
+      {:temp, "~> 0.4", only: :test}
     ]
   end
 

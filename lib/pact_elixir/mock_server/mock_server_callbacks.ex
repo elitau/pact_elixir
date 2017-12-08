@@ -64,23 +64,13 @@ defmodule PactElixir.MockServerCallbacks do
     write_pact_file_with_error_handling(provider, matched?(provider))
   end
 
-  defp write_pact_file_with_error_handling(%ServiceProvider{} = provider, true) do
-    RustPactMockServerFacade.write_pact_file(provider.port, provider.pact_output_dir_path)
-    |> process_write_pact_file_error
+  def write_pact_file_with_error_handling(%ServiceProvider{} = provider, true) do
+    :ok = RustPactMockServerFacade.write_pact_file(provider.port, provider.pact_output_dir_path)
+    {:ok}
   end
 
-  defp write_pact_file_with_error_handling(%ServiceProvider{} = _provider, false) do
+  def write_pact_file_with_error_handling(%ServiceProvider{} = _provider, false) do
     # Do not write file when mismatches happend
     {:error, :mismatches_prohibited_file_output}
   end
-
-  # Successfully written
-  defp process_write_pact_file_error({:ok, 0}), do: {:success, true}
-  defp process_write_pact_file_error({:ok, 1}), do: {:error, :general_panic_caught}
-
-  defp process_write_pact_file_error({:ok, 2}),
-    do: {:error, :pact_file_was_not_able_to_be_written}
-
-  defp process_write_pact_file_error({:ok, 3}),
-    do: {:error, :mock_server_with_the_provided_port_was_not_found}
 end

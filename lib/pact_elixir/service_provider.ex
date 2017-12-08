@@ -17,7 +17,7 @@ defmodule PactElixir.ServiceProvider do
     }
   end
 
-  def pact_file_path(provider) do
+  def pact_file_path(%__MODULE__{} = provider) do
     Path.join(provider.pact_output_dir_path, "#{provider.consumer}-#{provider.provider}.json")
   end
 
