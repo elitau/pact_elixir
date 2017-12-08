@@ -35,7 +35,6 @@ be found at [https://hexdocs.pm/pact_elixir](https://hexdocs.pm/pact_elixir).
  * TODO: Dialyzer specs
  * TODO: Property testing
  * TODO: Think of a usable Rust API for pact_verifier
- * TODO: Call Rust functions instead of C API (FFI)
- * TODO: Releas to hex.pm
+ * TODO: Call Rust functions instead of C API (FFI) - Done when new version of pact_mock_server is released
  * TODO: Run every mock server as a GenServer
    * Convert to app that supervises all mock servers
