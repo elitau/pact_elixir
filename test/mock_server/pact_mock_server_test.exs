@@ -17,7 +17,8 @@ defmodule PactElixir.PactMockServerTest do
       delete_generated_pact_file(provider)
     end)
 
-    {:ok, provider: provider}
+    {:ok, mock_server_pid} = start_supervised({PactMockServer, provider})
+    {:ok, mock_server_pid: mock_server_pid}
   end
 
   # todo
@@ -27,50 +28,38 @@ defmodule PactElixir.PactMockServerTest do
   #   PactMockServer.shutdown_mock_server(@port)
   # end
 
-  test "return port of started mock server", %{provider: provider} do
-    {:ok, mock_server_pid} = start_supervised({PactMockServer, provider})
-
+  test "return port of started mock server", %{mock_server_pid: mock_server_pid} do
     assert Enum.member?(1000..65535, PactMockServer.port(mock_server_pid))
   end
 
-  test "spawn as genserver", %{provider: provider} do
-    {:ok, mock_server_pid} = start_supervised({PactMockServer, provider})
-
+  test "mock server responds to requests", %{mock_server_pid: mock_server_pid} do
     assert "bar" == get_request("/foo", mock_server_pid).body
   end
 
-  test "shutdown GenServer", %{provider: provider} do
-    {:ok, mock_server_pid} = start_supervised({PactMockServer, provider})
-
+  test "shutdown GenServer", %{mock_server_pid: mock_server_pid} do
     assert PactMockServer.stop(mock_server_pid)
   end
 
-  test "writes pact file", %{provider: provider} do
-    {:ok, mock_server_pid} = start_supervised({PactMockServer, provider})
-
-    # make sure all assertions are matched which is needed for the file to be written
-    get_request("/foo", mock_server_pid)
-
-    assert {:ok} == PactMockServer.write_pact_file(mock_server_pid)
-    assert File.exists?(PactMockServer.pact_file_path(mock_server_pid))
-  end
-
-  # matched? returns false if no server could be found for given port, so this test is somewhat misleading
-  test "do not write pact file when some assertions did not match", %{provider: provider} do
-    {:ok, mock_server_pid} = start_supervised({PactMockServer, provider})
-
-    assert {:error, :mismatches_prohibited_file_output} ==
-             PactMockServer.write_pact_file(mock_server_pid)
-
-    refute File.exists?(PactMockServer.pact_file_path(mock_server_pid))
-  end
-
   # TODO: Simulate other possible errors during pact file write
+  describe "write pact file" do
+    test "file exists", %{mock_server_pid: mock_server_pid} do
+      # make sure all assertions are matched which is needed for the file to be written
+      get_request("/foo", mock_server_pid)
 
-  test "shutdown mock server returns empty body", %{provider: provider} do
-    {:ok, mock_server_pid} = start_supervised({PactMockServer, provider})
+      assert {:ok} == PactMockServer.write_pact_file(mock_server_pid)
+      assert File.exists?(PactMockServer.pact_file_path(mock_server_pid))
+    end
 
-    assert "bar" == get_request("/foo", mock_server_pid).body
+    # matched? returns false if no server could be found for given port, so this test is somewhat misleading
+    test "error unless all assertions matched", %{mock_server_pid: mock_server_pid} do
+      assert {:error, :mismatches_prohibited_file_output} ==
+               PactMockServer.write_pact_file(mock_server_pid)
+
+      refute File.exists?(PactMockServer.pact_file_path(mock_server_pid))
+    end
+  end
+
+  test "stopped mock server returns empty body", %{mock_server_pid: mock_server_pid} do
     port = PactMockServer.port(mock_server_pid)
     assert :ok == PactMockServer.stop(mock_server_pid)
     refute Process.alive?(mock_server_pid)
