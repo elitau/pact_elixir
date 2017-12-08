@@ -13,4 +13,7 @@ rustler = "0.15.1"
 libc = "0.2.9"
 rustler_codegen = "0.15.1"
 lazy_static = "0.2"
-pact_mock_server = { version = "0.3.1", path = "../../../pact-reference/rust/pact_mock_server" }
+
+# TODO: Use official release after pull request xxx was merged
+pact_mock_server = { git = "https://github.com/elitau/pact-reference" }
+# version = "0.3.1", path = "../../../pact-reference/rust/pact_mock_server"
