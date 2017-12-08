@@ -52,6 +52,7 @@ defmodule PactElixir.PactMockServerTest do
     get_request("/foo", mock_server_pid)
 
     assert {:ok} == PactMockServer.write_pact_file(mock_server_pid)
+    assert File.exists?(PactMockServer.pact_file_path(mock_server_pid))
   end
 
   # matched? returns false if no server could be found for given port, so this test is somewhat misleading
