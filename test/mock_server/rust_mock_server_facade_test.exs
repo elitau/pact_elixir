@@ -1,3 +1,4 @@
+# TODO: This test has a broken usage of ports. 
 defmodule PactElixir.RustPactMockServerFacadeTest do
   use ExUnit.Case
   alias PactElixir.RustPactMockServerFacade
@@ -45,11 +46,10 @@ defmodule PactElixir.RustPactMockServerFacadeTest do
 
       assert {:error, :invalid_pact_json} =
                RustPactMockServerFacade.create_mock_server(broken_json, @port)
-
-      RustPactMockServerFacade.cleanup_mock_server(@port)
     end
 
-    # test "fails if mock server could not start because of other error" do
+    # TODO: Find a way to trigger this error
+    # test "returns error if mock server could not start because of some general error" do
     #   assert {:error, :mock_server_failed_to_start} = RustPactMockServerFacade.create_mock_server(@pact, 22)
 
     #   RustPactMockServerFacade.cleanup_mock_server(@port)
@@ -58,18 +58,22 @@ defmodule PactElixir.RustPactMockServerFacadeTest do
 
   describe "mock_server_mismatches" do
     test "returns mismatches json when no requests were made" do
-      RustPactMockServerFacade.create_mock_server(@pact, 50824)
+      port = 50824
+      RustPactMockServerFacade.create_mock_server(@pact, port)
 
-      assert {:ok, mismatches_json_string} =
-               RustPactMockServerFacade.mock_server_mismatches(50824)
+      assert {:ok, mismatches_json_string} = RustPactMockServerFacade.mock_server_mismatches(port)
 
       assert String.ends_with?(mismatches_json_string, "}]")
+      RustPactMockServerFacade.cleanup_mock_server(port)
     end
   end
 
   describe "matched" do
     test "returns false if none of expected requests were made" do
-      assert {:ok, false} = RustPactMockServerFacade.mock_server_matched(@port)
+      port = 50828
+      RustPactMockServerFacade.create_mock_server(@pact, port)
+      assert {:ok, false} = RustPactMockServerFacade.mock_server_matched(port)
+      RustPactMockServerFacade.cleanup_mock_server(port)
     end
   end
 
@@ -79,6 +83,7 @@ defmodule PactElixir.RustPactMockServerFacadeTest do
       port = 50825
       RustPactMockServerFacade.create_mock_server(@pact, port)
       assert :ok = RustPactMockServerFacade.write_pact_file(port, dir_path)
+      RustPactMockServerFacade.cleanup_mock_server(port)
     end
 
     test "returns error if there is no mock server for port" do
@@ -94,6 +99,8 @@ defmodule PactElixir.RustPactMockServerFacadeTest do
 
       assert {:error, :io_error} =
                RustPactMockServerFacade.write_pact_file(port, "/not/existing/path")
+
+      RustPactMockServerFacade.cleanup_mock_server(port)
     end
   end
 
