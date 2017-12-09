@@ -1,4 +1,7 @@
 defmodule PactElixir.Dsl do
+  @moduledoc """
+  This module can be imported to create and start a mock server with the usual Pact DSL.
+  """
   alias PactElixir.{ServiceProvider, Interaction, Request, Response, PactMockServer, Errors}
 
   def service_provider(options \\ %{}) do

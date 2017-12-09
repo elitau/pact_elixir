@@ -1,4 +1,7 @@
 defmodule PactElixir.Request do
+  @moduledoc """
+  Represent the expected request.
+  """
   @derive [Poison.Encoder]
   defstruct [:method, :path, :query, :headers, :body]
 

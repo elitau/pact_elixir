@@ -1,4 +1,8 @@
 defmodule PactElixir.PactMockServer do
+  @moduledoc """
+  GenServer client API for managing a pact mock server. 
+  Used in conjunction with PactElixir.MockServerCallbacks.
+  """
   alias PactElixir.ServiceProvider
   use GenServer
 

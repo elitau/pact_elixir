@@ -1,4 +1,7 @@
 defmodule PactElixir.Response do
+  @moduledoc """
+  Represent the expected response.
+  """
   @derive [Poison.Encoder]
   defstruct [:body, :headers, :status]
 

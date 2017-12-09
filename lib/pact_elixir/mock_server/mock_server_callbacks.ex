@@ -1,4 +1,9 @@
 defmodule PactElixir.MockServerCallbacks do
+  @moduledoc """
+  GenServer callbacks for managing a pact mock server. 
+  Used in conjunction with PactMockServer.
+  """
+
   alias PactElixir.{ServiceProvider, RustPactMockServerFacade}
 
   def init(provider) do

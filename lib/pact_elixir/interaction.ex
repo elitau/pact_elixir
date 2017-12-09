@@ -1,4 +1,7 @@
 defmodule PactElixir.Interaction do
+  @moduledoc """
+  Defines the expected interactions with a provider.
+  """
   defstruct [:description, :given, :request, :response]
 
   def to_json(interactions) do

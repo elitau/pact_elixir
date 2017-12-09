@@ -1,4 +1,7 @@
 defmodule PactElixir.RequestError do
+  @moduledoc """
+  Exception for request errors.
+  """
   @no_value :pact_elixir_no_meaningful_value
   defexception path: @no_value,
                method: @no_value,
@@ -11,6 +14,10 @@ defmodule PactElixir.RequestError do
 end
 
 defmodule PactElixir.Errors do
+  @moduledoc """
+  Currently this is the whole error handling stuff.
+  """
+
   # %{
   #   "method" => "GET",
   #   "path" => "/foo",
@@ -137,25 +144,25 @@ defmodule PactElixir.Errors do
   #   /// Response status differ
   #   Status
   # }
-  defp to_error(%{
-         "method" => "GET",
-         "path" => "/organizations/org23/locations/betrieb41",
-         "request" => %{
-           "body" => "Empty",
-           "headers" => %{
-             "connection" => "keep-alive",
-             "content-length" => "0",
-             "host" => "localhost:61627",
-             "te" => ""
-           },
-           "matching_rules" => %{"rules" => %{}},
-           "method" => "GET",
-           "path" => "/organizations/org23/locations/betrieb41",
-           "query" => nil
-         },
-         "type" => "request-not-found"
-       }) do
-  end
+  # defp to_error(%{
+  #        "method" => "GET",
+  #        "path" => "/organizations/org23/locations/betrieb41",
+  #        "request" => %{
+  #          "body" => "Empty",
+  #          "headers" => %{
+  #            "connection" => "keep-alive",
+  #            "content-length" => "0",
+  #            "host" => "localhost:61627",
+  #            "te" => ""
+  #          },
+  #          "matching_rules" => %{"rules" => %{}},
+  #          "method" => "GET",
+  #          "path" => "/organizations/org23/locations/betrieb41",
+  #          "query" => nil
+  #        },
+  #        "type" => "request-not-found"
+  #      }) do
+  # end
 
   defp mismatch_to_error(mismatch) do
     case mismatch do
