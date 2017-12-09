@@ -45,3 +45,5 @@ pact_elixir-*.tar
 .tool-versions-e
 .vscode
 .elixir_ls
+
+/docs/
