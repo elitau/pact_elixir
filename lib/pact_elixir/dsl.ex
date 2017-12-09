@@ -11,7 +11,9 @@ defmodule PactElixir.Dsl do
   end
 
   def mock_server_mismatches(provider) do
-    PactMockServer.mismatches(provider) |> Poison.decode!()
+    provider
+    |> PactMockServer.mismatches()
+    |> Poison.decode!()
   end
 
   def mock_server_matched?(provider) do
@@ -36,8 +38,7 @@ defmodule PactElixir.Dsl do
 
   # hook after test suite
   def after_test_suite(provider) do
-    provider
-    |> PactMockServer.write_pact_file()
+    PactMockServer.write_pact_file(provider)
 
     # shutdown mock server
   end
