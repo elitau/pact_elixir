@@ -1,4 +1,4 @@
-# TODO: This test has a broken usage of ports. 
+# TODO: This test has a broken usage of ports.
 defmodule PactElixir.RustPactMockServerFacadeTest do
   use ExUnit.Case
   alias PactElixir.RustPactMockServerFacade

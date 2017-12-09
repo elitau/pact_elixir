@@ -29,8 +29,7 @@ defmodule PactElixir.DslTest do
 
   test "fails with ex unit assertion error", %{provider: provider} do
     assert_raise PactElixir.RequestError, fn ->
-      provider
-      |> verify_interactions
+      verify_interactions(provider)
     end
   end
 

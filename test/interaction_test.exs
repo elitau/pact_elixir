@@ -32,7 +32,11 @@ defmodule PactElixir.InteractionTest do
       response: will_respond_with(status: 200, body: "bar")
     }
 
-    actual_json = PactElixir.Interaction.to_json([interaction]) |> Poison.decode!()
+    actual_json =
+      [interaction]
+      |> PactElixir.Interaction.to_json()
+      |> Poison.decode!()
+
     assert expected_interactions_json == actual_json
   end
 end

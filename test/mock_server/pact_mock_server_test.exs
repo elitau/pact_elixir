@@ -97,7 +97,8 @@ defmodule PactElixir.PactMockServerTest do
   end
 
   defp new_service_provider(options \\ %{}) do
-    service_provider(options)
+    options
+    |> service_provider()
     |> add_interaction(
          "give me foo",
          given("foo exists"),
