@@ -13,5 +13,9 @@ env: MIX_ENV=test
 # Compiling PactMockServer outputs a warning {:error, {:upgrade, 'Upgrade not supported by this NIF library.'}} which
 # swallows coverage results for it. Running test twice solves this for now.
 script:
- - mix test
- - mix coveralls.travis
+  - mix test
+  - mix coveralls.travis
+
+after_script:
+  - mix deps.get --only docs
+  - MIX_ENV=docs mix inch.report

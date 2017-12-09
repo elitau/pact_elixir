@@ -44,7 +44,8 @@ defmodule PactElixir.MixProject do
       {:httpoison, "~> 0.13", only: :test},
       {:excoveralls, "~> 0.7", only: :test},
       {:temp, "~> 0.4", only: :test},
-      {:credo, "~> 0.8", only: [:dev, :test], runtime: false}
+      {:credo, "~> 0.8", only: [:dev, :test], runtime: false},
+      {:inch_ex, only: :docs}
     ]
   end
 
