@@ -4,7 +4,11 @@ defmodule PactElixir.PactMockServer do
 
   # GenServer: Client
   def start_link(%ServiceProvider{} = provider) do
-    GenServer.start_link(PactElixir.MockServerCallbacks, provider)
+    GenServer.start_link(
+      PactElixir.MockServerCallbacks,
+      provider,
+      name: {:global, provider.provider}
+    )
   end
 
   def port(mock_server_pid) when is_pid(mock_server_pid) do
