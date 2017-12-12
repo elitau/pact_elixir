@@ -29,11 +29,15 @@ Documentation can be generated with [ExDoc](https://github.com/elixir-lang/ex_do
 and published on [HexDocs](https://hexdocs.pm). Once published, the docs can
 be found at [https://hexdocs.pm/pact_elixir](https://hexdocs.pm/pact_elixir).
 
-## Things I would like to try out
+## Minimum viable product
 
-* TODO: Dialyzer specs
-* TODO: Property testing
-* TODO: Think of a usable Rust API for pact_verifier
-* TODO: Call Rust functions instead of C API (FFI) - Done when new version of pact_mock_server is released
-* TODO: Run every mock server as a GenServer
-  * Convert to app that supervises all mock servers
+- [ ]  Call Rust functions instead of C API (FFI) - Done when new version of pact_mock_server is released
+- [ ]  Write pact file automatically after test suite ends and is green
+- [ ]  Default config for pact output directory should be the main apps root directory
+  - [ ] And make it configurable
+- [ ]  Convert to app that supervises all mock servers
+  - [x]  Run every mock server as a GenServer
+  - [ ]  Use `Supervisor` with `:simple_one_for_one` strategy. Start mock server with `Supervisor.start_child(supervisor_pid, [args])` and stop it with `Supervisor.terminate_child(supervisor_pid, child_pid)`.
+- [ ]  Dialyzer specs
+- [ ]  Property testing
+- [ ]  Think of a usable Rust API for pact_verifier
