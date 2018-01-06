@@ -32,7 +32,7 @@ defmodule PactElixir.RustPactMockServerFacadeTest do
         }
       }
   """
-  @port 50823
+  @port 50_823
 
   describe "create_mock_server" do
     test "creates a mock server and returns its port" do
@@ -58,7 +58,7 @@ defmodule PactElixir.RustPactMockServerFacadeTest do
 
   describe "mock_server_mismatches" do
     test "returns mismatches json when no requests were made" do
-      port = 50824
+      port = 50_824
       RustPactMockServerFacade.create_mock_server(@pact, port)
 
       assert {:ok, mismatches_json_string} = RustPactMockServerFacade.mock_server_mismatches(port)
@@ -70,7 +70,7 @@ defmodule PactElixir.RustPactMockServerFacadeTest do
 
   describe "matched" do
     test "returns false if none of expected requests were made" do
-      port = 50828
+      port = 50_828
       RustPactMockServerFacade.create_mock_server(@pact, port)
       assert {:ok, false} = RustPactMockServerFacade.mock_server_matched(port)
       RustPactMockServerFacade.cleanup_mock_server(port)
@@ -80,7 +80,7 @@ defmodule PactElixir.RustPactMockServerFacadeTest do
   describe "write_pact_file" do
     test "writes pact file" do
       {:ok, dir_path} = Temp.mkdir("RustPactMockServerFacadeTest")
-      port = 50825
+      port = 50_825
       RustPactMockServerFacade.create_mock_server(@pact, port)
       assert :ok = RustPactMockServerFacade.write_pact_file(port, dir_path)
       RustPactMockServerFacade.cleanup_mock_server(port)
@@ -94,7 +94,7 @@ defmodule PactElixir.RustPactMockServerFacadeTest do
     end
 
     test "returns error if io could not complete" do
-      port = 50826
+      port = 50_826
       RustPactMockServerFacade.create_mock_server(@pact, port)
 
       assert {:error, :io_error} =
@@ -106,7 +106,7 @@ defmodule PactElixir.RustPactMockServerFacadeTest do
 
   describe "cleanup_mock_server" do
     test "returns true" do
-      port = 50827
+      port = 50_827
       RustPactMockServerFacade.create_mock_server(@pact, port)
       assert {:ok, true} == RustPactMockServerFacade.cleanup_mock_server(port)
     end

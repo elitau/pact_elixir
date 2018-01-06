@@ -40,7 +40,7 @@ defmodule PactElixir.PactMockServerTest do
   end
 
   test "return port of started mock server", %{mock_server_pid: mock_server_pid} do
-    assert Enum.member?(1000..65535, PactMockServer.port(mock_server_pid))
+    assert Enum.member?(1000..65_535, PactMockServer.port(mock_server_pid))
   end
 
   test "mock server responds to requests", %{mock_server_pid: mock_server_pid} do
