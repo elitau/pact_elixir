@@ -9,8 +9,8 @@ defmodule PactElixir.ServiceProviderTest do
   end
 
   test "constructor parameters" do
-    provider = ServiceProvider.new(port: 52342)
+    provider = ServiceProvider.new(port: 52_342)
 
-    assert 52342 == provider.port
+    assert 52_342 == provider.port
   end
 end
