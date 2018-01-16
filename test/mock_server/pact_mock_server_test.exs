@@ -19,6 +19,11 @@ defmodule PactElixir.PactMockServerTest do
       assert Process.alive?(mock_server_pid)
     end
 
+    test "registers process globally with name of provider" do
+      provider = PactMockServer.service_provider("test_provider")
+      assert "test_provider" = provider.provider
+    end
+
     test "allows multiple mock servers" do
       another_provider = new_service_provider(%{provider: "another_provider"})
 
@@ -76,6 +81,12 @@ defmodule PactElixir.PactMockServerTest do
       assert :ok == PactMockServer.stop(mock_server_pid)
       refute Process.alive?(mock_server_pid)
       assert "" == get_request("/foo", port).body
+    end
+  end
+
+  describe "returns service provider" do
+    test "as ServiceProvider struct", %{mock_server_pid: mock_server_pid} do
+      assert %ServiceProvider{} = PactMockServer.service_provider(mock_server_pid)
     end
   end
 

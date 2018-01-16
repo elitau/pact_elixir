@@ -41,6 +41,15 @@ defmodule PactElixir.PactMockServer do
     GenServer.call(mock_server_pid, {:write_pact_file})
   end
 
+  # @spec service_provider(pid) :: PactElixir.ServiceProvider
+  def service_provider(name) when is_binary(name) do
+    GenServer.call(registered_name(name), {:service_provider})
+  end
+
+  def service_provider(mock_server_pid) when is_pid(mock_server_pid) do
+    GenServer.call(mock_server_pid, {:service_provider})
+  end
+
   def stop(mock_server_pid) when is_pid(mock_server_pid) do
     :ok = GenServer.stop(mock_server_pid)
   end
