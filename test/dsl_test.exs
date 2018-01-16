@@ -50,6 +50,13 @@ defmodule PactElixir.DslTest do
     assert File.exists?(exported_pact_file_path)
   end
 
+  @tag :skip
+  test "convert all the errors" do
+  end
+
+  @tag :skip
+  test "test from another project as real lib"
+
   # test "throws InvalidInteractionError when description is missing"
   # test "throws InvalidInteractionError when request is missing"
   # test "throws InvalidInteractionError when response is missing"
@@ -68,11 +75,11 @@ defmodule PactElixir.DslTest do
       pact_output_dir_path: pact_output_dir_path
     )
     |> add_interaction(
-         "give me foo",
-         given("foo exists"),
-         with_request(method: :get, path: "/foo"),
-         will_respond_with(status: 200, body: "bar")
-       )
+      "give me foo",
+      given("foo exists"),
+      with_request(method: :get, path: "/foo"),
+      will_respond_with(status: 200, body: "bar")
+    )
     |> build
   end
 end
