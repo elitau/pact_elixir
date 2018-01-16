@@ -9,11 +9,11 @@ defmodule PactElixir.Dsl do
   end
 
   def build(provider) do
-    {:ok, pid} = PactMockServer.start_link(provider)
+    {:ok, pid} = PactElixir.MockServerSupervisor.start_mock_server(provider)
     pid
   end
 
-  def mock_server_mismatches(provider) do
+  def mock_server_mismatches(provider) when is_pid(provider) do
     provider
     |> PactMockServer.mismatches()
     |> Poison.decode!()
