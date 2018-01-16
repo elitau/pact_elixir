@@ -3,9 +3,25 @@ defmodule PactElixir.DslTest do
   alias PactElixir.PactMockServer
   import PactElixir.Dsl
 
-  # "setup" is called before each test
-  setup do
-    {:ok, provider: provider_with_interaction()}
+  setup context do
+    provider = provider_with_interaction()
+
+    unless context[:skip_after_test_suite_cleanup] do
+      on_exit(fn -> after_test_suite(provider) end)
+    end
+
+    if context[:delete_pact_file] do
+      exported_pact_file_path =
+        Path.join(PactMockServer.pact_output_dir_path(provider), "PactTester-PactProvider.json")
+
+      on_exit(fn ->
+        if File.exists?(exported_pact_file_path) do
+          File.rm(exported_pact_file_path)
+        end
+      end)
+    end
+
+    {:ok, provider: provider}
   end
 
   test "Provider responds to /foo with 'bar'", %{provider: provider} do
@@ -33,21 +49,28 @@ defmodule PactElixir.DslTest do
     end
   end
 
+  @tag :skip_after_test_suite_cleanup
+  @tag :delete_pact_file
   test "write pact file after test suite", %{provider: provider} do
+    get_request(provider, "/foo")
+
     exported_pact_file_path =
       Path.join(PactMockServer.pact_output_dir_path(provider), "PactTester-PactProvider.json")
-
-    on_exit(fn ->
-      if File.exists?(exported_pact_file_path) do
-        File.rm(exported_pact_file_path)
-      end
-    end)
-
-    get_request(provider, "/foo")
 
     after_test_suite(provider)
 
     assert File.exists?(exported_pact_file_path)
+  end
+
+  @tag :skip_after_test_suite_cleanup
+  @tag :delete_pact_file
+  test "genserver of mock server is killed after test suite", %{provider: provider} do
+    pid = GenServer.whereis(PactMockServer.registered_name("PactProvider"))
+    assert Process.alive?(pid)
+
+    after_test_suite(provider)
+
+    refute Process.alive?(pid)
   end
 
   @tag :skip

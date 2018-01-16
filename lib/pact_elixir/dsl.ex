@@ -50,6 +50,7 @@ defmodule PactElixir.Dsl do
 
   def after_test_suite(provider_pid) when is_pid(provider_pid) do
     PactMockServer.write_pact_file(provider_pid)
+    PactElixir.MockServerSupervisor.terminate_child(provider_pid)
   end
 
   def after_test_suite(providers) when is_list(providers) do
