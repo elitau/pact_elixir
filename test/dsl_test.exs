@@ -50,6 +50,13 @@ defmodule PactElixir.DslTest do
     assert File.exists?(exported_pact_file_path)
   end
 
+  @tag :skip
+  test "convert all the errors" do
+  end
+
+  @tag :skip
+  test "test from another project as real lib"
+
   # test "throws InvalidInteractionError when description is missing"
   # test "throws InvalidInteractionError when request is missing"
   # test "throws InvalidInteractionError when response is missing"
