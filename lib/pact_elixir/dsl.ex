@@ -39,11 +39,21 @@ defmodule PactElixir.Dsl do
     Enum.map(errors, &raise(&1))
   end
 
-  # hook after test suite
-  def after_test_suite(provider) do
-    PactMockServer.write_pact_file(provider)
+  def after_test_suite(provider_name) when is_binary(provider_name) do
+    provider_name
+    |> PactMockServer.registered_name()
+    |> GenServer.whereis()
+    |> after_test_suite
 
     # shutdown mock server
+  end
+
+  def after_test_suite(provider_pid) when is_pid(provider_pid) do
+    PactMockServer.write_pact_file(provider_pid)
+  end
+
+  def after_test_suite(providers) when is_list(providers) do
+    Enum.map(providers, &after_test_suite/1)
   end
 
   # todo: capture source location of request/response interaction definition for error output

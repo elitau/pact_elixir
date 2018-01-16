@@ -11,7 +11,7 @@ defmodule PactElixir.PactMockServer do
     GenServer.start_link(
       PactElixir.MockServerCallbacks,
       provider,
-      name: {:global, provider.provider}
+      name: registered_name(provider.provider)
     )
   end
 
@@ -41,6 +41,10 @@ defmodule PactElixir.PactMockServer do
     GenServer.call(mock_server_pid, {:write_pact_file})
   end
 
+  def write_pact_file(name) when is_binary(name) do
+    GenServer.call(registered_name(name), {:write_pact_file})
+  end
+
   # @spec service_provider(pid) :: PactElixir.ServiceProvider
   def service_provider(name) when is_binary(name) do
     GenServer.call(registered_name(name), {:service_provider})
@@ -48,6 +52,11 @@ defmodule PactElixir.PactMockServer do
 
   def service_provider(mock_server_pid) when is_pid(mock_server_pid) do
     GenServer.call(mock_server_pid, {:service_provider})
+  end
+
+  def registered_name(name) when is_binary(name) do
+    # {:via, Registry, {PactElixir.Registry, name}}
+    {:global, name}
   end
 
   def stop(mock_server_pid) when is_pid(mock_server_pid) do
