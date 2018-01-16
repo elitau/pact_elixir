@@ -10,6 +10,7 @@ defmodule PactElixir.Application do
     children = [
       # Starts a worker by calling: PactElixir.Worker.start_link(arg)
       # {PactElixir.Worker, arg},
+      # {Registry, keys: :unique, name: PactElixir.Registry}
     ]
 
     # See https://hexdocs.pm/elixir/Supervisor.html
