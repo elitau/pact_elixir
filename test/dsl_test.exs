@@ -75,11 +75,11 @@ defmodule PactElixir.DslTest do
       pact_output_dir_path: pact_output_dir_path
     )
     |> add_interaction(
-         "give me foo",
-         given("foo exists"),
-         with_request(method: :get, path: "/foo"),
-         will_respond_with(status: 200, body: "bar")
-       )
+      "give me foo",
+      given("foo exists"),
+      with_request(method: :get, path: "/foo"),
+      will_respond_with(status: 200, body: "bar")
+    )
     |> build
   end
 end

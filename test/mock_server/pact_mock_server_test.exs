@@ -100,10 +100,10 @@ defmodule PactElixir.PactMockServerTest do
     options
     |> service_provider()
     |> add_interaction(
-         "give me foo",
-         given("foo exists"),
-         with_request(method: :get, path: "/foo"),
-         will_respond_with(status: 200, body: "bar")
-       )
+      "give me foo",
+      given("foo exists"),
+      with_request(method: :get, path: "/foo"),
+      will_respond_with(status: 200, body: "bar")
+    )
   end
 end
