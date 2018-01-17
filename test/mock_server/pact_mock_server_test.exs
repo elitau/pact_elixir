@@ -63,19 +63,18 @@ defmodule PactElixir.PactMockServerTest do
     end
 
     # matched? returns false if no server could be found for given port, so this test is somewhat misleading
-    test "error unless all assertions matched", %{mock_server_pid: mock_server_pid} do
+    test "errors unless all assertions matched", %{mock_server_pid: mock_server_pid} do
       assert {:error, :mismatches_prohibited_file_output} ==
                PactMockServer.write_pact_file(mock_server_pid)
 
       refute File.exists?(PactMockServer.pact_file_path(mock_server_pid))
     end
 
-    test "call function with provider name", %{mock_server_pid: mock_server_pid} do
+    test "call with provider name", %{mock_server_pid: mock_server_pid} do
       # make sure all assertions are matched which is needed for the file to be written
       do_example_request(mock_server_pid)
 
       assert {:ok} == PactMockServer.write_pact_file("test_provider")
-      assert File.exists?(PactMockServer.pact_file_path(mock_server_pid))
     end
   end
 
