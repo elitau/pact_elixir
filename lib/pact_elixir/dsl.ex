@@ -53,9 +53,9 @@ defmodule PactElixir.Dsl do
     PactElixir.MockServerSupervisor.terminate_child(provider_pid)
   end
 
-  def after_test_suite(providers) when is_list(providers) do
-    Enum.map(providers, &after_test_suite/1)
-  end
+  # def after_test_suite(providers) when is_list(providers) do
+  #   Enum.map(providers, &after_test_suite/1)
+  # end
 
   # todo: capture source location of request/response interaction definition for error output
   def add_interaction(provider, description, given, %Request{} = request, %Response{} = response) do
