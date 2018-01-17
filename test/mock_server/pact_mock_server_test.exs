@@ -69,6 +69,14 @@ defmodule PactElixir.PactMockServerTest do
 
       refute File.exists?(PactMockServer.pact_file_path(mock_server_pid))
     end
+
+    test "call function with provider name", %{mock_server_pid: mock_server_pid} do
+      # make sure all assertions are matched which is needed for the file to be written
+      do_example_request(mock_server_pid)
+
+      assert {:ok} == PactMockServer.write_pact_file("test_provider")
+      assert File.exists?(PactMockServer.pact_file_path(mock_server_pid))
+    end
   end
 
   describe "stop mock server" do
@@ -87,6 +95,10 @@ defmodule PactElixir.PactMockServerTest do
   describe "returns service provider" do
     test "as ServiceProvider struct", %{mock_server_pid: mock_server_pid} do
       assert %ServiceProvider{} = PactMockServer.service_provider(mock_server_pid)
+    end
+
+    test "as ServiceProvider struct for provider name" do
+      assert %ServiceProvider{} = PactMockServer.service_provider("test_provider")
     end
   end
 
