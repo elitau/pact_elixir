@@ -64,6 +64,7 @@ defmodule PactElixir.DslTest do
 
   @tag :skip_after_test_suite_cleanup
   @tag :delete_pact_file
+  # This test has too much knowledge about the internals. Call it with provider name only
   test "genserver of mock server is killed after test suite", %{provider: provider} do
     pid = GenServer.whereis(PactMockServer.registered_name("PactProvider"))
     assert Process.alive?(pid)
