@@ -1,6 +1,6 @@
 defmodule PactElixir.MockServerCallbacks do
   @moduledoc """
-  GenServer callbacks for managing a pact mock server. 
+  GenServer callbacks for managing a pact mock server.
   Used in conjunction with PactMockServer.
   """
 

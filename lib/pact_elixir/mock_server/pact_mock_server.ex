@@ -1,6 +1,6 @@
 defmodule PactElixir.PactMockServer do
   @moduledoc """
-  GenServer client API for managing a pact mock server. 
+  GenServer client API for managing a pact mock server.
   Used in conjunction with PactElixir.MockServerCallbacks.
   """
   alias PactElixir.ServiceProvider
@@ -61,5 +61,10 @@ defmodule PactElixir.PactMockServer do
 
   def stop(mock_server_pid) when is_pid(mock_server_pid) do
     :ok = GenServer.stop(mock_server_pid)
+  end
+
+  # This is not used anywhere, just to shut up the warning elixir produces
+  def init(_) do
+    {:ok, nil}
   end
 end
