@@ -13,6 +13,47 @@ defmodule PactElixir.RequestError do
   end
 end
 
+defmodule PactElixir.MismatchesError do
+  @moduledoc """
+  Exception for mismatches errors.
+  """
+
+  @no_value :pact_elixir_no_meaningful_value
+  defexception path: @no_value,
+               method: @no_value,
+               mismatches: @no_value,
+               request: @no_value
+
+  def message(exception) do
+    "\n\n" <> "Mismatches: \n" <> format_mismatches(exception.mismatches)
+  end
+
+  # /// Request query mismatch
+  # QueryMismatch {
+  #     /// query parameter name
+  #     parameter: String,
+  #     /// expected value
+  #     expected: String,
+  #     /// actual value
+  #     actual: String,
+  #     /// description of the mismatch
+  #     mismatch: String
+  # },
+  def format_mismatches(mismatches) do
+    mismatches
+    |> Enum.map(fn %{
+                     "actual" => actual,
+                     "expected" => expected,
+                     "mismatch" => mismatch,
+                     "parameter" => _parameter,
+                     "type" => _type
+                   } ->
+      ~s|#{mismatch}. Expected: "#{expected}", got "#{actual}".|
+    end)
+    |> Enum.join("\n")
+  end
+end
+
 defmodule PactElixir.Errors do
   @moduledoc """
   Currently this is the whole error handling stuff.
@@ -81,17 +122,6 @@ defmodule PactElixir.Errors do
   #     expected: u16,
   #     /// actual response status
   #     actual: u16
-  # },
-  # /// Request query mismatch
-  # QueryMismatch {
-  #     /// query parameter name
-  #     parameter: String,
-  #     /// expected value
-  #     expected: String,
-  #     /// actual value
-  #     actual: String,
-  #     /// description of the mismatch
-  #     mismatch: String
   # },
   # /// Header mismatch
   # HeaderMismatch {
@@ -180,6 +210,14 @@ defmodule PactElixir.Errors do
           path: mismatch["path"],
           request: mismatch["request"],
           message: "Request not found"
+        }
+
+      %{"type" => "request-mismatch"} ->
+        %PactElixir.MismatchesError{
+          method: mismatch["method"],
+          path: mismatch["path"],
+          request: mismatch["request"],
+          mismatches: mismatch["mismatches"]
         }
 
       _ ->
