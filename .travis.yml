@@ -12,6 +12,11 @@ before_install:
   - rustc --version
   - cargo --version
 
+# https://askubuntu.com/questions/408784/after-doing-a-sudo-apt-get-install-app-where-does-the-application-get-stored
+after_install:
+  - dpkg -L rustc
+  - dpkg -L cargo
+
 env: MIX_ENV=test
 
 # Compiling PactMockServer outputs a warning {:error, {:upgrade, 'Upgrade not supported by this NIF library.'}} which
