@@ -2,6 +2,10 @@ language: elixir
 elixir: '1.6.5'
 otp_release: '20.0'
 
+cache:
+  directories:
+  - $HOME/otp/
+
 before_install:
   - sudo apt-get -qq update
   - sudo apt-get install -y --no-install-recommends rustc cargo
