@@ -11,7 +11,7 @@ defmodule PactElixir.Request do
     %PactElixir.Request{
       method: value_or_default.(:method, "GET") |> to_string |> String.upcase(),
       path: value_or_default.(:path, "/"),
-      query: value_or_default.(:query, ""),
+      query: value_or_default.(:query, %{}) |> URI.encode_query(),
       headers: value_or_default.(:headers, %{}),
       body: value_or_default.(:body, "")
     }

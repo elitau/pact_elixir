@@ -12,9 +12,7 @@ defmodule PactElixir.InteractionTest do
             "request": {
               "method": "GET",
               "path": "/foo",
-              "query": {
-                "sort": "desc"
-              },
+              "query": "sort=desc",
               "headers": {},
               "body": ""
             },
