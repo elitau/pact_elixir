@@ -16,6 +16,10 @@ before_install:
 after_install:
   - dpkg -L rustc
   - dpkg -L cargo
+  - dpkg -L libhttp-parser2.1
+  - dpkg -L libssh2-1
+  - dpkg -L libstd-rust-1.24
+  - dpkg -L libstd-rust-dev
 
 env: MIX_ENV=test
 
