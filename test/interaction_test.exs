@@ -12,7 +12,9 @@ defmodule PactElixir.InteractionTest do
             "request": {
               "method": "GET",
               "path": "/foo",
-              "query": "",
+              "query": {
+                "sort": "desc"
+              },
               "headers": {},
               "body": ""
             },
@@ -28,7 +30,7 @@ defmodule PactElixir.InteractionTest do
     interaction = %PactElixir.Interaction{
       description: "interaction-description",
       given: given("foo is present"),
-      request: with_request(method: :get, path: "/foo"),
+      request: with_request(method: :get, path: "/foo", query: %{sort: "desc"}),
       response: will_respond_with(status: 200, body: "bar")
     }
 
