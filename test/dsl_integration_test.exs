@@ -1,4 +1,4 @@
-defmodule PactElixir.DslTest do
+defmodule PactElixir.DslIntegrationTest do
   use ExUnit.Case
   alias PactElixir.PactMockServer
   import PactElixir.Dsl
@@ -29,6 +29,15 @@ defmodule PactElixir.DslTest do
 
     assert [] == mock_server_mismatches(provider)
     assert true == mock_server_matched?(provider)
+  end
+
+  test "Output all mismatches after single test finished" do
+  end
+
+  test "Output all mismatches after test suite finished" do
+  end
+
+  test "Tell that pact file was not written due to mismatches" do
   end
 
   test "Mock server includes mismatch without mocked request being made", %{provider: provider} do
