@@ -1,3 +1,5 @@
+require Logger
+
 defmodule PactElixir.MockServerCallbacks do
   @moduledoc """
   GenServer callbacks for managing a pact mock server.
@@ -70,6 +72,7 @@ defmodule PactElixir.MockServerCallbacks do
   end
 
   def write_pact_file(%ServiceProvider{} = provider) do
+    Logger.info("Writing Pact file to " <> PactElixir.ServiceProvider.pact_file_path(provider))
     write_pact_file_with_error_handling(provider, matched?(provider))
   end
 
