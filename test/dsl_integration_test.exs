@@ -57,13 +57,13 @@ defmodule PactElixir.DslIntegrationTest do
   end
 
   @tag :skip_after_test_suite_cleanup
-  test "write pact file after test suite", %{provider: provider} do
+  test "write pact file if all interactions matched", %{provider: provider} do
     get_request(provider, "/foo")
 
     exported_pact_file_path =
       Path.join(PactMockServer.pact_output_dir_path(provider), "PactTester-PactProvider.json")
 
-    after_test_suite(provider)
+    verify_pact(provider)
 
     assert File.exists?(exported_pact_file_path)
   end
