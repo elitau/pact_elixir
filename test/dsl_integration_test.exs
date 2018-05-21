@@ -51,7 +51,7 @@ defmodule PactElixir.DslIntegrationTest do
   end
 
   test "fails with ex unit assertion error", %{provider: provider} do
-    assert_raise PactElixir.RequestError, fn ->
+    assert_raise PactElixir.VerificationError, fn ->
       verify_interactions(provider)
     end
   end

@@ -23,22 +23,14 @@ defmodule PactElixir.Dsl do
     PactMockServer.matched?(provider)
   end
 
-  # hook to run after each test
+  # Verifies interactions and raises an error if mismatches exist
   def verify_interactions(provider) do
     provider
     |> mock_server_mismatches
-    |> Errors.convert_to_errors()
-    |> throw_errors
+    |> Errors.convert_to_error()
   end
 
-  def throw_errors([]) do
-    # Logger.no_mismatches
-  end
-
-  def throw_errors(errors) do
-    Enum.map(errors, &raise(&1))
-  end
-
+  # Cleanup
   def after_test_suite(provider_name) when is_binary(provider_name) do
     provider_name
     |> PactMockServer.registered_name()
@@ -48,9 +40,18 @@ defmodule PactElixir.Dsl do
     # shutdown mock server
   end
 
+  # Call after successful test suite run
   def after_test_suite(provider_pid) when is_pid(provider_pid) do
     PactMockServer.write_pact_file(provider_pid)
     PactElixir.MockServerSupervisor.terminate_child(provider_pid)
+  end
+
+  # Checks whether all expectations were met
+  def after_test(provider_pid) when is_pid(provider_pid) do
+    case mock_server_matched?(provider_pid) do
+      true -> :nothing
+      _ -> provider_pid |> verify_interactions()
+    end
   end
 
   # def after_test_suite(providers) when is_list(providers) do

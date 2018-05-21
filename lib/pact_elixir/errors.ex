@@ -1,33 +1,4 @@
-defmodule PactElixir.RequestError do
-  @moduledoc """
-  Exception for request errors.
-  """
-  @no_value :pact_elixir_no_meaningful_value
-  defexception path: @no_value,
-               method: @no_value,
-               message: @no_value,
-               request: @no_value
-
-  def message(exception) do
-    "\n\n" <> PactElixir.Errors.format_difference_error(exception)
-  end
-end
-
 defmodule PactElixir.MismatchesError do
-  @moduledoc """
-  Exception for mismatches errors.
-  """
-
-  @no_value :pact_elixir_no_meaningful_value
-  defexception path: @no_value,
-               method: @no_value,
-               mismatches: @no_value,
-               request: @no_value
-
-  def message(exception) do
-    "\n\n" <> "Mismatches: \n" <> format_mismatches(exception.mismatches)
-  end
-
   # /// Request query mismatch
   # QueryMismatch {
   #     /// query parameter name
@@ -54,6 +25,10 @@ defmodule PactElixir.MismatchesError do
   end
 end
 
+defmodule PactElixir.VerificationError do
+  defexception [:message]
+end
+
 defmodule PactElixir.Errors do
   @moduledoc """
   Currently this is the whole error handling stuff.
@@ -72,156 +47,131 @@ defmodule PactElixir.Errors do
   #   },
   #   "type" => "missing-request"
   # }
-  def convert_to_errors(mismatches) do
-    Enum.map(mismatches, &mismatch_to_error/1)
-  end
 
-  def format_difference_error(%PactElixir.RequestError{} = exception) do
-    "RequestError: #{exception.message}, method: #{exception.method}, path: #{exception.path}, request: #{
-      inspect(exception.request)
-    }"
-  end
+  def convert_to_error(mismatches) do
+    messages = Enum.map(mismatches, &mismatch_to_message/1)
 
-  # %{
-  #   "method" => "GET",
-  #   "path" => "/organizations/org23/locations/betrieb41",
-  #   "request" => %{
-  #     "body" => "Empty",
-  #     "headers" => %{
-  #       "connection" => "keep-alive",
-  #       "content-length" => "0",
-  #       "host" => "localhost:61627",
-  #       "te" => ""
-  #     },
-  #     "matching_rules" => %{"rules" => %{}},
-  #     "method" => "GET",
-  #     "path" => "/organizations/org23/locations/betrieb41",
-  #     "query" => nil
-  #   },
-  #   "type" => "request-not-found"
-  # }
-
-  # MethodMismatch {
-  #     /// Expected request method
-  #     expected: String,
-  #     /// Actual request method
-  #     actual: String
-  # },
-  # /// Request Path mismatch
-  # PathMismatch {
-  #     /// expected request path
-  #     expected: String,
-  #     /// actual request path
-  #     actual: String,
-  #     /// description of the mismatch
-  #     mismatch: String
-  # },
-  # /// Response status mismatch
-  # StatusMismatch {
-  #     /// expected response status
-  #     expected: u16,
-  #     /// actual response status
-  #     actual: u16
-  # },
-  # /// Header mismatch
-  # HeaderMismatch {
-  #     /// header key
-  #     key: String,
-  #     /// expected value
-  #     expected: String,
-  #     /// actual value
-  #     actual: String,
-  #     /// description of the mismatch
-  #     mismatch: String
-  # },
-  # /// Mismatch in the content type of the body
-  # BodyTypeMismatch {
-  #     /// expected content type of the body
-  #     expected: String,
-  #     /// actual content type of the body
-  #     actual: String
-  # },
-  # /// Body element mismatch
-  # BodyMismatch {
-  #     /// path expression to where the mismatch occured
-  #     path: String,
-  #     /// expected value
-  #     expected: Option<Vec<u8>>,
-  #     /// actual value
-  #     actual: Option<Vec<u8>>,
-  #     /// description of the mismatch
-  #     mismatch: String
-  # }
-
-  # RequestMatch
-  # RequestMismatch
-  # RequestNotFound
-  # MissingRequest
-
-  # pub enum DifferenceType {
-  #   /// Methods differ
-  #   Method,
-  #   /// Paths differ
-  #   Path,
-  #   /// Headers differ
-  #   Headers,
-  #   /// Query parameters differ
-  #   QueryParameters,
-  #   /// Bodies differ
-  #   Body,
-  #   /// Matching Rules differ
-  #   MatchingRules,
-  #   /// Response status differ
-  #   Status
-  # }
-  # defp to_error(%{
-  #        "method" => "GET",
-  #        "path" => "/organizations/org23/locations/betrieb41",
-  #        "request" => %{
-  #          "body" => "Empty",
-  #          "headers" => %{
-  #            "connection" => "keep-alive",
-  #            "content-length" => "0",
-  #            "host" => "localhost:61627",
-  #            "te" => ""
-  #          },
-  #          "matching_rules" => %{"rules" => %{}},
-  #          "method" => "GET",
-  #          "path" => "/organizations/org23/locations/betrieb41",
-  #          "query" => nil
-  #        },
-  #        "type" => "request-not-found"
-  #      }) do
-  # end
-
-  defp mismatch_to_error(mismatch) do
-    case mismatch do
-      %{"type" => "missing-request"} ->
-        %PactElixir.RequestError{
-          method: mismatch["method"],
-          path: mismatch["path"],
-          request: mismatch["request"],
-          message: "Missing request"
-        }
-
-      %{"type" => "request-not-found"} ->
-        %PactElixir.RequestError{
-          method: mismatch["method"],
-          path: mismatch["path"],
-          request: mismatch["request"],
-          message: "Request not found"
-        }
-
-      %{"type" => "request-mismatch"} ->
-        %PactElixir.MismatchesError{
-          method: mismatch["method"],
-          path: mismatch["path"],
-          request: mismatch["request"],
-          mismatches: mismatch["mismatches"]
-        }
-
-      _ ->
-        mismatch
+    if messages != [] do
+      raise PactElixir.VerificationError,
+            "error while verifying expectations\n\n" <> Enum.join(messages, "\n")
     end
+
+    :ok
+  end
+
+  defp mismatch_to_message(%{"request" => request, "type" => type} = _mismatch) do
+    "#{type_to_name(type)}:\n#{map_to_string(request)}"
+  end
+
+  defp mismatch_to_message(
+         %{"mismatches" => mismatches, "type" => type, "method" => method, "path" => path} =
+           _mismatch
+       ) do
+    "#{type_to_name(type)}: Mismatches for #{method} '#{path}':\n" <>
+      PactElixir.MismatchesError.format_mismatches(mismatches)
+  end
+
+  def type_to_name(type) do
+    String.split(type, "-")
+    |> Enum.map(&String.capitalize/1)
+    |> Enum.join(" ")
+  end
+
+  def map_to_string(map) do
+    # Poison.encode!(map, pretty: true)
+    Poison.encode!(map)
   end
 end
+
+# MethodMismatch {
+#     /// Expected request method
+#     expected: String,
+#     /// Actual request method
+#     actual: String
+# },
+# /// Request Path mismatch
+# PathMismatch {
+#     /// expected request path
+#     expected: String,
+#     /// actual request path
+#     actual: String,
+#     /// description of the mismatch
+#     mismatch: String
+# },
+# /// Response status mismatch
+# StatusMismatch {
+#     /// expected response status
+#     expected: u16,
+#     /// actual response status
+#     actual: u16
+# },
+# /// Header mismatch
+# HeaderMismatch {
+#     /// header key
+#     key: String,
+#     /// expected value
+#     expected: String,
+#     /// actual value
+#     actual: String,
+#     /// description of the mismatch
+#     mismatch: String
+# },
+# /// Mismatch in the content type of the body
+# BodyTypeMismatch {
+#     /// expected content type of the body
+#     expected: String,
+#     /// actual content type of the body
+#     actual: String
+# },
+# /// Body element mismatch
+# BodyMismatch {
+#     /// path expression to where the mismatch occured
+#     path: String,
+#     /// expected value
+#     expected: Option<Vec<u8>>,
+#     /// actual value
+#     actual: Option<Vec<u8>>,
+#     /// description of the mismatch
+#     mismatch: String
+# }
+
+# RequestMatch
+# RequestMismatch
+# RequestNotFound
+# MissingRequest
+
+# pub enum DifferenceType {
+#   /// Methods differ
+#   Method,
+#   /// Paths differ
+#   Path,
+#   /// Headers differ
+#   Headers,
+#   /// Query parameters differ
+#   QueryParameters,
+#   /// Bodies differ
+#   Body,
+#   /// Matching Rules differ
+#   MatchingRules,
+#   /// Response status differ
+#   Status
+# }
+# defp to_error(%{
+#        "method" => "GET",
+#        "path" => "/organizations/org23/locations/betrieb41",
+#        "request" => %{
+#          "body" => "Empty",
+#          "headers" => %{
+#            "connection" => "keep-alive",
+#            "content-length" => "0",
+#            "host" => "localhost:61627",
+#            "te" => ""
+#          },
+#          "matching_rules" => %{"rules" => %{}},
+#          "method" => "GET",
+#          "path" => "/organizations/org23/locations/betrieb41",
+#          "query" => nil
+#        },
+#        "type" => "request-not-found"
+#      }) do
+# end
