@@ -45,7 +45,8 @@ defmodule PactElixir.MixProject do
       {:excoveralls, "~> 0.7", only: :test},
       {:temp, "~> 0.4", only: :test},
       {:credo, "~> 0.8", only: [:dev, :test], runtime: false},
-      {:inch_ex, only: :docs}
+      {:inch_ex, "~> 0.5.6", only: :docs},
+      {:dialyxir, only: [:dev, :test], runtime: false}
     ]
   end
 
