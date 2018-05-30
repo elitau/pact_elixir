@@ -20,7 +20,7 @@ by adding `pact_elixir` to your list of dependencies in `mix.exs`:
 ```elixir
 def deps do
   [
-    {:pact_elixir, "~> 0.3.0"}
+    {:pact_elixir, "~> 0.4.0"}
   ]
 end
 ```
