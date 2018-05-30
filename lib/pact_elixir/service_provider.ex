@@ -24,6 +24,10 @@ defmodule PactElixir.ServiceProvider do
     Path.join(provider.pact_output_dir_path, "#{provider.consumer}-#{provider.provider}.json")
   end
 
+  def host_url(%PactElixir.ServiceProvider{port: port}) do
+    "http://localhost:#{port}"
+  end
+
   def to_pact_json(provider) do
     """
       {

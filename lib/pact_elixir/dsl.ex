@@ -23,6 +23,12 @@ defmodule PactElixir.Dsl do
     PactMockServer.matched?(provider)
   end
 
+  def host_url(provider) do
+    provider
+    |> PactMockServer.service_provider()
+    |> ServiceProvider.host_url()
+  end
+
   # raises an error for existing mismatches
   def report_errors(provider) do
     provider
