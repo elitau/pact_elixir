@@ -15,18 +15,22 @@ defmodule PactElixir.PactMockServer do
     )
   end
 
+  @spec port(pid) :: non_neg_integer
   def port(mock_server_pid) when is_pid(mock_server_pid) do
     GenServer.call(mock_server_pid, {:port})
   end
 
+  @spec pact_output_dir_path(pid) :: String.t()
   def pact_output_dir_path(mock_server_pid) when is_pid(mock_server_pid) do
     GenServer.call(mock_server_pid, {:pact_output_dir_path})
   end
 
+  @spec pact_file_path(pid) :: String.t()
   def pact_file_path(mock_server_pid) when is_pid(mock_server_pid) do
     GenServer.call(mock_server_pid, {:pact_file_path})
   end
 
+  @spec mismatches(pid) :: String.t()
   def mismatches(mock_server_pid) when is_pid(mock_server_pid) do
     # TODO: fails with seg fault when called with not used port
     GenServer.call(mock_server_pid, {:mismatches})
@@ -45,7 +49,7 @@ defmodule PactElixir.PactMockServer do
     GenServer.call(registered_name(name), {:write_pact_file})
   end
 
-  # @spec service_provider(pid) :: PactElixir.ServiceProvider
+  @spec service_provider(pid) :: PactElixir.ServiceProvider.t()
   def service_provider(name) when is_binary(name) do
     GenServer.call(registered_name(name), {:service_provider})
   end
