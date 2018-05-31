@@ -10,6 +10,7 @@ defmodule PactElixir.MismatchesError do
   #     /// description of the mismatch
   #     mismatch: String
   # },
+  @moduledoc false
   def format_mismatches(mismatches) do
     mismatches
     |> Enum.map(fn %{
