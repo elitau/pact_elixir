@@ -23,7 +23,10 @@ defmodule PactElixir.Dsl do
     PactMockServer.matched?(provider)
   end
 
-  def host_url(provider) do
+  @doc """
+  Returns URL of the mock server host, eg. "http://localhost:54321"
+  """
+  def mock_server_host_url(provider) do
     provider
     |> PactMockServer.service_provider()
     |> ServiceProvider.host_url()

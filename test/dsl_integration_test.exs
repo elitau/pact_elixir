@@ -31,7 +31,7 @@ defmodule PactElixir.DslIntegrationTest do
 
   test "has a host url", %{provider: provider} do
     port = PactElixir.PactMockServer.port(provider)
-    assert host_url(provider) == "http://localhost:#{port}"
+    assert mock_server_host_url(provider) == "http://localhost:#{port}"
   end
 
   test "Output all mismatches after single test finished" do
