@@ -1,4 +1,5 @@
 defmodule PactElixir.MixProject do
+  @moduledoc false
   use Mix.Project
 
   def project do

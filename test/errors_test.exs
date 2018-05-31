@@ -1,4 +1,5 @@
 defmodule PactElixir.ErrorsTest do
+  @moduledoc false
   use ExUnit.Case
   alias PactElixir.VerificationError
   import PactElixir.Errors

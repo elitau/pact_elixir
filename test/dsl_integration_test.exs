@@ -1,4 +1,5 @@
 defmodule PactElixir.DslIntegrationTest do
+  @moduledoc false
   use ExUnit.Case
   alias PactElixir.PactMockServer
   import PactElixir.Dsl
