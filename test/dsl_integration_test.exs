@@ -7,7 +7,7 @@ defmodule PactElixir.DslIntegrationTest do
     provider = provider_with_interaction()
 
     unless context[:skip_after_test_suite_cleanup] do
-      on_exit(fn -> after_test_suite(provider) end)
+      on_exit(fn -> shut_down_mock_server(provider) end)
     end
 
     exported_pact_file_path =
@@ -68,7 +68,7 @@ defmodule PactElixir.DslIntegrationTest do
     exported_pact_file_path =
       Path.join(PactMockServer.pact_output_dir_path(provider), "PactTester-PactProvider.json")
 
-    verify_pact(provider)
+    assert :ok = after_test_suite(provider)
 
     assert File.exists?(exported_pact_file_path)
   end
@@ -76,6 +76,7 @@ defmodule PactElixir.DslIntegrationTest do
   @tag :skip_after_test_suite_cleanup
   # This test has too much knowledge about the internals. Call it with provider name only
   test "genserver of mock server is killed after test suite", %{provider: provider} do
+    get_request(provider, "/foo")
     pid = GenServer.whereis(PactMockServer.registered_name("PactProvider"))
     assert Process.alive?(pid)
 

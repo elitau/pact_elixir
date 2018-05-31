@@ -13,65 +13,10 @@ defmodule PactElixir.Dsl do
     pid
   end
 
-  def mock_server_mismatches(provider) when is_pid(provider) do
-    provider
-    |> PactMockServer.mismatches()
-    |> Poison.decode!()
-  end
-
-  def mock_server_matched?(provider) do
-    PactMockServer.matched?(provider)
-  end
-
+  # TODO: capture source location of request/response interaction definition for error output
   @doc """
-  Returns URL of the mock server host, eg. "http://localhost:54321"
+  Adds an interaction to the pact.
   """
-  def mock_server_host_url(provider) do
-    provider
-    |> PactMockServer.service_provider()
-    |> ServiceProvider.host_url()
-  end
-
-  # raises an error for existing mismatches
-  def report_errors(provider) do
-    provider
-    |> mock_server_mismatches
-    |> Errors.convert_to_error()
-  end
-
-  def after_test_suite(provider_name) when is_binary(provider_name) do
-    provider_name
-    |> PactMockServer.registered_name()
-    |> GenServer.whereis()
-    |> after_test_suite
-  end
-
-  # Call after successful test suite run
-  def after_test_suite(provider_pid) when is_pid(provider_pid) do
-    PactElixir.MockServerSupervisor.terminate_child(provider_pid)
-  end
-
-  def verify_pact(provider_pid) do
-    provider_pid
-    |> verify_interactions
-    |> after_test_suite
-  end
-
-  # Checks whether all expectations were met
-  def verify_interactions(provider_pid) when is_pid(provider_pid) do
-    case mock_server_matched?(provider_pid) do
-      true -> PactMockServer.write_pact_file(provider_pid)
-      _ -> provider_pid |> report_errors()
-    end
-
-    provider_pid
-  end
-
-  # def after_test_suite(providers) when is_list(providers) do
-  #   Enum.map(providers, &after_test_suite/1)
-  # end
-
-  # todo: capture source location of request/response interaction definition for error output
   def add_interaction(provider, description, given, %Request{} = request, %Response{} = response) do
     interaction = %Interaction{
       description: description,
@@ -94,5 +39,67 @@ defmodule PactElixir.Dsl do
 
   def given(precondition) do
     precondition
+  end
+
+  @deprecated "Should only be used internally"
+  def mock_server_mismatches(provider) when is_pid(provider) do
+    provider
+    |> PactMockServer.mismatches()
+    |> Poison.decode!()
+  end
+
+  @deprecated "Should only be used internally"
+  def mock_server_matched?(provider) do
+    PactMockServer.matched?(provider)
+  end
+
+  @doc """
+  Returns URL of the mock server host, eg. "http://localhost:54321"
+  """
+  def mock_server_host_url(provider) do
+    provider
+    |> PactMockServer.service_provider()
+    |> ServiceProvider.host_url()
+  end
+
+  @doc """
+  Verifies interactions and shuts the mock server down.
+  To be called after test suite run in main application, eg. in an on_exit callback:
+  on_exit(fn ->
+    after_test_suite(provider)
+  end)
+  """
+  @spec after_test_suite(pid | String.t()) :: :ok | :error
+  def after_test_suite(provider_pid) when is_pid(provider_pid) do
+    verify_interactions(provider_pid)
+    write_pact_file(provider_pid)
+    shut_down_mock_server(provider_pid)
+    :ok
+  end
+
+  def after_test_suite(provider_name) when is_binary(provider_name) do
+    provider_name
+    |> PactMockServer.registered_name()
+    |> GenServer.whereis()
+    |> after_test_suite
+  end
+
+  @deprecated "Should only be used internally"
+  @spec shut_down_mock_server(pid) :: :ok | :error
+  def shut_down_mock_server(provider_pid) when is_pid(provider_pid) do
+    PactElixir.MockServerSupervisor.terminate_child(provider_pid)
+  end
+
+  # Checks whether all expectations were met
+  @deprecated "Should only be used internally"
+  @spec verify_interactions(pid) :: :ok
+  def verify_interactions(provider_pid) when is_pid(provider_pid) do
+    provider_pid
+    |> mock_server_mismatches
+    |> Errors.convert_to_error()
+  end
+
+  defp write_pact_file(provider_pid) do
+    PactMockServer.write_pact_file(provider_pid)
   end
 end
