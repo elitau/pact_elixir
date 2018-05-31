@@ -1,6 +1,7 @@
 # PactElixir
 
 **This library is an Elixir wrapper for the [pact-reference](https://github.com/pact-foundation/pact-reference) implementation**
+And it is in PRE alpha state without any semantic versioning.
 
 [![Build Status](https://travis-ci.org/elitau/pact_elixir.svg?branch=master)](https://travis-ci.org/elitau/pact_elixir)
 [![Coverage Status](https://coveralls.io/repos/github/elitau/pact_elixir/badge.svg?branch=master)](https://coveralls.io/github/elitau/pact_elixir?branch=master)
