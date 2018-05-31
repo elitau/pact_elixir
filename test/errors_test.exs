@@ -1,6 +1,5 @@
 defmodule PactElixir.ErrorsTest do
   use ExUnit.Case
-  # alias PactElixir.RequestError
   alias PactElixir.VerificationError
   import PactElixir.Errors
 

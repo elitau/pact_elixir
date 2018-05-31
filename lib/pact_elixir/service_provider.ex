@@ -2,6 +2,14 @@ defmodule PactElixir.ServiceProvider do
   @moduledoc """
   Represent the remote part (server/provider) for the expected interactions.
   """
+
+  @type t :: %__MODULE__{
+          consumer: String.t(),
+          provider: String.t(),
+          port: String.t() | non_neg_integer,
+          pact_output_dir_path: String.t() | :none
+        }
+
   defstruct [:consumer, :provider, :port, :interactions, :pact_output_dir_path]
   @default_provider_name "test_provider"
   @default_consumer_name "test_consumer"
