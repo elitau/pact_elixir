@@ -1,8 +1,8 @@
 defmodule PactElixir.MockServerSupervisor do
   @moduledoc """
-  Supervises PactMockServers so that they can be controlled even 
-  after the test suite has finished. The Supervisor does not restart 
-  a failed PactMockServer as the information like successful 
+  Supervises PactMockServers so that they can be controlled even
+  after the test suite has finished. The Supervisor does not restart
+  a failed PactMockServer as the information like successful
   requests is stored only there and therefor lost.
   """
 
@@ -18,7 +18,10 @@ defmodule PactElixir.MockServerSupervisor do
   end
 
   def terminate_child(provider_pid) do
-    DynamicSupervisor.terminate_child(__MODULE__, provider_pid)
+    case DynamicSupervisor.terminate_child(__MODULE__, provider_pid) do
+      :ok -> :ok
+      {:error, :not_found} -> :error
+    end
   end
 
   def init(:ok) do
