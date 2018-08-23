@@ -13,4 +13,10 @@ defmodule PactElixir.ServiceProviderTest do
 
     assert 52_342 == provider.port
   end
+
+  test "custom name for service provider" do
+    provider = ServiceProvider.new(provider: "CustomProviderName")
+
+    assert "CustomProviderName" = provider.provider
+  end
 end
