@@ -5,7 +5,8 @@ defmodule PactElixir.ServiceProviderTest do
   test "default constructor values" do
     provider = ServiceProvider.new()
 
-    assert 0 == provider.port
+    assert 0 = provider.port
+    assert "pacts/" = provider.pact_output_dir_path
   end
 
   test "constructor parameters" do
