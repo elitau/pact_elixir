@@ -57,8 +57,6 @@ fn create_mock_server_call<'a>(env: Env<'a>, args: &[Term<'a>]) -> NifResult<Ter
 
 fn mock_server_mismatches_call<'a>(env: Env<'a>, args: &[Term<'a>]) -> NifResult<Term<'a>> {
     let port: i32 = try!(args[0].decode());
-    // TODO: This works only because mock_server_mismatches returns a string now:
-    // Calling to_string() on json!(mismatches) in pact-reference/rust/pact_mock_server/src/lib.rs:657
     Ok((atoms::ok(), mock_server_mismatches(port)).encode(env))
 }
 
