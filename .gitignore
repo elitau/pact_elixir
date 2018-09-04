@@ -47,3 +47,4 @@ pact_elixir-*.tar
 .elixir_ls
 
 /docs/
+/pacts/
