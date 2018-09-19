@@ -1,7 +1,7 @@
 defmodule TermDetector do
 
-  def recursively_update_terms(%Term1{} = to_update) do
-    to_update_new = Term1.get_my_map(to_update)
+  def recursively_update_terms(%Term{} = to_update) do
+    to_update_new = Term.get_my_map(to_update)
 
     _recursively_update_terms(to_update_new)
   end
@@ -11,9 +11,9 @@ defmodule TermDetector do
 
   def _recursively_update_terms(%{} = to_update) do
     to_update
-    |> Map.to_list() # Structs aren't enumerable
+    |> Map.to_list()
     |> Enum.map(fn
-                {k, %Term1{} = v} -> {k, recursively_update_terms(v)}
+                {k, %Term{} = v} -> {k, recursively_update_terms(v)}
                 {k, %{} = v} -> {k, _recursively_update_terms(v)}
                 {k, v} -> {k, v}
               end)
@@ -25,7 +25,8 @@ defmodule TermDetector do
     |> Base.url_encode64(padding: false)
 end
 
-TermDetector.recursively_update_terms(%{a: "hey", b: "ho", x: %Term1{}, c: "zzz"})
-TermDetector.recursively_update_terms(%{a: "hey", b: "ho", x: %Term1{regex: "123", generate: %Term1{generate: %Term1{generate: "1", regex: "2"}, regex: 2}}, c: "zzz"})
-TermDetector.recursively_update_terms(%Term1{})
-TermDetector._recursively_update_terms(%Term1{})
+# Run these to understand how the module works
+#TermDetector.recursively_update_terms(%{a: "hey", b: "ho", x: %Term{}, c: "zzz"})
+#TermDetector.recursively_update_terms(%{a: "hey", b: "ho", x: %Term{regex: "someawesomeregex", generate: %Term{generate: %Term{generate: "1", regex: "somegreatregex"}, regex: "somecoolregex"}}, c: "zzz"})
+#TermDetector.recursively_update_terms(%Term{})
+#TermDetector._recursively_update_terms(%Term{})
