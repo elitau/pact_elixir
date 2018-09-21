@@ -1,4 +1,4 @@
-defmodule TermDetector do
+defmodule PactElixir.TermDetector do
 
   def recursively_update_terms(%Term{} = to_update) do
     to_update_new = Term.get_my_map(to_update)

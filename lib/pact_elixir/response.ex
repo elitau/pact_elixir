@@ -13,7 +13,7 @@ defmodule PactElixir.Response do
       headers: value_or_default.(:headers, %{}),
       status: value_or_default.(:status, 200)
     }
-    |> TermDetector.recursively_update_terms()
+    |> PactElixir.TermDetector.recursively_update_terms()
   end
 
   defp value_from_map(attributes, name, default) do
