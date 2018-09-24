@@ -22,7 +22,7 @@ by adding `pact_elixir` to your list of dependencies in `mix.exs`:
 ```elixir
 def deps do
   [
-    {:pact_elixir, "~> 0.4.1"}
+    {:pact_elixir, "~> 0.5.0"}
   ]
 end
 ```
@@ -31,7 +31,7 @@ Documentation can be generated with [ExDoc](https://github.com/elixir-lang/ex_do
 and published on [HexDocs](https://hexdocs.pm). Once published, the docs can
 be found at [https://hexdocs.pm/pact_elixir](https://hexdocs.pm/pact_elixir).
 
-## Examples  
+## Examples
 
 This is an example test case:
 
@@ -87,10 +87,10 @@ end
 
 You should be able to run it with `mix test <path_to_test_case>`.
 
-**Publishing**  
+**Publishing**
 If the test passes, a json file will be created and saved in a new directory - `./pacts`.
 
-Currently, pact publishing is not yet implemented in this library. You can run the following bash script for your basic publishing needs:  
+Currently, pact publishing is not yet implemented in this library. You can run the following bash script for your basic publishing needs:
 
 ```shell
 #!/bin/bash
@@ -116,7 +116,7 @@ done
 ## Troubleshooting
 
 ```
-Compiling NIF crate :pactmockserver (native/pactmockserver)...  
+Compiling NIF crate :pactmockserver (native/pactmockserver)...
 could not compile dependency :pact_elixir, "mix compile"
 failed. You can recompile this dependency with "mix deps.compile pact_elixir", update it with "mix deps.update pact_elixir" or clean it with "mix deps.clean pact_elixir"
 ```
@@ -153,7 +153,7 @@ defp rustler_crates(mix_env) when mix_env in [:test, :dev] do
   ```
 
 ### Docker
-Properly installing Rust should solve a majority of the problems. Just add the following code (this is for a Debian distro, it assumes you have curl installed):  
+Properly installing Rust should solve a majority of the problems. Just add the following code (this is for a Debian distro, it assumes you have curl installed):
 
 ```docker
 # Rust is required by pact-elixir
