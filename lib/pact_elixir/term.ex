@@ -1,7 +1,8 @@
-defmodule Term do
+defmodule PactElixir.Term do
+
   defstruct [:generate, :regex]
 
-  def get_my_map(%Term{} = term) do
+  def get_my_map(%PactElixir.Term{} = term) do
     %{
       json_class: "Pact::Term",
       data: %{
