@@ -1,4 +1,5 @@
 defmodule PactElixir.TermDetectorTest do
+  alias PactElixir.Term, as: Term
   use ExUnit.Case
 
   test "detect and convert empty Term in map to desired format" do
