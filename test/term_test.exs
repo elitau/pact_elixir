@@ -1,4 +1,5 @@
 defmodule PactElixir.TermTest do
+  alias PactElixir.Term, as: Term
   use ExUnit.Case
 
   test "default constructor with arguments" do
