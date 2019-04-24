@@ -31,7 +31,7 @@ defmodule PactElixir.Examples.LikeMatcherTest do
       "a retrieve thing request",
       given("foo exists"),
       with_request(method: :get, path: "/thing"),
-      will_respond_with(status: 200, body: "bar")
+      will_respond_with(status: 200, body: "FooBarString")
     )
     |> build
   end
@@ -41,9 +41,16 @@ defmodule PactElixir.Examples.LikeMatcherTest do
 
     assert :ok = after_test_suite(provider)
 
-    {:ok, expected} = File.read("test/examples/like_matcher.pact.json")
-    {:ok, generated} = File.read(exported_pact_file_path)
-    assert expected |> Poison.decode! == generated |> Poison.decode!
+    expected = File.read!("test/examples/like_matcher.pact.json") |> get_response_from_json()
+    generated = File.read!(exported_pact_file_path) |> get_response_from_json()
+
+    assert expected == generated
+  end
+
+  def get_response_from_json(response) do
+    json = response |> Poison.decode!
+    [interation] = json["interactions"]
+    interation["response"]
   end
 
   defp get_request(provider, path) do

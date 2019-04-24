@@ -21,22 +21,10 @@
           "Content-Type": "application/json"
         },
         "body": {
-          "company": "My big company",
-          "factories": [
-            {
-              "location": "Sydney",
-              "capacity": 5
-            }
-          ]
+          "company": "FooBarString"
         },
         "matchingRules": {
           "$.body.company": {
-            "match": "type"
-          },
-          "$.body.factories": {
-            "min": 1
-          },
-          "$.body.factories[*].*": {
             "match": "type"
           }
         }
