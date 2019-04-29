@@ -2,7 +2,7 @@ defmodule PactElixir.Response do
   @moduledoc """
   Represent the expected response.
   """
-  @derive [Poison.Encoder]
+  # @derive [Poison.Encoder]
   defstruct [:body, :headers, :status]
 
   def new(attributes \\ %{}) do
@@ -18,5 +18,25 @@ defmodule PactElixir.Response do
 
   defp value_from_map(attributes, name, default) do
     attributes[name] || attributes[:"#{name}"] || default
+  end
+
+  def matching_rules(%__MODULE__{body: body}) do
+  end
+end
+
+defimpl Poison.Encoder, for: PactElixir.Response do
+  def encode(
+        %PactElixir.Response{body: body, headers: headers, status: status} = response,
+        options
+      ) do
+    Poison.Encoder.Map.encode(
+      %{
+        body: body,
+        headers: headers,
+        status: status,
+        matchingRules: PactElixir.Response.matching_rules(response)
+      },
+      options
+    )
   end
 end

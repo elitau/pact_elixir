@@ -31,9 +31,9 @@ defmodule PactElixir.Examples.LikeMatcherTest do
       "a retrieve thing request",
       given("foo exists"),
       with_request(method: :get, path: "/thing"),
-      will_respond_with(status: 200, body: "FooBarString")
+      will_respond_with(status: 200, body: %{company: PactElixir.like("FooBarString")})
     )
-    |> build
+    |> build()
   end
 
   test "like matcher", %{provider: provider, exported_pact_file_path: exported_pact_file_path} do
@@ -48,7 +48,7 @@ defmodule PactElixir.Examples.LikeMatcherTest do
   end
 
   def get_response_from_json(response) do
-    json = response |> Poison.decode!
+    json = response |> Poison.decode!()
     [interation] = json["interactions"]
     interation["response"]
   end
@@ -57,5 +57,4 @@ defmodule PactElixir.Examples.LikeMatcherTest do
     %HTTPoison.Response{} =
       HTTPoison.get!("http://localhost:#{PactMockServer.port(provider)}#{path}")
   end
-
 end
