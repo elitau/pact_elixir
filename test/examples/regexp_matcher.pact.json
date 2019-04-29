@@ -1,0 +1,41 @@
+{
+  "consumer": {
+    "name": "Consumer"
+  },
+  "provider": {
+    "name": "Provider"
+  },
+  "interactions": [
+    {
+      "description": "a retrieve thing request",
+      "request": {
+        "method": "get",
+        "path": "/thing",
+        "headers": {
+          "Accept": "application/json"
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "body": {
+          "name": "Mary",
+          "dateOfBirth": "02/11/2013"
+        },
+        "matchingRules": {
+          "$.body.dateOfBirth": {
+            "match": "regex",
+            "regex": "\\d{2}\\/\\d{2}\\/\\d{4}"
+          }
+        }
+      }
+    }
+  ],
+  "metadata": {
+    "pactSpecification": {
+      "version": "2.0.0"
+    }
+  }
+}
