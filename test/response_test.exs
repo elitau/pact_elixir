@@ -10,10 +10,18 @@ defmodule PactElixir.ResponseTest do
   end
 
   describe "with like matcher" do
-    test "converts body attributes to usual attributes"
+    test "converts body attributes to usual attributes" do
+      assert %{body: %{some: "value"}} = PactElixir.Response.new(%{body: %{some: "value"}})
+    end
+
+    test "includes like matcher attributes as normal body attributes" do
+      assert %{body: %{with: 23}} =
+               PactElixir.Response.new(%{body: %{some: "value", with: PactElixir.like(23)}})
+    end
 
     test "converts body attributes to matching_rules" do
-      assert %{} == PactElixir.Response.new(%{body: %{some: "value", with: PactElixir.like(23)}})
+      assert %{matching_rules: %{"$.body.with" => %{"match" => "type"}}} =
+               PactElixir.Response.new(%{body: %{some: "value", with: PactElixir.like(23)}})
     end
   end
 end
