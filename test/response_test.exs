@@ -23,5 +23,10 @@ defmodule PactElixir.ResponseTest do
       assert %{matching_rules: %{"$.body.with" => %{"match" => "type"}}} =
                PactElixir.Response.new(%{body: %{some: "value", with: PactElixir.like(23)}})
     end
+
+    test "converts array attribute to matching_rule" do
+      assert %{matching_rules: %{"$.body.with[0]" => %{"match" => "type"}}} =
+               PactElixir.Response.new(%{body: %{some: "value", with: [PactElixir.like(23)]}})
+    end
   end
 end
