@@ -78,15 +78,20 @@ end
 
 defimpl Poison.Encoder, for: PactElixir.Response do
   def encode(
-        %PactElixir.Response{body: body, headers: headers, status: status} = response,
+        %PactElixir.Response{
+          body: body,
+          headers: headers,
+          status: status,
+          matching_rules: matching_rules
+        } = response,
         options
       ) do
     Poison.Encoder.Map.encode(
       %{
         body: body,
         headers: headers,
-        status: status
-        # matchingRules: PactElixir.Response.matching_rules(response)
+        status: status,
+        matchingRules: matching_rules
       },
       options
     )
