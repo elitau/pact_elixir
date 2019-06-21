@@ -36,43 +36,38 @@ defmodule PactElixir.Response do
     body
   end
 
-  def matching_rules(body), do: do_matching_rules(body, [:"$", :body], %{})
+  def matching_rules(body), do: do_matching_rules({:body, body}, [:"$"], %{})
 
-  def do_matching_rules(content, current_path, rules) when is_map(content) do
+  def do_matching_rules({path, %PactElixir.TypeMatcher{value: value}}, previous_paths, rules) do
+    do_matching_rules({path, value}, previous_paths, rules |> add_rule(path, previous_paths))
+  end
+
+  def do_matching_rules({path, content}, previous_paths, rules) when is_map(content) do
     content
-    |> Enum.reduce(rules, fn
-      {key, %PactElixir.TypeMatcher{value: value}}, rules ->
-        do_matching_rules(
-          value,
-          current_path ++ [key],
-          rules |> add_rule(current_path ++ [key])
-        )
-
-      {key, %{} = value}, rules ->
-        do_matching_rules(value, current_path ++ [key], rules)
-
-      # WIP for LISTS
-      # {key, values}, rules when is_list(values) ->
-      #   do_matching_rules(values, current_path ++ [key], rules)
-
-      {key, value}, rules ->
-        rules
+    |> Enum.reduce(rules, fn {key, value}, rules ->
+      do_matching_rules({key, value}, previous_paths ++ [path], rules)
     end)
   end
 
-  def do_matching_rules(content, current_path, rules) when is_list(content) do
-    content
+  def do_matching_rules({path, values}, previous_paths, rules) when is_list(values) do
+    values
     |> Enum.with_index()
-    |> IO.inspect()
     |> Enum.reduce(rules, fn {value, index}, rules ->
-      do_matching_rules(value, current_path ++ [index], rules)
+      do_matching_rules({key_for_list_element(path, index), value}, previous_paths, rules)
     end)
   end
 
-  def do_matching_rules(_content, _current_path, rules), do: rules
+  def do_matching_rules({_path, value}, _previous_paths, _rules) when is_tuple(value),
+    do: raise(ArgumentError, "Tuples are not supported. Given #{value |> inspect()}")
 
-  def add_rule(rules, paths) do
-    rules |> Map.put(Enum.join(paths, "."), %{"match" => "type"})
+  def do_matching_rules(_content, _previous_paths, rules), do: rules
+
+  def add_rule(rules, key, previous_paths) do
+    rules |> Map.put(Enum.join(previous_paths ++ [key], "."), %{"match" => "type"})
+  end
+
+  def key_for_list_element(path, index) do
+    "#{path}[#{index}]"
   end
 end
 
@@ -83,7 +78,7 @@ defimpl Poison.Encoder, for: PactElixir.Response do
           headers: headers,
           status: status,
           matching_rules: matching_rules
-        } = response,
+        },
         options
       ) do
     Poison.Encoder.Map.encode(
