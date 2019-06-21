@@ -10,7 +10,7 @@ defmodule PactElixir.Response do
 
     %PactElixir.Response{
       body: value_or_default.(:body, "") |> collect_values_for_body(),
-      headers: value_or_default.(:headers, %{}),
+      headers: value_or_default.(:headers, %{"Content-Type" => "application/json"}),
       status: value_or_default.(:status, 200),
       matching_rules: value_or_default.(:body, %{}) |> matching_rules()
     }
