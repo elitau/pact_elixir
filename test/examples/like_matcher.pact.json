@@ -24,8 +24,15 @@
           "company": "FooBarString"
         },
         "matchingRules": {
-          "$.body.company": {
-            "match": "type"
+          "body": {
+            "$.company": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            }
           }
         }
       }
@@ -33,7 +40,7 @@
   ],
   "metadata": {
     "pactSpecification": {
-      "version": "2.0.0"
+      "version": "3.0.0"
     }
   }
 }

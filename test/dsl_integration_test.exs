@@ -24,7 +24,7 @@ defmodule PactElixir.DslIntegrationTest do
   end
 
   test "Provider responds to /foo with 'bar'", %{provider: provider} do
-    assert "bar" == get_request(provider, "/foo").body
+    assert "\"bar\"" == get_request(provider, "/foo").body
 
     assert [] == mock_server_mismatches(provider)
     assert true == mock_server_matched?(provider)
