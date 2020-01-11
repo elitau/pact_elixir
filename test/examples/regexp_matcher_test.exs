@@ -37,11 +37,11 @@ defmodule PactElixir.Examples.RegexpMatcherTest do
         status: 200,
         body: %{
           name: "Mary",
-          dateOfBirth: %PactElixir.Term{generate: "02/11/2013", regex: "\d{2}\/\d{2}\/\d{4}"}
+          dateOfBirth: PactElixir.term(generate: "02/11/2013", regex: "\d{2}\/\d{2}\/\d{4}")
         }
       )
     )
-    |> build
+    |> build()
   end
 
   test "regexp matcher", %{provider: provider, exported_pact_file_path: exported_pact_file_path} do

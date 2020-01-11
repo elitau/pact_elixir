@@ -14,7 +14,8 @@ defmodule PactElixir.Response do
       status: value_or_default.(:status, 200),
       matching_rules: value_or_default.(:body, %{}) |> matching_rules()
     }
-    |> PactElixir.TermDetector.recursively_update_terms()
+
+    # |> PactElixir.TermDetector.recursively_update_terms()
   end
 
   defp value_from_map(attributes, name, default) do
@@ -38,8 +39,28 @@ defmodule PactElixir.Response do
 
   def matching_rules(body), do: do_matching_rules({:body, body}, [:"$"], %{})
 
-  def do_matching_rules({path, %PactElixir.TypeMatcher{value: value}}, previous_paths, rules) do
-    do_matching_rules({path, value}, previous_paths, rules |> add_rule(path, previous_paths))
+  def do_matching_rules(
+        {path, %PactElixir.TypeMatcher{value: value} = matcher},
+        previous_paths,
+        rules
+      ) do
+    do_matching_rules(
+      {path, value},
+      previous_paths,
+      rules |> add_rule(path, previous_paths, matcher)
+    )
+  end
+
+  def do_matching_rules(
+        {path, %PactElixir.Term{generate: value} = matcher},
+        previous_paths,
+        rules
+      ) do
+    do_matching_rules(
+      {path, value},
+      previous_paths,
+      rules |> add_rule(path, previous_paths, matcher)
+    )
   end
 
   def do_matching_rules({path, content}, previous_paths, rules) when is_map(content) do
@@ -62,8 +83,13 @@ defmodule PactElixir.Response do
 
   def do_matching_rules(_content, _previous_paths, rules), do: rules
 
-  def add_rule(rules, key, previous_paths) do
+  def add_rule(rules, key, previous_paths, %PactElixir.TypeMatcher{}) do
     rules |> Map.put(Enum.join(previous_paths ++ [key], "."), %{"match" => "type"})
+  end
+
+  def add_rule(rules, key, previous_paths, %PactElixir.Term{regex: regex}) do
+    rules
+    |> Map.put(Enum.join(previous_paths ++ [key], "."), %{"match" => "regex", "regex" => regex})
   end
 
   def key_for_list_element(path, index) do
