@@ -43,7 +43,7 @@ defmodule PactElixir.MixProject do
       {:poison, "~> 4.0"},
       {:ex_doc, "~> 0.19.0", only: :dev, runtime: false},
       {:httpoison, "~> 1.0", only: :test},
-      {:excoveralls, "~> 0.7", only: :test},
+      {:excoveralls, "~> 0.12", only: :test},
       {:temp, "~> 0.4", only: :test},
       {:credo, "~> 1.0", only: [:dev, :test], runtime: false},
       {:inch_ex, "~> 2.0.0", only: :docs},
