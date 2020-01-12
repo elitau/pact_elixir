@@ -6,7 +6,7 @@ defmodule PactElixir.MixProject do
     [
       app: :pact_elixir,
       version: "0.5.1",
-      elixir: "~> 1.6",
+      elixir: "~> 1.7",
       name: "PactElixir",
       start_permanent: Mix.env() == :prod,
       description: description(),
