@@ -41,7 +41,7 @@ defmodule PactElixir.MixProject do
     [
       {:rustler, "~> 0.21"},
       {:poison, "~> 4.0"},
-      {:ex_doc, "~> 0.21.2", only: :dev, runtime: false},
+      {:ex_doc, "~> 0.23.0", only: :dev, runtime: false},
       {:httpoison, "~> 1.0", only: :test},
       {:excoveralls, "~> 0.12", only: :test},
       {:temp, "~> 0.4", only: :test},
