@@ -7,6 +7,7 @@
 
 // use rustler::{Env, Term, NifResult, Encoder}; // MON30AUG210852
 use rustler::{NifResult}; // MON30AUG210852
+use rustler::types::Atom;
 extern crate pact_mock_server;
 extern crate libc;
 
@@ -69,7 +70,7 @@ rustler::init!(
 );
 
 #[rustler::nif(name = "create_mock_server")]
-fn create_mock_server_call(pact_json:&str, port_arg:i32) -> NifResult<i32> {
+fn create_mock_server_call(pact_json:&str, port_arg:i32) -> NifResult<(Atom,i32)> {
 // fn create_mock_server(args: &[Term]) -> NifResult<i32> {
     // let pact_json: &str = r#try!(args[0].decode());
     // let port_arg: i32 = r#try!(args[1].decode());
@@ -80,7 +81,7 @@ fn create_mock_server_call(pact_json:&str, port_arg:i32) -> NifResult<i32> {
 
     match port {
         Ok(port) => {
-            Ok(port)
+            Ok((atoms::ok(), port))
         }
         Err(MockServerError::MockServerFailedToStart) =>
             NifResult::Err( rustler::error::Error::Atom("mock_server_failed_to_start")),
@@ -128,10 +129,10 @@ fn mock_server_matched_call(port:i32) -> bool {
 //     }
 // }
 #[rustler::nif(name = "write_pact_file")]
-fn write_pact_file_call(port:i32, dir_path:String) -> NifResult<()> {
+fn write_pact_file_call(port:i32, dir_path:String) -> NifResult<Atom> {
     match write_pact_file(port, Some(dir_path)) {
         Ok(()) =>
-            Ok(()),
+            Ok(atoms::ok()),
         Err(WritePactFileErr::IOError) =>
             NifResult::Err( rustler::error::Error::Atom("io_error")),
         Err(WritePactFileErr::NoMockServer) =>
