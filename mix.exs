@@ -39,7 +39,7 @@ defmodule PactElixir.MixProject do
   # Run "mix help deps" to learn about dependencies.
   defp deps do
     [
-      {:rustler, "~> 0.21"},
+      {:rustler, "~> 0.22"},
       {:poison, "~> 4.0"},
       {:ex_doc, "~> 0.25.2", only: :dev, runtime: false},
       {:httpoison, "~> 1.0", only: :test},
