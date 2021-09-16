@@ -5,8 +5,8 @@ defmodule PactElixir.MixProject do
   def project do
     [
       app: :pact_elixir,
-      version: "0.5.1",
-      elixir: "~> 1.6",
+      version: "0.5.2",
+      elixir: "~> 1.7",
       name: "PactElixir",
       start_permanent: Mix.env() == :prod,
       description: description(),
@@ -19,8 +19,7 @@ defmodule PactElixir.MixProject do
         "coveralls.post": :test,
         "coveralls.html": :test
       ],
-      compilers: [:rustler] ++ Mix.compilers(),
-      rustler_crates: rustler_crates(),
+      compilers: Mix.compilers(),
       source_url: "https://github.com/elitau/pact_elixir",
       homepage_url: "https://github.com/elitau/pact_elixir",
       # The main page in the docs
@@ -39,25 +38,15 @@ defmodule PactElixir.MixProject do
   # Run "mix help deps" to learn about dependencies.
   defp deps do
     [
-      {:rustler, "~> 0.18"},
+      {:rustler, "~> 0.22"},
       {:poison, "~> 4.0"},
-      {:jaxon, "~> 1.0"},
-      {:ex_doc, "~> 0.18.0", only: :dev, runtime: false},
+      {:ex_doc, "~> 0.25.2", only: :dev, runtime: false},
       {:httpoison, "~> 1.0", only: :test},
-      {:excoveralls, "~> 0.7", only: :test},
+      {:excoveralls, "~> 0.12", only: :test},
       {:temp, "~> 0.4", only: :test},
       {:credo, "~> 1.0", only: [:dev, :test], runtime: false},
       {:inch_ex, "~> 2.0.0", only: :docs},
-      {:dialyxir, "~> 0.5.1", only: [:dev, :test], runtime: false}
-    ]
-  end
-
-  def rustler_crates do
-    [
-      pactmockserver: [
-        path: "native/pactmockserver",
-        mode: if(Mix.env() == :prod, do: :release, else: :debug)
-      ]
+      {:dialyxir, "~> 1.1.0", only: [:dev, :test], runtime: false}
     ]
   end
 

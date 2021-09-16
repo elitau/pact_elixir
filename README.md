@@ -6,7 +6,7 @@ And it is in *PRE alpha* shape without any semantic versioning or documentation.
 
 [![Build Status](https://travis-ci.org/elitau/pact_elixir.svg?branch=master)](https://travis-ci.org/elitau/pact_elixir)
 [![Coverage Status](https://coveralls.io/repos/github/elitau/pact_elixir/badge.svg?branch=master)](https://coveralls.io/github/elitau/pact_elixir?branch=master)
-[![Ebert](https://ebertapp.io/github/elitau/pact_elixir.svg)](https://ebertapp.io/github/elitau/pact_elixir)
+[![SourceLevel](https://app.sourcelevel.io/github/elitau/pact_elixir.svg)](https://app.sourcelevel.io/github/elitau/pact_elixir)
 [![Inline docs](http://inch-ci.org/github/elitau/pact_elixir.svg)](http://inch-ci.org/github/elitau/pact_elixir)
 
 It is not yet usable as many needed parts like publishing a pact file to a broker or pact
@@ -22,7 +22,7 @@ by adding `pact_elixir` to your list of dependencies in `mix.exs`:
 ```elixir
 def deps do
   [
-    {:pact_elixir, "~> 0.5.0"}
+    {:pact_elixir, "~> 0.5.2"}
   ]
 end
 ```

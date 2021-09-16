@@ -57,7 +57,6 @@ defmodule PactElixir.PactMockServerTest do
     test "file exists", %{mock_server_pid: mock_server_pid} do
       # make sure all assertions are matched which is needed for the file to be written
       do_example_request(mock_server_pid)
-
       assert {:ok} == PactMockServer.write_pact_file(mock_server_pid)
       assert File.exists?(PactMockServer.pact_file_path(mock_server_pid))
     end
