@@ -19,8 +19,7 @@ defmodule PactElixir.MixProject do
         "coveralls.post": :test,
         "coveralls.html": :test
       ],
-      compilers: [:rustler] ++ Mix.compilers(),
-      rustler_crates: rustler_crates(),
+      compilers: Mix.compilers(),
       source_url: "https://github.com/elitau/pact_elixir",
       homepage_url: "https://github.com/elitau/pact_elixir",
       # The main page in the docs
@@ -48,15 +47,6 @@ defmodule PactElixir.MixProject do
       {:credo, "~> 1.0", only: [:dev, :test], runtime: false},
       {:inch_ex, "~> 2.0.0", only: :docs},
       {:dialyxir, "~> 1.1.0", only: [:dev, :test], runtime: false}
-    ]
-  end
-
-  def rustler_crates do
-    [
-      pactmockserver: [
-        path: "native/pactmockserver",
-        mode: if(Mix.env() == :prod, do: :release, else: :debug)
-      ]
     ]
   end
 
