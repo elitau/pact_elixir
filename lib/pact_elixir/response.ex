@@ -27,6 +27,7 @@ defmodule PactElixir.Response do
     |> Map.to_list()
     |> Enum.map(fn
       {k, %PactElixir.TypeMatcher{value: value}} -> {k, collect_values_for_body(value)}
+      {k, %PactElixir.Term{generate: value, regex: _pattern}} -> {k, value}
       {k, %{} = v} -> {k, collect_values_for_body(v)}
       {k, v} -> {k, v}
     end)
