@@ -8,34 +8,48 @@
   "interactions": [
     {
       "description": "a retrieve thing request",
-      "request": {
-        "method": "get",
-        "path": "/thing",
-        "headers": {
-          "Accept": "application/json"
+      "providerStates": [
+        {
+          "name": "foo exists"
         }
+      ],
+      "request": {
+        "body": "",
+        "headers": {},
+        "method": "GET",
+        "path": "/thing"
       },
       "response": {
-        "status": 200,
+        "body": {
+          "dateOfBirth": "02/11/2013",
+          "name": "Mary"
+        },
         "headers": {
           "Content-Type": "application/json"
         },
-        "body": {
-          "name": "Mary",
-          "dateOfBirth": "02/11/2013"
-        },
         "matchingRules": {
-          "$.body.dateOfBirth": {
-            "match": "regex",
-            "regex": "\\d{2}\\/\\d{2}\\/\\d{4}"
+          "body": {
+            "$.dateOfBirth": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "{2}/{2}/{4}"
+                }
+              ]
+            }
           }
-        }
+        },
+        "status": 200
       }
     }
   ],
   "metadata": {
+    "pactRust": {
+      "version": "0.4.5"
+    },
     "pactSpecification": {
-      "version": "2.0.0"
+      "version": "3.0.0"
     }
   }
 }
