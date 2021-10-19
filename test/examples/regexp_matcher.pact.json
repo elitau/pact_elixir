@@ -1,0 +1,55 @@
+{
+  "consumer": {
+    "name": "Consumer"
+  },
+  "provider": {
+    "name": "Provider"
+  },
+  "interactions": [
+    {
+      "description": "a retrieve thing request",
+      "providerStates": [
+        {
+          "name": "foo exists"
+        }
+      ],
+      "request": {
+        "body": "",
+        "headers": {},
+        "method": "GET",
+        "path": "/thing"
+      },
+      "response": {
+        "body": {
+          "dateOfBirth": "02/11/2013",
+          "name": "Mary"
+        },
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "matchingRules": {
+          "body": {
+            "$.dateOfBirth": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "{2}/{2}/{4}"
+                }
+              ]
+            }
+          }
+        },
+        "status": 200
+      }
+    }
+  ],
+  "metadata": {
+    "pactRust": {
+      "version": "0.4.5"
+    },
+    "pactSpecification": {
+      "version": "3.0.0"
+    }
+  }
+}

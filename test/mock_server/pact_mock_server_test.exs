@@ -49,7 +49,7 @@ defmodule PactElixir.PactMockServerTest do
   end
 
   test "mock server responds to requests", %{mock_server_pid: mock_server_pid} do
-    assert "bar" == do_example_request(mock_server_pid).body
+    assert "\"bar\"" == do_example_request(mock_server_pid).body
   end
 
   # TODO: Simulate other possible errors during pact file write

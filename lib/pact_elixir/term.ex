@@ -1,6 +1,9 @@
 defmodule PactElixir.Term do
-
   defstruct [:generate, :regex]
+
+  def term(generate, regex) do
+    %PactElixir.Term{generate: generate, regex: regex}
+  end
 
   def get_my_map(%PactElixir.Term{} = term) do
     %{

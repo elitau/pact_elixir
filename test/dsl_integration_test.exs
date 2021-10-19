@@ -24,10 +24,10 @@ defmodule PactElixir.DslIntegrationTest do
   end
 
   test "Provider responds to /foo with 'bar'", %{provider: provider} do
-    assert "bar" == get_request(provider, "/foo").body
+    assert "\"bar\"" == get_request(provider, "/foo").body
 
     assert [] == mock_server_mismatches(provider)
-    assert true == mock_server_matched?(provider)
+    assert true == PactMockServer.matched?(provider)
   end
 
   test "has a host url", %{provider: provider} do
@@ -45,7 +45,7 @@ defmodule PactElixir.DslIntegrationTest do
   end
 
   test "Mock server includes mismatch without mocked request being made", %{provider: provider} do
-    assert mock_server_matched?(provider) == false
+    assert PactMockServer.matched?(provider) == false
 
     [failure | _tail] = mock_server_mismatches(provider)
 
