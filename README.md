@@ -12,6 +12,10 @@ And it is in *PRE alpha* shape without any semantic versioning or documentation.
 It is not yet usable as many needed parts like publishing a pact file to a broker or pact
 verification on the provider side are still missing. Also there is no documentation available, yet.
 
+## Development
+
+Discussion about the development of this library takes places in the #pact-elixir Channel at [https://pact-foundation.slack.com/](https://pact-foundation.slack.com/).
+
 ## Installation
 
 You need [Rust](https://www.rust-lang.org) in order to build and install the package.
