@@ -1,16 +1,13 @@
 version: 2
 updates:
-- package-ecosystem: mix
-  directory: "/"
-  schedule:
-    interval: daily
-  open-pull-requests-limit: 10
-  ignore:
-  - dependency-name: ex_doc
-    versions:
-    - 0.23.0
-    - 0.24.0
-    - 0.24.1
-  - dependency-name: excoveralls
-    versions:
-    - 0.13.4
+  - package-ecosystem: mix
+    directory: "/"
+    schedule:
+      interval: daily
+    open-pull-requests-limit: 5
+
+  - package-ecosystem: cargo
+    directory: "/native/pactmockserver"
+    schedule:
+      interval: daily
+    open-pull-requests-limit: 5
