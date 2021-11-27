@@ -50,8 +50,8 @@ jobs:
 
       - run: PACTELIXIR_BUILD=1 mix deps.compile
 
-      - run: PACTELIXIR_BUILD=1 mix compile --warnings-as-errors
-        if: ${{ matrix.lint }}
+      # - run: PACTELIXIR_BUILD=1 mix compile --warnings-as-errors
+      #   if: ${{ matrix.lint }}
 
       - run: PACTELIXIR_BUILD=1 mix test
 
