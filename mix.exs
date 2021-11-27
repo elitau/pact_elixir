@@ -46,7 +46,8 @@ defmodule PactElixir.MixProject do
       {:temp, "~> 0.4", only: :test},
       {:credo, "~> 1.0", only: [:dev, :test], runtime: false},
       {:inch_ex, "~> 2.0.0", only: :docs},
-      {:dialyxir, "~> 1.1.0", only: [:dev, :test], runtime: false}
+      {:dialyxir, "~> 1.1.0", only: [:dev, :test], runtime: false},
+      {:castore, "~> 0.1"}
     ]
   end
 
