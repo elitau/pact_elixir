@@ -30,7 +30,7 @@ defmodule PactElixir.RustPactMockServerFacade do
 
         {:error, error} ->
           error =
-            "Error while downloading precompiled NIF: #{error}\n\nSet HTML5EVER_BUILD=1 env var to compile the NIF from scratch. You can also configure this application to force compilation:\n\n    config :html5ever, Html5ever, build_from_source: true\n"
+            "Error while downloading precompiled NIF: #{error}\n\nSet PACTELIXIR_BUILD=1 env var to compile the NIF from scratch. You can also configure this application to force compilation:\n\n    config :pact_elixir, PactElixir, build_from_source: true\n"
 
           if Mix.env() == :prod do
             raise error
