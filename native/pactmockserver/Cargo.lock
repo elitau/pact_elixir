@@ -319,7 +319,7 @@ dependencies = [
 name = "pactmockserver"
 version = "0.1.0"
 dependencies = [
- "lazy_static 0.2.11",
+ "lazy_static 1.4.0",
  "libc",
  "pact_mock_server",
  "rustler",
