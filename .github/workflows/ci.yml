@@ -55,6 +55,6 @@ jobs:
 
       - run: PACTELIXIR_BUILD=1 mix test
 
-      - run: mix deps.get --only docs
-
-      - run: MIX_ENV=docs mix inch.report
+      # MIX_ENV=docs mix inch fails on Erlang 24 and Elixir 1.12
+      # - run: mix deps.get --only docs
+      # - run: MIX_ENV=docs mix inch.report
