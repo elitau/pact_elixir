@@ -41,14 +41,14 @@ defmodule PactElixir.Dsl do
     precondition
   end
 
-  @deprecated "Should only be used internally"
+  # @deprecated "Should only be used internally" Why, oh why, is this here?
   def mock_server_mismatches(provider) when is_pid(provider) do
     provider
     |> PactMockServer.mismatches()
     |> Poison.decode!()
   end
 
-  @deprecated "Should only be used internally"
+  # @deprecated "Should only be used internally" Why, oh why, is this here?
   def mock_server_matched?(provider) do
     PactMockServer.matched?(provider)
   end
@@ -84,14 +84,14 @@ defmodule PactElixir.Dsl do
     |> after_test_suite
   end
 
-  @deprecated "Should only be used internally"
+  # @deprecated "Should only be used internally" Why, oh why, is this here?
   @spec shut_down_mock_server(pid) :: :ok | :error
   def shut_down_mock_server(provider_pid) when is_pid(provider_pid) do
     PactElixir.MockServerSupervisor.terminate_child(provider_pid)
   end
 
   # Checks whether all expectations were met
-  @deprecated "Should only be used internally"
+  # @deprecated "Should only be used internally" Why, oh why, is this here?
   @spec verify_interactions(pid) :: :ok
   def verify_interactions(provider_pid) when is_pid(provider_pid) do
     provider_pid
