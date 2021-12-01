@@ -13,8 +13,7 @@ defmodule PactElixir.MockServerSupervisor do
   end
 
   def start_mock_server(%PactElixir.ServiceProvider{} = provider) do
-    spec = Supervisor.Spec.worker(PactElixir.PactMockServer, [provider], restart: :temporary)
-    DynamicSupervisor.start_child(__MODULE__, spec)
+    DynamicSupervisor.start_child(__MODULE__, {PactElixir.PactMockServer, provider})
   end
 
   def terminate_child(provider_pid) do

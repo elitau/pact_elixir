@@ -4,7 +4,7 @@ defmodule PactElixir.PactMockServer do
   Used in conjunction with PactElixir.MockServerCallbacks.
   """
   alias PactElixir.ServiceProvider
-  use GenServer
+  use GenServer, restart: :temporary
 
   # GenServer: Client
   def start_link(%ServiceProvider{} = provider) do
