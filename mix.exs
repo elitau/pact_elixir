@@ -5,7 +5,7 @@ defmodule PactElixir.MixProject do
   def project do
     [
       app: :pact_elixir,
-      version: "0.5.2-rc.0",
+      version: "0.5.2-rc.5",
       elixir: "~> 1.7",
       name: "PactElixir",
       start_permanent: Mix.env() == :prod,
@@ -38,7 +38,7 @@ defmodule PactElixir.MixProject do
   # Run "mix help deps" to learn about dependencies.
   defp deps do
     [
-      {:rustler, "~> 0.22", sparse: "rustler_mix"},
+      {:rustler, "~> 0.23"},
       {:poison, "~> 5.0"},
       {:ex_doc, "~> 0.26.0", only: :dev, runtime: false},
       {:httpoison, "~> 1.0", only: :test},
