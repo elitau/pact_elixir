@@ -1,7 +1,7 @@
 defmodule PactElixir.MixProject do
   @moduledoc false
   use Mix.Project
-  @version "0.5.2-rc.7"
+  @version "0.5.2-rc.8"
 
   def project do
     [
