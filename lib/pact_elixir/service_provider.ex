@@ -7,14 +7,17 @@ defmodule PactElixir.ServiceProvider do
           consumer: String.t(),
           provider: String.t(),
           port: String.t() | non_neg_integer,
+          address: String.t(),
+          interactions: list(),
           pact_output_dir_path: String.t() | :none
         }
 
-  defstruct [:consumer, :provider, :port, :interactions, :pact_output_dir_path]
+  defstruct [:consumer, :provider, :port, :address, :interactions, :pact_output_dir_path]
   @default_provider_name "test_provider"
   @default_consumer_name "test_consumer"
   # System selects a random port
   @default_port 0
+  @default_address "localhost:#{@default_port}"
   @default_pact_output_dir_path "pacts/"
 
   def new(options \\ %{}) do
@@ -22,7 +25,7 @@ defmodule PactElixir.ServiceProvider do
       provider: options[:provider] || @default_provider_name,
       consumer: options[:consumer] || @default_consumer_name,
       interactions: [],
-      port: options[:port] || @default_port,
+      address: options[:address] || @default_address,
       pact_output_dir_path: options[:pact_output_dir_path] || @default_pact_output_dir_path
     }
   end

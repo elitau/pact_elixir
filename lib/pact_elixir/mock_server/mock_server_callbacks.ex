@@ -53,7 +53,7 @@ defmodule PactElixir.MockServerCallbacks do
   # returns ServiceProvider with actual port
   def start(pact_json, %ServiceProvider{} = provider) when is_binary(pact_json) do
     {:ok, mock_server_port} =
-      RustPactMockServerFacade.create_mock_server(pact_json, provider.port)
+      RustPactMockServerFacade.create_mock_server(pact_json, provider.address)
 
     put_in(provider.port, mock_server_port)
   end
