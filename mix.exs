@@ -20,7 +20,6 @@ defmodule PactElixir.MixProject do
         "coveralls.post": :test,
         "coveralls.html": :test
       ],
-      compilers: Mix.compilers(),
       source_url: "https://github.com/elitau/pact_elixir",
       homepage_url: "https://github.com/elitau/pact_elixir",
       # The main page in the docs
