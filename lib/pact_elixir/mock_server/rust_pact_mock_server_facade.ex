@@ -13,7 +13,7 @@ defmodule PactElixir.RustPactMockServerFacade do
   version = mix_config[:version]
   github_url = mix_config[:package][:links]["GitHub"]
 
-  rustler_opts = [otp_app: :pact_elixir, crate: "pactmockserver", mode: :release]
+  rustler_opts = [otp_app: :pact_elixir, crate: "pactmockserver", mode: :debug]
   env_config = Application.get_env(rustler_opts[:otp_app], PactElixir, [])
 
   opts =
